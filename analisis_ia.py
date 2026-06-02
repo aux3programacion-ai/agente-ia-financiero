@@ -163,7 +163,7 @@ if not resultado:
             print(f'[IA] Intentando modelo: {modelo}')
             raw = llamar_modelo(modelo)
             parsed = extraer_json(raw)
-            if 'probabilidades' in parsed and len(parsed['probabilidades']) > 0:
+            if 'probabilidades' in parsed and len(parsed['probabilidades']) > 0 and isinstance(list(parsed['probabilidades'].values())[0], dict):
                 resultado = parsed
                 resultado['modelo_usado'] = modelo
                 print(f'[OK] {modelo} respondio correctamente')
@@ -179,9 +179,10 @@ if not resultado:
     resultado = generar_defaults()
     resultado['modelo_usado'] = 'fallback-local'
 
-# Ensure all 30 tickers have probabilities
+# Ensure all 30 tickers have probabilities (as dict objects)
 for t in TICKERS:
-    if t not in resultado.get('probabilidades', {}):
+    p = resultado.get('probabilidades', {}).get(t)
+    if p is None or not isinstance(p, dict):
         resultado.setdefault('probabilidades', {})[t] = {
             'probabilidad': PROBS_BASE.get(t, 50),
             'confianza': CONF_BASE.get(t, 50),
@@ -208,7 +209,8 @@ for t in TICKERS:
     if t not in hist_preds:
         hist_preds[t] = {'predicciones': [], 'total': 0, 'aciertos': 0, 'precision': 0.5}
     p = resultado.get('probabilidades', {}).get(t, {})
-    prob = p.get('probabilidad', 50)
+    if not isinstance(p, dict): p = {}
+    prob = p.get('probabilidad', PROBS_BASE.get(t, 50))
     direccion = 'up' if prob >= 50 else 'down'
     hist_preds[t]['predicciones'].append({
         'fecha': ahora[:10],
