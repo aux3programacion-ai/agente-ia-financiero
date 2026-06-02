@@ -39,6 +39,11 @@ CONF_BASE = {'NVDA':60,'MU':58,'DELL':62,'AVGO':60,'DDOG':56,'SMCI':54,'SNOW':57
     'AAPL':55,'AMZN':57,'GOOGL':58,'META':55,'MSFT':58,'LLY':53,'AMAT':55,
     'LRCX':54,'PANW':52,'ORCL':53,'HON':50,'UBER':52,'GE':51,'COST':50,'NEE':51}
 
+PRICES_BASE = {'NVDA':218,'MU':970,'DELL':425,'AVGO':420,'DDOG':195,'SMCI':985,'SNOW':254,
+    'CRWD':349,'NOW':124,'TSM':197,'ARM':157,'OKTA':122,'HPE':60,'NTAP':209,'CLS':388,
+    'AAPL':245,'AMZN':215,'GOOGL':490,'META':620,'MSFT':510,'LLY':890,'AMAT':245,
+    'LRCX':290,'PANW':380,'ORCL':175,'HON':235,'UBER':82,'GE':200,'COST':950,'NEE':78}
+
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
 OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
@@ -121,7 +126,7 @@ Responde EXACTAMENTE este JSON sin ningun otro texto:
 "sectores":{{"Semiconductores":"analisis corto","Servidores IA":"analisis","Software IA":"analisis","Ciberseguridad":"analisis","Almacenamiento":"analisis","Manufactura":"analisis","Consumer Tech":"analisis","Cloud/Commerce":"analisis","Internet/Cloud":"analisis","Social/IA":"analisis","Enterprise/Cloud":"analisis","Farmaceutico":"analisis","Semicon Equip":"analisis","Cloud/Database":"analisis","Industrial":"analisis","Movilidad/Tech":"analisis","Aeroespacial":"analisis","Consumo Defensivo":"analisis","Utilities/Energy":"analisis"}},
 "probabilidades":{{}}}}
 
-Cada ticker debe tener: "probabilidad" (0-100 segun momentum, fundamentals Y NOTICIAS RECIENTES), "confianza" (0-100), "analisis" (texto corto mencionando noticias si aplica).'''
+Cada ticker en "probabilidades" debe tener: "probabilidad" (0-100 segun momentum, fundamentals Y NOTICIAS RECIENTES), "confianza" (0-100), "analisis" (texto corto mencionando noticias si aplica), "precio_objetivo_30d" (precio estimado en dolares en 30 dias basado en tu analisis).'''
 
 def llamar_modelo(modelo):
     url = 'https://openrouter.ai/api/v1/chat/completions'
@@ -170,7 +175,8 @@ def generar_defaults():
             'Movilidad/Tech','Aeroespacial','Consumo Defensivo','Utilities/Energy']},
         'probabilidades': {
             t: {'probabilidad': PROBS_BASE.get(t, 50), 'confianza': CONF_BASE.get(t, 50),
-                'analisis': 'Analisis basado en datos de mercado y tendencias del sector.'}
+                'analisis': 'Analisis basado en datos de mercado y tendencias del sector.',
+                'precio_objetivo_30d': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 200)}
             for t in TICKERS
         }
     }
@@ -211,7 +217,8 @@ for t in TICKERS:
         resultado.setdefault('probabilidades', {})[t] = {
             'probabilidad': PROBS_BASE.get(t, 50),
             'confianza': CONF_BASE.get(t, 50),
-            'analisis': 'Analisis baseline.'
+            'analisis': 'Analisis baseline.',
+            'precio_objetivo_30d': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 200)
         }
 
 resultado['timestamp'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
