@@ -304,6 +304,7 @@ if (Test-Path $pfFilePath) {
     } catch { $pfFileArray = @() }
 }
 $pfFileJson = $pfFileArray | ConvertTo-Json -Compress
+if (-not $pfFileJson) { $pfFileJson = '[]' }
 
 # Portfolio section HTML
 $HTML += "<div class=`"pf`"><div class=`"pfh`">MI PORTAFOLIO <span>Se sincroniza automaticamente en todos tus dispositivos via GitHub - edita <b>Datos/portafolio_usuario.json</b> en el repo</span></div>"
@@ -317,9 +318,9 @@ foreach ($s in $sectoresUnicos) { $HTML += "<option value=`"$s`">$s</option>" }
 $HTML += "</select><span class=`"rcount`" id=`"resultCount`">30/30</span></div>"
 $HTML += "<div class=`"tc`"><table><thead><tr><th>#</th><th>Ticker</th><th class=`"hm`">Compania</th><th>Sector</th><th style=`"text-align:right`">Precio</th><th style=`"text-align:right`">Cambio</th><th style=`"text-align:right`">%</th><th style=`"text-align:right`">Prob.</th><th>Conf.</th><th style=`"text-align:right`">Prec.H</th></tr></thead><tbody>$tableRows</tbody></table></div>"
 $HTML += "<div class=`"ft`">IA: $aiModel | Precios: $dataSource | $FECHA_HUMANA | 30 tickers | Generado por IA. No constituye asesoramiento financiero.</div>"
-$pfJsonEsc = $pfJson.Replace("'","\u0027")
-$newsJsonEsc = $newsJson.Replace("'","\u0027")
-$pfFileJsonEsc = $pfFileJson.Replace("'","\u0027")
+$pfJsonEsc = if ($pfJson) { $pfJson.Replace("'","\u0027") } else { '{}' }
+$newsJsonEsc = if ($newsJson) { $newsJson.Replace("'","\u0027") } else { '{}' }
+$pfFileJsonEsc = if ($pfFileJson) { $pfFileJson.Replace("'","\u0027") } else { '[]' }
 $HTML += "<script>var PD=JSON.parse('$pfJsonEsc');var ND=JSON.parse('$newsJsonEsc');var PF=JSON.parse('$pfFileJsonEsc');</script>"
 $HTML += "<script src=`"./portfolio.js`"></script>"
 $HTML += "<script>function filtrarTabla(){var q=document.getElementById('searchInput').value.toUpperCase();var s=document.getElementById('sectorFilter').value;var rows=document.querySelectorAll('tbody tr');var v=0;rows.forEach(function(r){var tk=r.cells[1].textContent.toUpperCase();var nm=r.cells[2].textContent.toUpperCase();var sc=r.cells[3].textContent;var match=q===''||tk.includes(q)||nm.includes(q)||sc.toUpperCase().includes(q);if(s!==''&&sc!==s)match=false;r.style.display=match?'':'none';if(match)v++;});document.getElementById('resultCount').textContent=v+'/'+rows.length;}</script>"
