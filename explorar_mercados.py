@@ -19,36 +19,91 @@ def scrape_wikipedia_table(url, col_ticker=0, suffix="", remove_colons=True):
         if not table:
             table = soup.find_all('table', {'class': 'wikitable'})
             if table: table = table[0]
+        if not table:
+            tables = soup.find_all('table')
+            for t in tables:
+                if t.get('class') and ('wikitable' in ' '.join(t.get('class', []))):
+                    table = t; break
+                if t.find('th') and ('Ticker' in t.get_text() or 'Symbol' in t.get_text()):
+                    table = t; break
         if not table: return []
         rows = table.find_all('tr')[1:]
         tickers = []
+        header_cells = table.find_all('tr')[0].find_all('th')
+        header_texts = [h.get_text(strip=True).lower() for h in header_cells]
+        ticker_col = col_ticker
+        for idx, ht in enumerate(header_texts):
+            if any(k in ht for k in ['ticker', 'symbol', 'code', 'empresa', 'company']):
+                ticker_col = idx; break
         for row in rows:
             cells = row.find_all('td')
-            if len(cells) > col_ticker:
-                t = cells[col_ticker].get_text(strip=True)
+            if len(cells) > ticker_col:
+                t = cells[ticker_col].get_text(strip=True)
                 t = re.sub(r'\s+', '', t)
                 if remove_colons: t = t.replace(':', '')
                 if suffix and not t.endswith(suffix): t = t + suffix
-                if t and len(t) <= 10 and not re.match(r'^\d', t):
+                if t and len(t) <= 12 and not re.match(r'^\d', t[:1]):
                     tickers.append(t)
         return tickers
-    except:
+    except Exception as e:
+        print(f'  [!] Error scraping: {e}')
         return []
 
 def get_sp500():
     print("[SP500] Obteniendo componentes...")
     tickers = scrape_wikipedia_table(WIKI_SP500, col_ticker=0)
-    if tickers: print(f"[OK] SP500: {len(tickers)} tickers")
+    if not tickers or len(tickers) < 100:
+        # Try alternate approach: read from the table by finding "Symbol" column
+        try:
+            r = requests.get(WIKI_SP500, timeout=15)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            tbl = None
+            for t in soup.find_all('table'):
+                if 'wikitable' in str(t.get('class', [])):
+                    tbl = t; break
+                if t.find('th') and 'Symbol' in t.get_text():
+                    tbl = t; break
+            if tbl:
+                rows = tbl.find_all('tr')[1:]
+                tickers = []
+                for row in rows:
+                    cells = row.find_all('td')
+                    for c in cells:
+                        a = c.find('a')
+                        if a and a.get('href') and len(a.text.strip()) <= 5:
+                            t = a.text.strip()
+                            if t and re.match(r'^[A-Z]', t):
+                                tickers.append(t)
+                                break
+                tickers = list(dict.fromkeys(tickers))
+        except:
+            pass
+    if tickers and len(tickers) >= 100:
+        print(f"[OK] SP500: {len(tickers)} tickers")
+    else:
+        fallback = ["AAPL","MSFT","AMZN","GOOGL","META","NVDA","BRK.B","JPM","V","UNH",
+                     "XOM","MA","PG","JNJ","HD","MRK","COST","AVGO","CVX","ABBV",
+                     "CRM","NFLX","KO","PEP","WMT","BAC","TMO","ACN","DIS","MCD",
+                     "CSCO","ABT","TXN","VZ","ADBE","LIN","CMCSA","NKE","NEE","PM",
+                     "AMD","IBM","GE","QCOM","MDT","HON","AMT","RTX","LOW","SPGI",
+                     "INTU","UPS","CAT","BLK","PLD","T","ELV","CI","GS","MS",
+                     "DE","SYK","LMT","MDLZ","BA","SCHW","AMAT","CB","AXP","ADI",
+                     "DUK","GILD","TMUS","SO","ISRG","MMM","MU","BKNG","LRCX","CL",
+                     "APD","REGN","ATVI","FISV","EBAY","GM","EW","F","IQV","STZ",
+                     "C","FCX","HUM"]
+        tickers = fallback
+        print(f"[FALLBACK] SP500: {len(tickers)} tickers")
     return tickers
 
 def get_ipc_mexico():
     print("[IPC] Obteniendo componentes...")
     tickers = scrape_wikipedia_table(WIKI_IPC, col_ticker=0, suffix=".MX")
     if not tickers or len(tickers) < 10:
-        fallback = ["AMXL.MX","WMT.MX","FEMSAUBD.MX","GFNORTEO.MX","GMEXICOB.MX",
-                     "PE&OLES.MX","CEMEXCPO.MX","BBAJIOO.MX","ELEKTRA.MX","KIMBERA.MX",
-                     "ASURB.MX","LAB.MX","AC.MX","MEGACPO.MX","ALFAA.MX",
-                     "GCARSOA1.MX","TLEVISACPO.MX","OHLMEX.MX","CUERVO.MX","PASAB.MX"]
+        fallback = ["WMT.MX","FEMSAUB.MX","GFNORTEO.MX","AMX.MX","GMEXICOB.MX",
+                     "CEMEXCPO.MX","BBAJIO.MX","KIMBERA.MX",
+                     "ASURB.MX","AC.MX","MEGACPO.MX","ALFA.MX",
+                     "TLEVISACPO.MX","CUERVO.MX","PASAB.MX",
+                     "GENTERA.MX","ORBIA.MX","PINFRA.MX","BIMBOA.MX","GCARSOA1.MX"]
         tickers = fallback
     print(f"[OK] IPC Mexico: {len(tickers)} tickers")
     return tickers
