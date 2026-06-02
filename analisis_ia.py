@@ -57,13 +57,41 @@ if os.path.exists(PRECIOS_PATH):
 
 texto_precios = ', '.join(f'{t} ${precios.get(t, PROBS_BASE.get(t,100)):.2f}' for t in TICKERS)
 
+# Cargar precision historica para feedback de aprendizaje
+feedback_precision = ''
+CALIB_PATH = os.path.join(DATA_DIR, 'Datos', 'calibracion.json')
+HIST_PATH = os.path.join(DATA_DIR, 'Datos', 'predicciones_hist.json')
+if os.path.exists(CALIB_PATH):
+    try:
+        cal = json.load(open(CALIB_PATH))
+        pg = cal.get('precision_global', 0.5)
+        te = cal.get('total_evaluado', 0)
+        if te > 0:
+            lines = [f'Precision global historica: {pg:.1%} ({te} predicciones)']
+            for t in TICKERS[:10]:
+                f = cal['factores'].get(t, {})
+                if f.get('total', 0) > 0:
+                    lines.append(f'{t}: precision {f["precision"]:.0%} ({f["aciertos"]}/{f["total"]})')
+            feedback_precision = '\n'.join(lines)
+    except: pass
+
 SYSTEM_PROMPT = 'Eres un analista financiero experto con 20 anos de experiencia en mercados globales. Respondes SOLO con JSON valido, sin markdown, sin explicaciones.'
 
-USER_PROMPT = f'''Genera analisis para estos 30 tickers. Precios actuales: {texto_precios}
+feedback_section = ''
+if feedback_precision:
+    feedback_section = f'''
+HISTORIAL DE PRECISION:
+{feedback_precision}
+
+IMPORTANTE: Ajusta tus probabilidades segun tu precision historica.
+Si tienes alta precision en un ticker, puedes aumentar la confianza.
+Si tienes baja precision, reduce tu confianza y probabilidad.'''
+
+USER_PROMPT = f'''Genera analisis para estos 30 tickers. Precios actuales: {texto_precios}{feedback_section}
 
 Responde EXACTAMENTE este JSON sin ningun otro texto:
 {{"resumen_mercado":"texto corto de 1-2 oraciones sobre el mercado",
-"modelo_usado":"gemini-flash",
+"modelo_usado":"modelo-ia",
 "titulares":["headline1","headline2","headline3","headline4","headline5"],
 "sectores":{{"Semiconductores":"analisis corto","Servidores IA":"analisis","Software IA":"analisis","Ciberseguridad":"analisis","Almacenamiento":"analisis","Manufactura":"analisis","Consumer Tech":"analisis","Cloud/Commerce":"analisis","Internet/Cloud":"analisis","Social/IA":"analisis","Enterprise/Cloud":"analisis","Farmaceutico":"analisis","Semicon Equip":"analisis","Cloud/Database":"analisis","Industrial":"analisis","Movilidad/Tech":"analisis","Aeroespacial":"analisis","Consumo Defensivo":"analisis","Utilities/Energy":"analisis"}},
 "probabilidades":{{}}}}
@@ -166,3 +194,37 @@ resultado['total_tickers'] = len(TICKERS)
 with open(OUTPUT_PATH, 'w') as f:
     json.dump(resultado, f, indent=2, ensure_ascii=False)
 print(f'[OK] Analisis IA guardado ({resultado["modelo_usado"]}) - {len(resultado["probabilidades"])} tickers')
+
+# Guardar predicciones en base historica
+ahora = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+hist_preds = {}
+if os.path.exists(HIST_PATH):
+    try:
+        with open(HIST_PATH) as f:
+            hist_preds = json.load(f)
+    except: pass
+
+for t in TICKERS:
+    if t not in hist_preds:
+        hist_preds[t] = {'predicciones': [], 'total': 0, 'aciertos': 0, 'precision': 0.5}
+    p = resultado.get('probabilidades', {}).get(t, {})
+    prob = p.get('probabilidad', 50)
+    direccion = 'up' if prob >= 50 else 'down'
+    hist_preds[t]['predicciones'].append({
+        'fecha': ahora[:10],
+        'hora': ahora[11:16],
+        'precio_pred': precios.get(t, 0),
+        'direccion': direccion,
+        'probabilidad': prob,
+        'confianza': p.get('confianza', 50),
+        'resultado': None,
+        'precio_real': None,
+        'acertada': None
+    })
+    # Limitar a 100 predicciones por ticker
+    if len(hist_preds[t]['predicciones']) > 100:
+        hist_preds[t]['predicciones'] = hist_preds[t]['predicciones'][-100:]
+
+with open(HIST_PATH, 'w') as f:
+    json.dump(hist_preds, f, indent=2, ensure_ascii=False)
+print(f'[OK] Predicciones guardadas en historial')

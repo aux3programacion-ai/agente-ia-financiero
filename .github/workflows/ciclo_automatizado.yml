@@ -37,6 +37,10 @@ jobs:
         env:
           OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
 
+      - name: Evaluar predicciones y calibrar (aprendizaje autonomo)
+        shell: bash
+        run: python aprendizaje.py
+
       - name: Ejecutar ciclo intradia (30 tickers)
         shell: pwsh
         run: ./ciclo_gh.ps1

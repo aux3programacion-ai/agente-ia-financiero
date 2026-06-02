@@ -37,6 +37,8 @@ $aiModel = 'none'
 $aiResumen = ''
 $aiTitulares = @()
 $aiSectores = @{}
+$precisionGlobal = 0
+$totalEvaluado = 0
 
 # Cargar precios reales
 $jsonPath = "$DATOS_DIR/precios_reales.json"
@@ -62,6 +64,8 @@ if (Test-Path $iaPath) {
         $aiResumen = $iaData.resumen_mercado
         if ($iaData.titulares) { $aiTitulares = @($iaData.titulares) }
         if ($iaData.sectores) { $aiSectores = $iaData.sectores }
+        if ($iaData.precision_global) { $precisionGlobal = $iaData.precision_global }
+        if ($iaData.total_evaluado) { $totalEvaluado = $iaData.total_evaluado }
         foreach ($t in $TICKERS) {
             $iaInfo = $iaData.probabilidades.$t
             if ($iaInfo) {
@@ -210,7 +214,9 @@ $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-syste
 $HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Top 30 - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
 $HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Top 30 - Probabilidad Alcista</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA</div></div></div><div class=`"badge`">INTRADIA</div></header>"
 $HTML += "<div class=`"tb`"><div class=`"tbi`">$tickerItems $tickerItems</div></div>"
-$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Modelo IA</div><div class=`"v`" style=`"font-size:12px;color:#ce93d8`">$aiModel</div></div></div>"
+$precColor = if ($precisionGlobal -ge 0.7) { '#00c853' } elseif ($precisionGlobal -ge 0.5) { '#ffc107' } else { '#ff5252' }
+$precLabel = if ($precisionGlobal -gt 0) { "$([math]::Round($precisionGlobal * 100))%" } else { '--' }
+$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Precision</div><div class=`"v`" style=`"color:$precColor;font-size:14px`">$precLabel</div></div><div class=`"sc`"><div class=`"l`">Modelo IA</div><div class=`"v`" style=`"font-size:12px;color:#ce93d8`">$aiModel</div></div></div>"
 if ($aiResumen) {
     $HTML += "<div class=`"resumen`">$aiResumen</div>"
 }
