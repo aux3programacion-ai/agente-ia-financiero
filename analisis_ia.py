@@ -57,6 +57,31 @@ if os.path.exists(PRECIOS_PATH):
 
 texto_precios = ', '.join(f'{t} ${precios.get(t, PROBS_BASE.get(t,100)):.2f}' for t in TICKERS)
 
+# Cargar noticias recientes para inyectar contexto
+texto_noticias = ''
+news_sentimiento = {}
+NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
+if os.path.exists(NEWS_PATH):
+    try:
+        news_data = json.load(open(NEWS_PATH))
+        pt = news_data.get('por_ticker', {})
+        lines_n = ['\nNOTICIAS RECIENTES (para usar en tu analisis):']
+        for t in TICKERS:
+            nd = pt.get(t, {})
+            notis = nd.get('noticias', []) if isinstance(nd, dict) else []
+            if notis and isinstance(notis, list):
+                titulos = [n['titulo'][:120] for n in notis[:2] if isinstance(n, dict) and n.get('titulo')]
+                if titulos:
+                    lines_n.append(f'  {t}: {" | ".join(titulos)}')
+            sent = nd.get('sentimiento') if isinstance(nd, dict) else None
+            if sent and isinstance(sent, dict) and sent.get('sentimiento'):
+                lines_n.append(f'    Sentimiento IA -> {sent["sentimiento"]} (score:{sent.get("score","?")})')
+                news_sentimiento[t] = sent
+        if len(lines_n) > 1:
+            texto_noticias = '\n'.join(lines_n)
+    except Exception as e:
+        print(f'[!] Error cargando noticias: {e}')
+
 # Cargar precision historica para feedback de aprendizaje
 feedback_precision = ''
 CALIB_PATH = os.path.join(DATA_DIR, 'Datos', 'calibracion.json')
@@ -87,7 +112,7 @@ IMPORTANTE: Ajusta tus probabilidades segun tu precision historica.
 Si tienes alta precision en un ticker, puedes aumentar la confianza.
 Si tienes baja precision, reduce tu confianza y probabilidad.'''
 
-USER_PROMPT = f'''Genera analisis para estos 30 tickers. Precios actuales: {texto_precios}{feedback_section}
+USER_PROMPT = f'''Genera analisis para estos 30 tickers. Precios actuales: {texto_precios}{feedback_section}{texto_noticias}
 
 Responde EXACTAMENTE este JSON sin ningun otro texto:
 {{"resumen_mercado":"texto corto de 1-2 oraciones sobre el mercado",
@@ -96,7 +121,7 @@ Responde EXACTAMENTE este JSON sin ningun otro texto:
 "sectores":{{"Semiconductores":"analisis corto","Servidores IA":"analisis","Software IA":"analisis","Ciberseguridad":"analisis","Almacenamiento":"analisis","Manufactura":"analisis","Consumer Tech":"analisis","Cloud/Commerce":"analisis","Internet/Cloud":"analisis","Social/IA":"analisis","Enterprise/Cloud":"analisis","Farmaceutico":"analisis","Semicon Equip":"analisis","Cloud/Database":"analisis","Industrial":"analisis","Movilidad/Tech":"analisis","Aeroespacial":"analisis","Consumo Defensivo":"analisis","Utilities/Energy":"analisis"}},
 "probabilidades":{{}}}}
 
-Cada ticker debe tener: "probabilidad" (0-100 segun momentum y fundamentals), "confianza" (0-100), "analisis" (texto corto).'''
+Cada ticker debe tener: "probabilidad" (0-100 segun momentum, fundamentals Y NOTICIAS RECIENTES), "confianza" (0-100), "analisis" (texto corto mencionando noticias si aplica).'''
 
 def llamar_modelo(modelo):
     url = 'https://openrouter.ai/api/v1/chat/completions'
@@ -212,6 +237,7 @@ for t in TICKERS:
     if not isinstance(p, dict): p = {}
     prob = p.get('probabilidad', PROBS_BASE.get(t, 50))
     direccion = 'up' if prob >= 50 else 'down'
+    sent_noticias = news_sentimiento.get(t, {})
     hist_preds[t]['predicciones'].append({
         'fecha': ahora[:10],
         'hora': ahora[11:16],
@@ -221,7 +247,9 @@ for t in TICKERS:
         'confianza': p.get('confianza', 50),
         'resultado': None,
         'precio_real': None,
-        'acertada': None
+        'acertada': None,
+        'news_sentimiento': sent_noticias.get('sentimiento') if sent_noticias else None,
+        'news_score': sent_noticias.get('score') if sent_noticias else None
     })
     # Limitar a 100 predicciones por ticker
     if len(hist_preds[t]['predicciones']) > 100:

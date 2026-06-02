@@ -11,6 +11,7 @@ HIST_PATH = os.path.join(DATA_DIR, 'Datos', 'predicciones_hist.json')
 PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
 IA_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
 CALIB_PATH = os.path.join(DATA_DIR, 'Datos', 'calibracion.json')
+NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
@@ -29,6 +30,20 @@ if os.path.exists(HIST_PATH):
 for t in TICKERS:
     if t not in hist:
         hist[t] = {'predicciones': [], 'total': 0, 'aciertos': 0, 'precision': 0.5}
+
+# --- Cargar sentimiento de noticias para correlacion ---
+noticias_sentimiento = {}
+if os.path.exists(NEWS_PATH):
+    try:
+        nd = json.load(open(NEWS_PATH)).get('por_ticker', {})
+        for t in TICKERS:
+            td = nd.get(t, {})
+            if isinstance(td, dict):
+                sent = td.get('sentimiento')
+                if sent and isinstance(sent, dict) and sent.get('sentimiento'):
+                    noticias_sentimiento[t] = sent
+    except Exception as e:
+        print(f'[!] Error cargando noticias: {e}')
 
 # --- Cargar precios actuales ---
 precios = {}
@@ -71,13 +86,44 @@ precision_global = round(aciertos_global / total_global, 4) if total_global > 0 
 with open(HIST_PATH, 'w') as f:
     json.dump(hist, f, indent=2, ensure_ascii=False)
 
-# --- Generar calibracion bayesiana ---
+# --- Generar calibracion bayesiana con tracking de noticias ---
+# Correlacion sentimiento vs acierto
+aciertos_sent_pos = 0; total_sent_pos = 0
+aciertos_sent_neg = 0; total_sent_neg = 0
+aciertos_sent_neu = 0; total_sent_neu = 0
+
+for t in TICKERS:
+    for p in hist[t]['predicciones']:
+        ns = p.get('news_sentimiento')
+        acertada = p.get('acertada')
+        if ns and acertada is not None:
+            if ns == 'positivo':
+                total_sent_pos += 1
+                if acertada: aciertos_sent_pos += 1
+            elif ns == 'negativo':
+                total_sent_neg += 1
+                if acertada: aciertos_sent_neg += 1
+            elif ns == 'neutral':
+                total_sent_neu += 1
+                if acertada: aciertos_sent_neu += 1
+
+prec_sent_pos = round(aciertos_sent_pos / total_sent_pos, 4) if total_sent_pos > 0 else None
+prec_sent_neg = round(aciertos_sent_neg / total_sent_neg, 4) if total_sent_neg > 0 else None
+
 calibracion = {
     'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
     'precision_global': precision_global,
     'total_evaluado': total_global,
     'aciertos_global': aciertos_global,
     'evaluados_este_ciclo': evaluados,
+    'correlacion_noticias': {
+        'prec_sentimiento_positivo': prec_sent_pos,
+        'total_sentimiento_positivo': total_sent_pos,
+        'prec_sentimiento_negativo': prec_sent_neg,
+        'total_sentimiento_negativo': total_sent_neg,
+        'total_sentimiento_neutral': total_sent_neu,
+        'aciertos_sentimiento_neutral': aciertos_sent_neu
+    },
     'factores': {}
 }
 

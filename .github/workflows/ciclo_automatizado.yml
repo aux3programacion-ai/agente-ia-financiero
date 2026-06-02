@@ -31,7 +31,13 @@ jobs:
         shell: bash
         run: python fetch_prices.py
 
-      - name: Analisis IA via OpenRouter (multi-modelo gratuito)
+      - name: Noticias de mercado (RSS + sentimiento IA)
+        shell: bash
+        run: python noticias_mercado.py
+        env:
+          OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+
+      - name: Analisis IA via OpenRouter (multi-modelo gratuito + noticias frescas)
         shell: bash
         run: python analisis_ia.py
         env:
