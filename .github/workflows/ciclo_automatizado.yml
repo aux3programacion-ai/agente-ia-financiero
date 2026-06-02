@@ -23,6 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Instalar yfinance y obtener precios reales
+        shell: bash
+        run: |
+          pip install yfinance -q
+          python fetch_prices.py
+
       - name: Ejecutar ciclo intradia (30 tickers)
         shell: pwsh
         run: ./ciclo_gh.ps1

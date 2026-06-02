@@ -103,18 +103,43 @@ $stockData = @{
 }
 
 # ============================================================
-# PASO 3: PRECIOS CON FLUCTUACION
+# PASO 3: PRECIOS REALES (con fallbacks)
 # ============================================================
 $prices = @{}
-foreach ($t in $TICKERS) {
-    $base = $stockData[$t]['base']
-    $var = $base * 0.015
-    $live = [math]::Round($base + (Get-Random -Minimum -$var -Maximum $var), 2)
-    $chg = [math]::Round($live - $base, 2)
-    $pct = [math]::Round(($chg / $base) * 100, 2)
-    $prices[$t] = @{ 'price' = $live; 'change' = $chg; 'pct' = $pct }
+$jsonPath = "$DATOS_DIR/precios_reales.json"
+$dataSource = "simulada"
+if (Test-Path $jsonPath) {
+    try {
+        $realData = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $dataSource = $realData.fuente
+        foreach ($t in $TICKERS) {
+            $pd = $realData.precios.$t
+            if ($pd) {
+                $prices[$t] = @{ 'price' = $pd.price; 'change' = $pd.change; 'pct' = $pd.pct }
+            } else {
+                $base = $stockData[$t]['base']
+                $var = $base * 0.015
+                $live = [math]::Round($base + (Get-Random -Minimum -$var -Maximum $var), 2)
+                $chg = [math]::Round($live - $base, 2)
+                $prices[$t] = @{ 'price' = $live; 'change' = $chg; 'pct' = [math]::Round(($chg / $base) * 100, 2) }
+            }
+        }
+    } catch {
+        Write-Output "[!] Error leyendo JSON real, usando simulados"
+        $dataSource = "simulada"
+    }
 }
-Write-Output "[OK] Precios generados para 30 activos"
+if ($prices.Count -eq 0) {
+    foreach ($t in $TICKERS) {
+        $base = $stockData[$t]['base']
+        $var = $base * 0.015
+        $live = [math]::Round($base + (Get-Random -Minimum -$var -Maximum $var), 2)
+        $chg = [math]::Round($live - $base, 2)
+        $pct = [math]::Round(($chg / $base) * 100, 2)
+        $prices[$t] = @{ 'price' = $live; 'change' = $chg; 'pct' = $pct }
+    }
+}
+Write-Output "[OK] Precios ($dataSource) para 30 activos"
 
 # ============================================================
 # PASO 4: BITACORAS
@@ -173,7 +198,7 @@ $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-syste
 $HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Top 30 - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
 $HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Top 30 - Probabilidad Alcista</div><div class=`"hs`">Monitoreo Intradia | $FECHA $HORA | 30 tickers</div></div></div><div class=`"badge`">INTRADIA</div></header>"
 $HTML += "<div class=`"tb`"><div class=`"tbi`">$tickerItems $tickerItems</div></div>"
-$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Fuentes</div><div class=`"v`" style=`"font-size:12px`">$($fuentes.Count)</div></div></div>"
+$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Fuente</div><div class=`"v`" style=`"font-size:12px;color:#64b5f6`">$dataSource</div></div></div>"
 $HTML += "<div class=`"tc`"><table><thead><tr><th>#</th><th>Ticker</th><th class=`"hm`">Compania</th><th>Sector</th><th style=`"text-align:right`">Precio</th><th style=`"text-align:right`">Cambio</th><th style=`"text-align:right`">%</th><th style=`"text-align:right`">Prob.</th><th>Conf.</th></tr></thead><tbody>$tableRows</tbody></table></div>"
 $HTML += "<div class=`"ft`">Monitoreo Intradia - GitHub Actions | $FECHA_HUMANA | 30 tickers en 5 sectores estrategicos | Generado por IA. No constituye asesoramiento financiero.</div></body></html>"
 
