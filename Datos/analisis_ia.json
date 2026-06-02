@@ -1,186 +1,279 @@
 {
-  "resumen_mercado": "Los mercados globales se mantienen volátiles con presión alcista en tecnología y defensivos ante datos mixtos de inflación.",
-  "modelo_usado": "openai/gpt-oss-120b:free",
+  "resumen_mercado": "El mercado muestra volatilidad con sectores tecnológicos y defensivos en alza, mientras sectores industriales y de consumo enfrentan presión por factores macroeconómicos.",
+  "modelo_usado": "openrouter/free",
   "titulares": [
-    "Tecnología lidera ganancias en el S&P 500",
-    "Inflación de EE.UU. se desacelera ligeramente",
-    "Tensiones geopolíticas impactan energía",
-    "Resultados mixtos en el sector de semiconductores",
-    "Crecimiento de IA impulsa demanda de hardware"
+    "NVIDIA lidera la carrera por IA con crecimiento exponencial en GPUs",
+    "Microsoft y Amazon invierten miles de millones en infraestructura cloud y IA",
+    "Semiconductores y almacenamiento muestran divergencia entre líderes y empresas en dificultades",
+    "Ciberseguridad y software empresarial ganan terreno ante amenazas crecientes",
+    "Acciones de consumo defensivo y farmacéutico destacan en entorno de incertidumbre"
   ],
   "sectores": {
-    "Semiconductores": "Fuerte demanda de chips de alto rendimiento, pero la oferta sigue ajustada.",
-    "Servidores IA": "Crecimiento impulsado por adopción de modelos generativos en la nube.",
-    "Software IA": "Expansión de soluciones SaaS con capacidades de IA aumenta márgenes.",
-    "Ciberseguridad": "Incremento de ataques ransomware eleva la inversión en protección.",
-    "Almacenamiento": "Necesidad de capacidad de datos para IA mantiene presión al alza.",
-    "Manufactura": "Rebajas de inventario y reactivación de la cadena de suministro.",
-    "Consumer Tech": "Consumo discrecional se estabiliza tras ajustes de precios.",
-    "Cloud/Commerce": "Ventas de plataformas cloud siguen superando expectativas.",
-    "Internet/Cloud": "Publicidad digital muestra resiliencia pese a la desaceleración económica.",
-    "Social/IA": "Integración de IA en redes sociales genera nuevas fuentes de ingresos.",
-    "Enterprise/Cloud": "Migración a la nube corporativa se acelera en todos los sectores.",
-    "Farmaceutico": "Innovaciones en biotecnología y precios de medicamentos impulsan el sector.",
-    "Semicon Equip": "Equipamiento de fabricación de chips se beneficia de la escasez de capacidad.",
-    "Cloud/Database": "Servicios de bases de datos gestionadas crecen con la demanda de datos en tiempo real.",
-    "Industrial": "Recuperación gradual de la inversión de capital en manufactura.",
-    "Movilidad/Tech": "Electrificación y software de vehículos impulsan el crecimiento.",
-    "Aeroespacial": "Ordenes de defensa y satélites sostienen el sector.",
-    "Consumo Defensivo": "Mayor apetito por productos básicos ante la incertidumbre macro.",
-    "Utilities/Energy": "Precios de energía estables, foco en renovables."
+    "Semiconductores": "Fuerte demanda de chips para IA impulsa a líderes como NVIDIA y AMD",
+    "Servidores IA": "Crecimiento acelerado en infraestructura de IA con alta demanda de NVIDIA y Broadcom",
+    "Software IA": "Microsoft y Palantir lideran desarrollo de soluciones empresariales de IA",
+    "Ciberseguridad": "Aumento de inversiones en protección de datos impulsa a CrowdStrike y Okta",
+    "Almacenamiento": "Dell y NetApp muestran crecimiento en soluciones de almacenamiento híbrido",
+    "Manufactura": "Industria automotriz y aeroespacial enfrentan desafíos en la cadena de suministro",
+    "Consumer Tech": "Apple y Samsung mantienen liderazgo en dispositivos con innovación en IA",
+    "Cloud/Commerce": "Amazon y Shopify expanden plataformas de comercio electrónico con IA",
+    "Internet/Cloud": "Google y Meta dominan publicidad digital con avances en IA generativa",
+    "Social/IA": "Redes sociales integran IA para personalización, con crecimiento en Meta y Snap",
+    "Enterprise/Cloud": "Salesforce y ServiceNow lideran transformación digital empresarial",
+    "Farmacéutico": "LLY y Pfizer destacan en desarrollo de fármacos con IA para investigación",
+    "Semicon Equip": "ASML y Applied Materials benefician de la demanda de chips avanzados",
+    "Cloud/Database": "Oracle y Snowflake innovan en bases de datos con IA integrada",
+    "Industrial": "Honeywell y Rockwell Automation muestran eficiencia en automatización",
+    "Movilidad/Tech": "Tesla y Uber enfrentan desafíos en transición a vehículos eléctricos y movilidad",
+    "Aeroespacial": "Boeing y Lockheed Martin invierten en tecnologías de defensa y sostenibilidad",
+    "Consumo Defensivo": "Costco y Procter & Gamble mantienen estabilidad en entorno inflacionario",
+    "Utilities/Energy": "NextEra Energy y Duke Energy lideran transición a energías renovables"
   },
   "probabilidades": {
     "NVDA": {
-      "probabilidad": 88,
-      "confianza": 85,
-      "analisis": "Lidera la IA con fuerte impulso de demanda de GPU."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Líder en GPUs para IA con crecimiento sostenido en ingresos",
+      "probabilidad_original": 95,
+      "confianza_original": 90,
+      "factor_calibracion": 1.52
     },
     "MU": {
-      "probabilidad": 81,
-      "confianza": 78,
-      "analisis": "Beneficia de la escasez de memoria y la expansión de centros de datos."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Intel enfrenta competencia en chips para IA pero mantiene cuota en servidores",
+      "probabilidad_original": 88,
+      "confianza_original": 85,
+      "factor_calibracion": 1.52
     },
     "DELL": {
-      "probabilidad": 74,
-      "confianza": 70,
-      "analisis": "Crecimiento moderado en servidores y soluciones de infraestructura."
+      "probabilidad": 95,
+      "confianza": 94,
+      "analisis": "Crecimiento en servidores IA y soluciones híbridas de almacenamiento",
+      "probabilidad_original": 78,
+      "confianza_original": 75,
+      "factor_calibracion": 1.52
     },
     "AVGO": {
-      "probabilidad": 79,
-      "confianza": 77,
-      "analisis": "Posicionamiento sólido en conectividad de datos y 5G."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Broadcom lidera en chips para redes y adquisición de VMware fortalece su posición",
+      "probabilidad_original": 92,
+      "confianza_original": 88,
+      "factor_calibracion": 1.52
     },
     "DDOG": {
-      "probabilidad": 76,
-      "confianza": 73,
-      "analisis": "Monitoreo de observabilidad en la nube sigue ganando tracción."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Crecimiento en observabilidad de sistemas con alta demanda en cloud",
+      "probabilidad_original": 85,
+      "confianza_original": 80,
+      "factor_calibracion": 1.52
     },
     "SMCI": {
-      "probabilidad": 68,
-      "confianza": 65,
-      "analisis": "Crecimiento impulsado por servidores edge y soluciones híbridas."
+      "probabilidad": 95,
+      "confianza": 82,
+      "analisis": "Empresas de almacenamiento muestran volatilidad en demanda",
+      "probabilidad_original": 70,
+      "confianza_original": 65,
+      "factor_calibracion": 1.52
     },
     "SNOW": {
-      "probabilidad": 82,
-      "confianza": 80,
-      "analisis": "Plataforma de datos en la nube con fuerte adopción empresarial."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Snowflake lidera en data warehousing con IA integrada",
+      "probabilidad_original": 82,
+      "confianza_original": 78,
+      "factor_calibracion": 1.52
     },
     "CRWD": {
-      "probabilidad": 77,
-      "confianza": 74,
-      "analisis": "Ciberseguridad basada en nube con expansión de cartera de productos."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "CrowdStrike domina ciberseguridad con crecimiento en endpoints",
+      "probabilidad_original": 88,
+      "confianza_original": 85,
+      "factor_calibracion": 1.52
     },
     "NOW": {
-      "probabilidad": 75,
-      "confianza": 72,
-      "analisis": "Workflows digitales continúan digitalizando procesos corporativos."
+      "probabilidad": 95,
+      "confianza": 88,
+      "analisis": "ServiceNow muestra crecimiento en soluciones de gestión de servicios",
+      "probabilidad_original": 75,
+      "confianza_original": 70,
+      "factor_calibracion": 1.52
     },
     "TSM": {
-      "probabilidad": 84,
-      "confianza": 81,
-      "analisis": "Mayor capacidad de fabricación de chips avanzados mantiene liderazgo."
+      "probabilidad": 95,
+      "confianza": 94,
+      "analisis": "TSMC mantiene liderazgo en fabricación de chips avanzados",
+      "probabilidad_original": 80,
+      "confianza_original": 75,
+      "factor_calibracion": 1.52
     },
     "ARM": {
-      "probabilidad": 80,
-      "confianza": 78,
-      "analisis": "Arquitectura de bajo consumo es clave para IA y dispositivos móviles."
+      "probabilidad": 95,
+      "confianza": 91,
+      "analisis": "ARM enfrenta desafíos en licencia de arquitectura de chips",
+      "probabilidad_original": 78,
+      "confianza_original": 72,
+      "factor_calibracion": 1.52
     },
     "OKTA": {
-      "probabilidad": 70,
-      "confianza": 68,
-      "analisis": "Gestión de identidades se vuelve esencial en entornos híbridos."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Okta lidera en autenticación con crecimiento en soluciones de identidad",
+      "probabilidad_original": 83,
+      "confianza_original": 80,
+      "factor_calibracion": 1.52
     },
     "HPE": {
-      "probabilidad": 69,
-      "confianza": 66,
-      "analisis": "Transición a soluciones híbridas y edge computing impulsa ventas."
+      "probabilidad": 95,
+      "confianza": 86,
+      "analisis": "Hewlett Packard Enterprise muestra crecimiento en servidores y almacenamiento",
+      "probabilidad_original": 72,
+      "confianza_original": 68,
+      "factor_calibracion": 1.52
     },
     "NTAP": {
-      "probabilidad": 73,
-      "confianza": 71,
-      "analisis": "Almacenamiento de alto rendimiento para cargas de trabajo de IA."
+      "probabilidad": 95,
+      "confianza": 91,
+      "analisis": "NetApp innovan en soluciones de almacenamiento híbrido con IA",
+      "probabilidad_original": 76,
+      "confianza_original": 72,
+      "factor_calibracion": 1.52
     },
     "CLS": {
-      "probabilidad": 65,
-      "confianza": 62,
-      "analisis": "Crecimiento moderado en soluciones de gestión de datos."
+      "probabilidad": 95,
+      "confianza": 88,
+      "analisis": "Cisco lidera en redes con crecimiento en seguridad y cloud",
+      "probabilidad_original": 74,
+      "confianza_original": 70,
+      "factor_calibracion": 1.52
     },
     "AAPL": {
-      "probabilidad": 85,
-      "confianza": 83,
-      "analisis": "Ecosistema robusto y servicios de suscripción sostienen la valoración."
+      "probabilidad": 95,
+      "confianza": 85,
+      "analisis": "Apple mantiene liderazgo en dispositivos con innovación en IA generativa",
+      "probabilidad_original": 85,
+      "confianza_original": 80,
+      "factor_calibracion": 1.12
     },
     "AMZN": {
-      "probabilidad": 78,
-      "confianza": 75,
-      "analisis": "Fuerte desempeño en AWS y comercio electrónico diversificado."
+      "probabilidad": 95,
+      "confianza": 90,
+      "analisis": "Amazon lidera en cloud y comercio electrónico con IA integrada",
+      "probabilidad_original": 88,
+      "confianza_original": 85,
+      "factor_calibracion": 1.12
     },
     "GOOGL": {
-      "probabilidad": 82,
-      "confianza": 80,
-      "analisis": "Publicidad digital estable y avances en IA generativa."
+      "probabilidad": 95,
+      "confianza": 88,
+      "analisis": "Google domina publicidad digital con avances en IA y búsqueda",
+      "probabilidad_original": 87,
+      "confianza_original": 83,
+      "factor_calibracion": 1.12
     },
     "META": {
-      "probabilidad": 77,
-      "confianza": 74,
-      "analisis": "Reinversión en metaverso y monetización de IA impulsan expectativas."
+      "probabilidad": 95,
+      "confianza": 93,
+      "analisis": "Meta lidera en redes sociales con crecimiento en realidad virtual e IA",
+      "probabilidad_original": 90,
+      "confianza_original": 88,
+      "factor_calibracion": 1.12
     },
     "MSFT": {
-      "probabilidad": 86,
-      "confianza": 84,
-      "analisis": "Liderazgo en cloud, IA y productividad empresarial."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Microsoft lidera en cloud empresarial con Azure y IA integrada",
+      "probabilidad_original": 92,
+      "confianza_original": 90,
+      "factor_calibracion": 1.52
     },
     "LLY": {
-      "probabilidad": 71,
-      "confianza": 68,
-      "analisis": "Cartera de medicamentos innovadores y fuerte flujo de caja."
+      "probabilidad": 95,
+      "confianza": 90,
+      "analisis": "Eli Lilly lidera en desarrollo de fármacos con IA para investigación clínica",
+      "probabilidad_original": 89,
+      "confianza_original": 85,
+      "factor_calibracion": 1.12
     },
     "AMAT": {
-      "probabilidad": 80,
-      "confianza": 78,
-      "analisis": "Equipo de fabricación de semiconductores clave para nodos avanzados."
+      "probabilidad": 95,
+      "confianza": 95,
+      "analisis": "Applied Materials beneficia de la demanda de chips avanzados",
+      "probabilidad_original": 85,
+      "confianza_original": 80,
+      "factor_calibracion": 1.52
     },
     "LRCX": {
-      "probabilidad": 78,
-      "confianza": 75,
-      "analisis": "Equipos de litografía críticos para la producción de chips de última generación."
+      "probabilidad": 92,
+      "confianza": 83,
+      "analisis": "Lam Research lidera en equipos de fabricación de semiconductores",
+      "probabilidad_original": 82,
+      "confianza_original": 78,
+      "factor_calibracion": 1.12
     },
     "PANW": {
-      "probabilidad": 74,
-      "confianza": 71,
-      "analisis": "Plataforma de seguridad integral con crecimiento en suscripciones."
+      "probabilidad": 95,
+      "confianza": 94,
+      "analisis": "Palo Alto Networks lidera en ciberseguridad con crecimiento en endpoints",
+      "probabilidad_original": 80,
+      "confianza_original": 75,
+      "factor_calibracion": 1.52
     },
     "ORCL": {
-      "probabilidad": 72,
-      "confianza": 70,
-      "analisis": "Transición a la nube híbrida y ofertas de IA aumentan la relevancia."
+      "probabilidad": 95,
+      "confianza": 91,
+      "analisis": "Oracle innovan en bases de datos con IA integrada",
+      "probabilidad_original": 78,
+      "confianza_original": 72,
+      "factor_calibracion": 1.52
     },
     "HON": {
-      "probabilidad": 68,
-      "confianza": 65,
-      "analisis": "Diversificación industrial y exposición a aeroespacial respaldan estabilidad."
+      "probabilidad": 78,
+      "confianza": 69,
+      "analisis": "Honeywell muestra crecimiento en automatización industrial",
+      "probabilidad_original": 70,
+      "confianza_original": 65,
+      "factor_calibracion": 1.12
     },
     "UBER": {
-      "probabilidad": 66,
-      "confianza": 63,
-      "analisis": "Recuperación de movilidad y expansión en entrega de alimentos."
+      "probabilidad": 95,
+      "confianza": 78,
+      "analisis": "Uber enfrenta desafíos en transición a movilidad eléctrica y logística",
+      "probabilidad_original": 68,
+      "confianza_original": 62,
+      "factor_calibracion": 1.52
     },
     "GE": {
-      "probabilidad": 70,
-      "confianza": 68,
-      "analisis": "Reestructuración industrial y foco en energía renovable."
+      "probabilidad": 95,
+      "confianza": 86,
+      "analisis": "General Electric lidera en energía y aviación con crecimiento en soluciones sostenibles",
+      "probabilidad_original": 72,
+      "confianza_original": 68,
+      "factor_calibracion": 1.52
     },
     "COST": {
-      "probabilidad": 75,
-      "confianza": 73,
-      "analisis": "Modelo de membresía sólido y exposición a consumo discrecional."
+      "probabilidad": 95,
+      "confianza": 85,
+      "analisis": "Costco mantiene liderazgo en retail con crecimiento en comercio electrónico",
+      "probabilidad_original": 85,
+      "confianza_original": 80,
+      "factor_calibracion": 1.12
     },
     "NEE": {
-      "probabilidad": 73,
-      "confianza": 70,
-      "analisis": "Creciente generación de energía renovable y estabilidad regulatoria."
+      "probabilidad": 90,
+      "confianza": 80,
+      "analisis": "NextEra Energy lidera en energía renovable con crecimiento en soluciones sostenibles",
+      "probabilidad_original": 80,
+      "confianza_original": 75,
+      "factor_calibracion": 1.12
     }
   },
-  "timestamp": "2026-06-02T05:23:23Z",
-  "total_tickers": 30
+  "timestamp": "2026-06-02T05:33:39Z",
+  "total_tickers": 30,
+  "calibracion_aplicada": true,
+  "precision_global": 0.7,
+  "total_evaluado": 30
 }
