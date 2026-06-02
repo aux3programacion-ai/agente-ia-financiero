@@ -8,6 +8,12 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   analisis:
@@ -29,3 +35,18 @@ jobs:
           git add -A
           git diff --cached --quiet || git commit -m "[auto] Ciclo $(date +'%Y-%m-%d %H:%M')"
           git push
+
+      - name: Preparar artefacto para Pages
+        shell: bash
+        run: |
+          mkdir -p _site
+          cp -r Reportes/* _site/
+          # Crear index.html que redirige al dashboard
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=./dashboard_top15.html"></head><body><a href="./dashboard_top15.html">Ir al Dashboard</a></body></html>' > _site/index.html
+
+      - name: Subir artefacto
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Desplegar a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
