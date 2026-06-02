@@ -45,8 +45,15 @@ PRICES_BASE = {'NVDA':218,'MU':970,'DELL':425,'AVGO':420,'DDOG':195,'SMCI':985,'
     'AAPL':245,'AMZN':215,'GOOGL':490,'META':620,'MSFT':510,'LLY':890,'AMAT':245,
     'LRCX':290,'PANW':380,'ORCL':175,'HON':235,'UBER':82,'GE':200,'COST':950,'NEE':78}
 
-# Load global screening to determine TICKERS to analyze
+DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
+PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
+IA_OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
+TECNICO_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_tecnico.json')
+NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
 SCREENING_PATH = os.path.join(DATA_DIR, 'Datos', 'screening_global.json')
+os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
+
+# Load global screening to determine TICKERS to analyze
 TICKERS = list(TICKERS_CORE)
 if os.path.exists(SCREENING_PATH):
     try:
@@ -57,13 +64,6 @@ if os.path.exists(SCREENING_PATH):
         print(f'[Screen] Cargados {len(top50)} screening + {len(TICKERS_CORE)} core = {len(TICKERS)} a analizar')
     except Exception as e:
         print(f'[!] Error cargando screening: {e}')
-
-DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
-PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
-IA_OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
-TECNICO_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_tecnico.json')
-NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
-os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 # --- Cargar precios ---
 precios = {}
