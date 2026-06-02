@@ -25,11 +25,19 @@ jobs:
 
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance -q
+        run: pip install yfinance beautifulsoup4 lxml -q
 
       - name: Obtener precios reales (yfinance + scraping)
         shell: bash
         run: python fetch_prices.py
+
+      - name: Explorar mercados globales (construir universo desde Wikipedia)
+        shell: bash
+        run: python explorar_mercados.py
+
+      - name: Cobertura global (screening tecnico masivo + filtro top 50)
+        shell: bash
+        run: python cobertura_global.py
 
       - name: Noticias de mercado (RSS + sentimiento IA)
         shell: bash

@@ -26,9 +26,9 @@ MODELOS = [
     'meta-llama/llama-3.2-3b-instruct:free'
 ]
 
-TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
-           'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
-           'LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
+TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
+               'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
+               'LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
 PROBS_BASE = {'NVDA':72,'MU':68,'DELL':70,'AVGO':65,'DDOG':63,'SMCI':60,'SNOW':62,
     'CRWD':58,'NOW':55,'TSM':67,'ARM':52,'OKTA':64,'HPE':60,'NTAP':52,'CLS':61,
@@ -44,6 +44,19 @@ PRICES_BASE = {'NVDA':218,'MU':970,'DELL':425,'AVGO':420,'DDOG':195,'SMCI':985,'
     'CRWD':349,'NOW':124,'TSM':197,'ARM':157,'OKTA':122,'HPE':60,'NTAP':209,'CLS':388,
     'AAPL':245,'AMZN':215,'GOOGL':490,'META':620,'MSFT':510,'LLY':890,'AMAT':245,
     'LRCX':290,'PANW':380,'ORCL':175,'HON':235,'UBER':82,'GE':200,'COST':950,'NEE':78}
+
+# Load global screening to determine TICKERS to analyze
+SCREENING_PATH = os.path.join(DATA_DIR, 'Datos', 'screening_global.json')
+TICKERS = list(TICKERS_CORE)
+if os.path.exists(SCREENING_PATH):
+    try:
+        scr = json.load(open(SCREENING_PATH))
+        top50 = scr.get('top50_tickers', [])
+        merged = list(dict.fromkeys(top50 + TICKERS_CORE))
+        TICKERS = merged[:50]
+        print(f'[Screen] Cargados {len(top50)} screening + {len(TICKERS_CORE)} core = {len(TICKERS)} a analizar')
+    except Exception as e:
+        print(f'[!] Error cargando screening: {e}')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
@@ -148,24 +161,30 @@ Si tienes alta precision en un ticker o sector, puedes aumentar la confianza.
 Si tienes baja precision, reduce tu confianza y probabilidad.
 Usa los rangos de probabilidad para calibrar: si en rango 60-65% tu precision historica es baja, se mas conservador ahi.'''
 
-USER_PROMPT_TEMPLATE = f'''Genera analisis para estos 30 tickers.
+ticker_list_str = ', '.join(TICKERS)
+USER_PROMPT_TEMPLATE = f'''Genera analisis para estos {len(TICKERS)} tickers de mercados globales (US, Mexico, Europa, Asia).
+Tickers: {ticker_list_str}
 Precios actuales: {texto_precios}
 {texto_noticias}
 {texto_tecnicos}
 {feedback_section}
 
 Responde EXACTAMENTE este JSON sin ningun otro texto:
-{{"resumen_mercado":"texto corto de 1 oracion sobre el mercado integrando regimen y tecnicos",
+{{"resumen_mercado":"texto corto de 1 oracion sobre el mercado global",
 "modelo_usado":"modelo-ia",
 "titulares":["headline1","headline2","headline3","headline4","headline5"],
-"sectores":{{"Semiconductores":"analisis corto","Servidores IA":"analisis","Software IA":"analisis","Ciberseguridad":"analisis","Almacenamiento":"analisis","Manufactura":"analisis","Consumer Tech":"analisis","Cloud/Commerce":"analisis","Internet/Cloud":"analisis","Social/IA":"analisis","Enterprise/Cloud":"analisis","Farmaceutico":"analisis","Semicon Equip":"analisis","Cloud/Database":"analisis","Industrial":"analisis","Movilidad/Tech":"analisis","Aeroespacial":"analisis","Consumo Defensivo":"analisis","Utilities/Energy":"analisis"}},
+"sectores":{{"Semiconductores":"analisis","Servidores IA":"analisis","Software IA":"analisis","Ciberseguridad":"analisis","Industrial":"analisis","Financiero":"analisis","Energia":"analisis","Consumo":"analisis","Salud":"analisis","Utilities":"analisis","Materiales":"analisis","Inmobiliario":"analisis","Global":"analisis"}},
 "probabilidades":{{}}}}
 
 Cada ticker en "probabilidades" debe tener:
-  "probabilidad" (0-100 segun regimen mercado + tecnicos + noticias + fundamentals),
+  "probabilidad" (0-100 alza en 30d),
   "confianza" (0-100),
-  "analisis" (texto corto mencionando tecnicos/noticias que justifican),
-  "precio_objetivo_30d" (precio estimado en dolares en 30 dias basado en regimen + tecnicos + noticias)'''
+  "analisis" (texto corto justificando con tecnicos/noticias),
+  "precio_objetivo_30d" (precio estimado $ en 30 dias),
+  "precio_objetivo_3m" (precio estimado $ en 3 meses),
+  "precio_objetivo_6m" (precio estimado $ en 6 meses),
+  "precio_objetivo_1y" (precio estimado $ en 1 ano),
+  "mercado" (region: "US"/"MEXICO"/"EUROPA"/"ASIA"/"GLOBAL")'''
 
 def llamar_modelo(modelo, prompt):
     url = 'https://openrouter.ai/api/v1/chat/completions'
@@ -208,19 +227,21 @@ def validar_resultado(r):
 def generar_defaults():
     random.seed()
     return {
-        'resumen_mercado': 'Mercado operando en sesion regular con tendencias mixtas.',
+        'resumen_mercado': 'Mercado global operando en sesion regular.',
         'modelo_usado': 'fallback-local',
-        'titulares': ['Analisis financiero generado por IA', 'Mercado en sesion activa',
-            'Datos de precios via yfinance', 'Monitoreo intradia 30 tickers', 'Sectores tecnologicos lideran'],
-        'sectores': {s: 'Sector en monitoreo regular' for s in [
-            'Semiconductores','Servidores IA','Software IA','Ciberseguridad','Almacenamiento',
-            'Manufactura','Consumer Tech','Cloud/Commerce','Internet/Cloud','Social/IA',
-            'Enterprise/Cloud','Farmaceutico','Semicon Equip','Cloud/Database','Industrial',
-            'Movilidad/Tech','Aeroespacial','Consumo Defensivo','Utilities/Energy']},
+        'titulares': ['Analisis global generado por IA', 'Mercados en sesion activa',
+            'Datos via yfinance', 'Monitoreo multiplataforma'],
+        'sectores': {s: 'Sector en monitoreo' for s in [
+            'Semiconductores','Servidores IA','Software IA','Ciberseguridad','Industrial',
+            'Financiero','Energia','Consumo','Salud','Utilities','Materiales','Inmobiliario','Global']},
         'probabilidades': {
             t: {'probabilidad': PROBS_BASE.get(t, 50), 'confianza': CONF_BASE.get(t, 50),
-                'analisis': 'Analisis basado en datos de mercado y tendencias del sector.',
-                'precio_objetivo_30d': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 200)}
+                'analisis': 'Analisis basado en datos de mercado.',
+                'precio_objetivo_30d': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 200),
+                'precio_objetivo_3m': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 150),
+                'precio_objetivo_6m': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 100),
+                'precio_objetivo_1y': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 80),
+                'mercado': 'US'}
             for t in TICKERS
         }
     }
@@ -269,13 +290,22 @@ else:
 
         if len(respuestas_modelos) > 1:
             for t in TICKERS:
-                probs = []; confs = []; targets = []; analisis_list = []; pesos = []
+                probs = []; confs = []; targets30 = []; targets3m = []; targets6m = []; targets1y = []; mercados = []; analisis_list = []; pesos = []
                 for rm in respuestas_modelos:
                     p = rm.get('probabilidades', {}).get(t, {})
                     if isinstance(p, dict) and p.get('probabilidad'):
                         probs.append(p['probabilidad'])
                         confs.append(p.get('confianza', 50))
-                        targets.append(p.get('precio_objetivo_30d', 0))
+                        t30 = p.get('precio_objetivo_30d', 0)
+                        if t30 and t30 > 0: targets30.append(t30)
+                        t3 = p.get('precio_objetivo_3m', 0)
+                        if t3 and t3 > 0: targets3m.append(t3)
+                        t6 = p.get('precio_objetivo_6m', 0)
+                        if t6 and t6 > 0: targets6m.append(t6)
+                        t1 = p.get('precio_objetivo_1y', 0)
+                        if t1 and t1 > 0: targets1y.append(t1)
+                        m = p.get('mercado', '')
+                        if m: mercados.append(m)
                         analisis_list.append(p.get('analisis', ''))
                         pesos.append(pesos_modelo[rm['modelo_usado']])
 
@@ -283,14 +313,21 @@ else:
                     peso_total = sum(pesos)
                     w_prob = sum(p * w for p, w in zip(probs, pesos)) / peso_total if peso_total else sum(probs) / len(probs)
                     w_conf = sum(c * w for c, w in zip(confs, pesos)) / peso_total if peso_total else sum(confs) / len(confs)
-                    w_targets = [t for t in targets if t and t > 0]
-                    w_target = sum(w_targets) / len(w_targets) if w_targets else 0
+                    w_target30 = sum(targets30) / len(targets30) if targets30 else 0
+                    w_target3m = sum(targets3m) / len(targets3m) if targets3m else 0
+                    w_target6m = sum(targets6m) / len(targets6m) if targets6m else 0
+                    w_target1y = sum(targets1y) / len(targets1y) if targets1y else 0
+                    w_mercado = max(set(mercados), key=mercados.count) if mercados else 'US'
                     w_analisis = max(analisis_list, key=lambda a: len(a)) if analisis_list else ''
                     resultado_final.setdefault('probabilidades', {})[t] = {
                         'probabilidad': round(w_prob),
                         'confianza': round(w_conf),
                         'analisis': w_analisis,
-                        'precio_objetivo_30d': round(w_target, 2) if w_target else precios.get(t, PRICES_BASE.get(t, 100))
+                        'precio_objetivo_30d': round(w_target30, 2) if w_target30 else precios.get(t, PRICES_BASE.get(t, 100)),
+                        'precio_objetivo_3m': round(w_target3m, 2) if w_target3m else precios.get(t, PRICES_BASE.get(t, 100)),
+                        'precio_objetivo_6m': round(w_target6m, 2) if w_target6m else precios.get(t, PRICES_BASE.get(t, 100)),
+                        'precio_objetivo_1y': round(w_target1y, 2) if w_target1y else precios.get(t, PRICES_BASE.get(t, 100)),
+                        'mercado': w_mercado
                     }
 
             resultado_final['modelo_usado'] = 'ensemble-' + '+'.join(modelos_exitosos)
@@ -303,15 +340,23 @@ else:
 for t in TICKERS:
     p = resultado_final.get('probabilidades', {}).get(t)
     if p is None or not isinstance(p, dict) or not p.get('probabilidad'):
+        base_p = precios.get(t, PRICES_BASE.get(t, 100))
+        prob = PROBS_BASE.get(t, 50)
         resultado_final.setdefault('probabilidades', {})[t] = {
-            'probabilidad': PROBS_BASE.get(t, 50),
+            'probabilidad': prob,
             'confianza': CONF_BASE.get(t, 50),
             'analisis': 'Analisis baseline.',
-            'precio_objetivo_30d': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 200)
+            'precio_objetivo_30d': base_p * (1 + (prob - 50) / 200),
+            'precio_objetivo_3m': base_p * (1 + (prob - 50) / 150),
+            'precio_objetivo_6m': base_p * (1 + (prob - 50) / 100),
+            'precio_objetivo_1y': base_p * (1 + (prob - 50) / 80),
+            'mercado': 'US'
         }
 
 resultado_final['timestamp'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 resultado_final['total_tickers'] = len(TICKERS)
+resultado_final['tickers_analizados'] = TICKERS
+resultado_final['fuente_universo'] = 'global' if os.path.exists(SCREENING_PATH) else 'core_30'
 resultado_final['regimen_mercado'] = regimen_mercado
 resultado_final['modelos_ensemble'] = modelos_exitosos if modelos_exitosos else []
 
@@ -351,6 +396,10 @@ for t in TICKERS:
         'acertada': None,
         'modelo_usado': modelo_usado_pred,
         'precio_objetivo_30d': p.get('precio_objetivo_30d'),
+        'precio_objetivo_3m': p.get('precio_objetivo_3m'),
+        'precio_objetivo_6m': p.get('precio_objetivo_6m'),
+        'precio_objetivo_1y': p.get('precio_objetivo_1y'),
+        'mercado': p.get('mercado', 'US'),
         'news_sentimiento': sent_noticias.get('sentimiento') if sent_noticias else None,
         'news_score': sent_noticias.get('score') if sent_noticias else None
     })
