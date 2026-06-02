@@ -214,7 +214,7 @@ foreach ($t in $TICKERS) {
     if (-not $sectorGroups.ContainsKey($sec)) { $sectorGroups[$sec] = @() }
     $sectorGroups[$sec] += $t
 }
-$sectorSummary = ($sectorGroups.Keys | ForEach-Object { "$_: $($sectorGroups[$_].Count)" }) -join ', '
+$sectorSummary = ($sectorGroups.Keys | ForEach-Object { "$($_): $($sectorGroups[$_].Count)" }) -join ', '
 
 $reporte = "REPORTE INTRADIA 30 TICKERS - $FECHA_HUMANA`nCiclo: $HORA UTC`n`n"
 $reporte += "NOTICIAS INTRADIA:`n"
