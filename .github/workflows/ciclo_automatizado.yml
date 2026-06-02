@@ -1,9 +1,11 @@
-name: Ciclo Automatico 08:00 y 16:00
+name: Ciclo 30T Intradia
 
 on:
   schedule:
-    - cron: '0 13 * * *'
-    - cron: '0 21 * * *'
+    - cron: '0 13 * * 1-5'   # 08:00 Mexico - Pre-mercado
+    - cron: '0 16 * * 1-5'   # 11:00 Mexico - Media manana
+    - cron: '0 19 * * 1-5'   # 14:00 Mexico - Media tarde
+    - cron: '0 21 * * 1-5'   # 16:00 Mexico - Post-mercado
   workflow_dispatch:
 
 permissions:
@@ -21,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ejecutar ciclo de analisis
+      - name: Ejecutar ciclo intradia (30 tickers)
         shell: pwsh
         run: ./ciclo_gh.ps1
         env:
@@ -33,7 +35,7 @@ jobs:
           git config --global user.name "Agente IA Bot"
           git config --global user.email "agente-ia@bot.local"
           git add -A
-          git diff --cached --quiet || git commit -m "[auto] Ciclo $(date +'%Y-%m-%d %H:%M')"
+          git diff --cached --quiet || git commit -m "[auto] 30T $(date +'%Y-%m-%d %H:%M')"
           git push
 
       - name: Preparar artefacto para Pages
@@ -41,12 +43,10 @@ jobs:
         run: |
           mkdir -p _site
           cp -r Reportes/* _site/
-          # Crear index.html que redirige al dashboard
-          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=./dashboard_top15.html"></head><body><a href="./dashboard_top15.html">Ir al Dashboard</a></body></html>' > _site/index.html
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=./dashboard_top15.html"></head><body><a href="./dashboard_top15.html">Dashboard</a></body></html>' > _site/index.html
 
       - name: Subir artefacto
         uses: actions/upload-pages-artifact@v3
 
       - name: Desplegar a GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
