@@ -34,6 +34,7 @@ foreach ($t in $TICKERS) {
 $prices = @{}
 $dataSource = 'simulada'
 $aiModel = 'none'
+$aiRegimen = ''
 $aiResumen = ''
 $aiFeedback = ''
 $aiTitulares = @()
@@ -62,6 +63,7 @@ if (Test-Path $iaPath) {
     try {
         $iaData = Get-Content $iaPath -Raw | ConvertFrom-Json
         $aiModel = $iaData.modelo_usado
+        $aiRegimen = $iaData.regimen_mercado
         $aiResumen = $iaData.resumen_mercado
         if ($iaData.titulares) { $aiTitulares = @($iaData.titulares) }
         if ($iaData.sectores) { $aiSectores = $iaData.sectores }
@@ -226,11 +228,11 @@ $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-syste
 .t5{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.t5h{font-size:13px;font-weight:700;color:#00c853;margin-bottom:12px;display:flex;align-items:center;gap:8px}.t5h span{font-size:10px;color:#4b5563;font-weight:400}.t5g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.t5c{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative;overflow:hidden}.t5c .rk{position:absolute;top:0;left:0;background:#00c853;color:#0a0b0e;font-size:10px;font-weight:800;padding:2px 8px;border-radius:0 0 6px 0}.t5c .tk{font-size:14px;font-weight:700;margin-top:6px}.t5c .nm{font-size:11px;color:#9ca3af;margin-bottom:4px}.t5c .pr{font-size:13px;font-weight:700}.t5c .tp{font-size:11px;color:#00c853;margin-top:2px}.t5c .up{font-size:12px;font-weight:700;color:#00c853;margin-top:1px}.t5c .an{font-size:10px;color:#6b7280;margin-top:6px;line-height:1.3}.t5c .pb{display:flex;align-items:center;gap:6px;margin-top:4px}.t5c .pb .pbb{flex:1;height:4px;background:#1e2028;border-radius:2px;overflow:hidden}.t5c .pb .pbf{height:100%;border-radius:2px}.t5c .pb .pt{font-size:11px;font-weight:700;min-width:30px;text-align:right}"
 
 $HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Top 30 - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
-$HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Top 30 - Probabilidad Alcista</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA</div></div></div><div class=`"badge`">INTRADIA</div></header>"
+$HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Top 30 - Probabilidad Alcista</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA</div></div></div><div class=`"badge`">$(if ($aiRegimen) { $aiRegimen.ToUpper() } else { 'INTRADIA' })</div></header>"
 $HTML += "<div class=`"tb`"><div class=`"tbi`">$tickerItems $tickerItems</div></div>"
 $precColor = if ($precisionGlobal -ge 0.7) { '#00c853' } elseif ($precisionGlobal -ge 0.5) { '#ffc107' } else { '#ff5252' }
 $precLabel = if ($precisionGlobal -gt 0) { "$([math]::Round($precisionGlobal * 100))%" } else { '--' }
-$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Precision</div><div class=`"v`" style=`"color:$precColor;font-size:14px`">$precLabel</div></div><div class=`"sc`"><div class=`"l`">Modelo IA</div><div class=`"v`" style=`"font-size:12px;color:#ce93d8`">$aiModel</div></div></div>"
+$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Precision</div><div class=`"v`" style=`"color:$precColor;font-size:14px`">$precLabel</div></div><div class=`"sc`"><div class=`"l`">Regimen</div><div class=`"v`" style=`"font-size:12px;color:#64b5f6`">$(if ($aiRegimen) { $aiRegimen -replace '^-.*','' } else { '--' })</div></div><div class=`"sc`"><div class=`"l`">Modelo IA</div><div class=`"v`" style=`"font-size:12px;color:#ce93d8`">$aiModel</div></div></div>"
 if ($aiResumen) {
     $HTML += "<div class=`"resumen`">$aiResumen</div>"
 }

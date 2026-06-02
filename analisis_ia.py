@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-analisis_ia.py - Analisis IA via OpenRouter con fallback multi-modelo.
-Prueba modelos gratis en cadena hasta obtener JSON valido.
+analisis_ia.py - Analisis IA via OpenRouter con ensemble multi-modelo.
+Inyecta noticias frescas, indicadores tecnicos, regimen de mercado,
+y feedback de aprendizaje. Pondera resultados por precision historica.
 """
 import json, os, sys, urllib.request, urllib.error, time, re, random
 
@@ -46,26 +47,27 @@ PRICES_BASE = {'NVDA':218,'MU':970,'DELL':425,'AVGO':420,'DDOG':195,'SMCI':985,'
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
-OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
+IA_OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
+TECNICO_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_tecnico.json')
+NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
+# --- Cargar precios ---
 precios = {}
 if os.path.exists(PRECIOS_PATH):
     try:
-        with open(PRECIOS_PATH) as f:
-            pd = json.load(f).get('precios', {})
-            for t in TICKERS:
-                p = pd.get(t, {})
-                precios[t] = p.get('price', PROBS_BASE.get(t, 100))
+        pd = json.load(open(PRECIOS_PATH)).get('precios', {})
+        for t in TICKERS:
+            p = pd.get(t, {})
+            precios[t] = p.get('price', PROBS_BASE.get(t, 100))
     except Exception as e:
         print(f'[!] Error leyendo precios: {e}')
 
 texto_precios = ', '.join(f'{t} ${precios.get(t, PROBS_BASE.get(t,100)):.2f}' for t in TICKERS)
 
-# Cargar noticias recientes para inyectar contexto
+# --- Cargar noticias ---
 texto_noticias = ''
 news_sentimiento = {}
-NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
 if os.path.exists(NEWS_PATH):
     try:
         news_data = json.load(open(NEWS_PATH))
@@ -87,9 +89,31 @@ if os.path.exists(NEWS_PATH):
     except Exception as e:
         print(f'[!] Error cargando noticias: {e}')
 
-# Cargar retroalimentacion de aprendizaje del ciclo anterior
+# --- Cargar tecnicos + regimen de mercado ---
+texto_tecnicos = ''
+regimen_mercado = ''
+if os.path.exists(TECNICO_PATH):
+    try:
+        tec = json.load(open(TECNICO_PATH))
+        spy = tec.get('spy', {})
+        regimen = tec.get('regimen_mercado', 'desconocido')
+        regimen_mercado = f'REGIMEN DE MERCADO: {regimen.upper()} - {spy.get("descripcion", "")}'
+        lines_t = [f'\nREGIMEN DE MERCADO: {regimen.upper()}']
+        if spy:
+            lines_t.append(f'SPY: ${spy.get("precio","?")} | MA50: ${spy.get("ma50","?")} | MA200: ${spy.get("ma200","?")} | Tendencia: {spy.get("tendencia_pct","?")}%')
+        lines_t.append('\nINDICADORES TECNICOS POR TICKER (usar en tu analisis):')
+        for t in TICKERS:
+            tn = tec.get('tecnicos', {}).get(t, {})
+            if tn.get('error'): continue
+            lines_t.append(f'{t}: {tn.get("tendencia","?")} | RSI:{tn.get("rsi","?")} | MACD:{tn.get("senial_macd","?")} | MA50:{tn.get("pct_sobre_ma50","?")}% | ATR:{tn.get("atr_pct","?")}% | Vol:{tn.get("vol_ratio","?")}x')
+        texto_tecnicos = '\n'.join(lines_t)
+        print(f'[Tecnico] Regimen: {regimen}')
+    except Exception as e:
+        print(f'[!] Error cargando tecnicos: {e}')
+
+# --- Cargar retroalimentacion de aprendizaje ---
 feedback_precision = ''
-IA_OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
+precision_por_modelo = {}
 if os.path.exists(IA_OUTPUT_PATH):
     try:
         prev = json.load(open(IA_OUTPUT_PATH))
@@ -99,37 +123,57 @@ if os.path.exists(IA_OUTPUT_PATH):
     except:
         pass
 
+# --- Cargar precision por modelo para ensemble ---
+CALIB_PATH = os.path.join(DATA_DIR, 'Datos', 'calibracion.json')
+if os.path.exists(CALIB_PATH):
+    try:
+        cal = json.load(open(CALIB_PATH))
+        modelos_stats = cal.get('modelos_ia', {})
+        for m, ms in modelos_stats.items():
+            if ms.get('total', 0) >= 2:
+                precision_por_modelo[m] = ms['precision']
+    except:
+        pass
+
 SYSTEM_PROMPT = 'Eres un analista financiero experto con 20 anos de experiencia en mercados globales. Respondes SOLO con JSON valido, sin markdown, sin explicaciones.'
 
 feedback_section = ''
 if feedback_precision:
     feedback_section = f'''
-HISTORIAL DE PRECISION:
+HISTORIAL DE APRENDIZAJE (precision de predicciones anteriores):
 {feedback_precision}
 
 IMPORTANTE: Ajusta tus probabilidades segun tu precision historica.
-Si tienes alta precision en un ticker, puedes aumentar la confianza.
+Si tienes alta precision en un ticker o sector, puedes aumentar la confianza.
 Si tienes baja precision, reduce tu confianza y probabilidad.
-Usa los rangos de probabilidad para calibrar: si en rango 60-65% tu precision es baja, se mas conservador ahi.'''
+Usa los rangos de probabilidad para calibrar: si en rango 60-65% tu precision historica es baja, se mas conservador ahi.'''
 
-USER_PROMPT = f'''Genera analisis para estos 30 tickers. Precios actuales: {texto_precios}{feedback_section}{texto_noticias}
+USER_PROMPT_TEMPLATE = f'''Genera analisis para estos 30 tickers.
+Precios actuales: {texto_precios}
+{texto_noticias}
+{texto_tecnicos}
+{feedback_section}
 
 Responde EXACTAMENTE este JSON sin ningun otro texto:
-{{"resumen_mercado":"texto corto de 1-2 oraciones sobre el mercado",
+{{"resumen_mercado":"texto corto de 1 oracion sobre el mercado integrando regimen y tecnicos",
 "modelo_usado":"modelo-ia",
 "titulares":["headline1","headline2","headline3","headline4","headline5"],
 "sectores":{{"Semiconductores":"analisis corto","Servidores IA":"analisis","Software IA":"analisis","Ciberseguridad":"analisis","Almacenamiento":"analisis","Manufactura":"analisis","Consumer Tech":"analisis","Cloud/Commerce":"analisis","Internet/Cloud":"analisis","Social/IA":"analisis","Enterprise/Cloud":"analisis","Farmaceutico":"analisis","Semicon Equip":"analisis","Cloud/Database":"analisis","Industrial":"analisis","Movilidad/Tech":"analisis","Aeroespacial":"analisis","Consumo Defensivo":"analisis","Utilities/Energy":"analisis"}},
 "probabilidades":{{}}}}
 
-Cada ticker en "probabilidades" debe tener: "probabilidad" (0-100 segun momentum, fundamentals Y NOTICIAS RECIENTES), "confianza" (0-100), "analisis" (texto corto mencionando noticias si aplica), "precio_objetivo_30d" (precio estimado en dolares en 30 dias basado en tu analisis).'''
+Cada ticker en "probabilidades" debe tener:
+  "probabilidad" (0-100 segun regimen mercado + tecnicos + noticias + fundamentals),
+  "confianza" (0-100),
+  "analisis" (texto corto mencionando tecnicos/noticias que justifican),
+  "precio_objetivo_30d" (precio estimado en dolares en 30 dias basado en regimen + tecnicos + noticias)'''
 
-def llamar_modelo(modelo):
+def llamar_modelo(modelo, prompt):
     url = 'https://openrouter.ai/api/v1/chat/completions'
     payload = json.dumps({
         'model': modelo,
         'messages': [
             {'role': 'system', 'content': SYSTEM_PROMPT},
-            {'role': 'user', 'content': USER_PROMPT}
+            {'role': 'user', 'content': prompt}
         ],
         'temperature': 0.1,
         'max_tokens': 2000
@@ -156,6 +200,11 @@ def extraer_json(texto):
         texto = texto[inicio:fin+1]
     return json.loads(texto)
 
+def validar_resultado(r):
+    return ('probabilidades' in r and len(r['probabilidades']) > 0
+            and isinstance(list(r['probabilidades'].values())[0], dict)
+            and 'probabilidad' in list(r['probabilidades'].values())[0])
+
 def generar_defaults():
     random.seed()
     return {
@@ -176,55 +225,103 @@ def generar_defaults():
         }
     }
 
+# ============================================================
+# ENSEMBLE MULTI-MODELO
+# ============================================================
 if not API_KEY:
     print('[!] OPENROUTER_KEY no configurada, usando defaults locales')
-    resultado = generar_defaults()
-    resultado['modelo_usado'] = 'no-key'
+    resultado_final = generar_defaults()
+    resultado_final['modelo_usado'] = 'no-key'
 else:
-    resultado = None
+    respuestas_modelos = []
+    modelos_exitosos = []
+    prompt_completo = USER_PROMPT_TEMPLATE
 
-if not resultado:
     for modelo in MODELOS:
+        if len(modelos_exitosos) >= 3:
+            break
         try:
             print(f'[IA] Intentando modelo: {modelo}')
-            raw = llamar_modelo(modelo)
+            raw = llamar_modelo(modelo, prompt_completo)
             parsed = extraer_json(raw)
-            if 'probabilidades' in parsed and len(parsed['probabilidades']) > 0 and isinstance(list(parsed['probabilidades'].values())[0], dict):
-                resultado = parsed
-                resultado['modelo_usado'] = modelo
+            if validar_resultado(parsed):
+                parsed['modelo_usado'] = modelo
+                respuestas_modelos.append(parsed)
+                modelos_exitosos.append(modelo)
                 print(f'[OK] {modelo} respondio correctamente')
-                break
             else:
-                print(f'[!] {modelo} respondio sin probabilidades, probando siguiente')
+                print(f'[!] {modelo} respondio sin probabilidades validas')
         except Exception as e:
             print(f'[!] {modelo} fallo: {str(e)[:80]}')
             continue
 
-if not resultado:
-    print('[!] Todos los modelos fallaron, usando defaults locales')
-    resultado = generar_defaults()
-    resultado['modelo_usado'] = 'fallback-local'
+    if not respuestas_modelos:
+        print('[!] Todos los modelos fallaron, usando defaults locales')
+        resultado_final = generar_defaults()
+        resultado_final['modelo_usado'] = 'fallback-local'
+    else:
+        # Ensemble: promediar probabilidades ponderadas por precision historica del modelo
+        resultado_final = respuestas_modelos[0].copy()
+        pesos_modelo = {}
+        for rm in respuestas_modelos:
+            m = rm['modelo_usado']
+            pesos_modelo[m] = precision_por_modelo.get(m, 0.5)
 
-# Ensure all 30 tickers have probabilities (as dict objects)
+        if len(respuestas_modelos) > 1:
+            for t in TICKERS:
+                probs = []; confs = []; targets = []; analisis_list = []; pesos = []
+                for rm in respuestas_modelos:
+                    p = rm.get('probabilidades', {}).get(t, {})
+                    if isinstance(p, dict) and p.get('probabilidad'):
+                        probs.append(p['probabilidad'])
+                        confs.append(p.get('confianza', 50))
+                        targets.append(p.get('precio_objetivo_30d', 0))
+                        analisis_list.append(p.get('analisis', ''))
+                        pesos.append(pesos_modelo[rm['modelo_usado']])
+
+                if probs:
+                    peso_total = sum(pesos)
+                    w_prob = sum(p * w for p, w in zip(probs, pesos)) / peso_total if peso_total else sum(probs) / len(probs)
+                    w_conf = sum(c * w for c, w in zip(confs, pesos)) / peso_total if peso_total else sum(confs) / len(confs)
+                    w_targets = [t for t in targets if t and t > 0]
+                    w_target = sum(w_targets) / len(w_targets) if w_targets else 0
+                    w_analisis = max(analisis_list, key=lambda a: len(a)) if analisis_list else ''
+                    resultado_final.setdefault('probabilidades', {})[t] = {
+                        'probabilidad': round(w_prob),
+                        'confianza': round(w_conf),
+                        'analisis': w_analisis,
+                        'precio_objetivo_30d': round(w_target, 2) if w_target else precios.get(t, PRICES_BASE.get(t, 100))
+                    }
+
+            resultado_final['modelo_usado'] = 'ensemble-' + '+'.join(modelos_exitosos)
+            print(f'[Ensemble] {len(respuestas_modelos)} modelos combinados: {", ".join(modelos_exitosos)}')
+        else:
+            resultado_final = respuestas_modelos[0]
+            print(f'[Single] Modelo unico: {modelos_exitosos[0]}')
+
+# Ensure all 30 tickers
 for t in TICKERS:
-    p = resultado.get('probabilidades', {}).get(t)
-    if p is None or not isinstance(p, dict):
-        resultado.setdefault('probabilidades', {})[t] = {
+    p = resultado_final.get('probabilidades', {}).get(t)
+    if p is None or not isinstance(p, dict) or not p.get('probabilidad'):
+        resultado_final.setdefault('probabilidades', {})[t] = {
             'probabilidad': PROBS_BASE.get(t, 50),
             'confianza': CONF_BASE.get(t, 50),
             'analisis': 'Analisis baseline.',
             'precio_objetivo_30d': precios.get(t, PRICES_BASE.get(t, 100)) * (1 + (PROBS_BASE.get(t, 50) - 50) / 200)
         }
 
-resultado['timestamp'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-resultado['total_tickers'] = len(TICKERS)
+resultado_final['timestamp'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+resultado_final['total_tickers'] = len(TICKERS)
+resultado_final['regimen_mercado'] = regimen_mercado
+resultado_final['modelos_ensemble'] = modelos_exitosos if modelos_exitosos else []
 
-with open(OUTPUT_PATH, 'w') as f:
-    json.dump(resultado, f, indent=2, ensure_ascii=False)
-print(f'[OK] Analisis IA guardado ({resultado["modelo_usado"]}) - {len(resultado["probabilidades"])} tickers')
+with open(IA_OUTPUT_PATH, 'w') as f:
+    json.dump(resultado_final, f, indent=2, ensure_ascii=False)
+print(f'[OK] Analisis IA guardado ({resultado_final["modelo_usado"]}) - {len(resultado_final["probabilidades"])} tickers')
 
-# Guardar predicciones en base historica
+# --- Guardar predicciones en historial ---
 ahora = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+HIST_PATH = os.path.join(DATA_DIR, 'Datos', 'predicciones_hist.json')
 hist_preds = {}
 if os.path.exists(HIST_PATH):
     try:
@@ -232,15 +329,16 @@ if os.path.exists(HIST_PATH):
             hist_preds = json.load(f)
     except: pass
 
+modelo_usado_pred = resultado_final.get('modelo_usado', 'desconocido')
+
 for t in TICKERS:
     if t not in hist_preds:
         hist_preds[t] = {'predicciones': [], 'total': 0, 'aciertos': 0, 'precision': 0.5}
-    p = resultado.get('probabilidades', {}).get(t, {})
+    p = resultado_final.get('probabilidades', {}).get(t, {})
     if not isinstance(p, dict): p = {}
     prob = p.get('probabilidad', PROBS_BASE.get(t, 50))
     direccion = 'up' if prob >= 50 else 'down'
     sent_noticias = news_sentimiento.get(t, {})
-    modelo_usado_pred = resultado.get('modelo_usado', 'desconocido')
     hist_preds[t]['predicciones'].append({
         'fecha': ahora[:10],
         'hora': ahora[11:16],
@@ -252,10 +350,10 @@ for t in TICKERS:
         'precio_real': None,
         'acertada': None,
         'modelo_usado': modelo_usado_pred,
+        'precio_objetivo_30d': p.get('precio_objetivo_30d'),
         'news_sentimiento': sent_noticias.get('sentimiento') if sent_noticias else None,
         'news_score': sent_noticias.get('score') if sent_noticias else None
     })
-    # Limitar a 100 predicciones por ticker
     if len(hist_preds[t]['predicciones']) > 100:
         hist_preds[t]['predicciones'] = hist_preds[t]['predicciones'][-100:]
 

@@ -37,7 +37,11 @@ jobs:
         env:
           OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
 
-      - name: Analisis IA via OpenRouter (multi-modelo gratuito + noticias frescas)
+      - name: Analisis tecnico (indicadores + regimen de mercado)
+        shell: bash
+        run: python analisis_tecnico.py
+
+      - name: Analisis IA via OpenRouter (ensemble multi-modelo + noticias + tecnicos)
         shell: bash
         run: python analisis_ia.py
         env:
