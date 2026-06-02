@@ -63,8 +63,7 @@ jobs:
           git config --global user.name "Agente IA Bot"
           git config --global user.email "agente-ia@bot.local"
           git add -A
-          git diff --cached --quiet || git commit -m "[auto] 30T $(date +'%Y-%m-%d %H:%M')"
-          git push
+          git diff --cached --quiet || (git commit -m "[auto] 30T $(date +'%Y-%m-%d %H:%M')" && git pull --rebase && git push)
 
       - name: Preparar artefacto para Pages
         shell: bash
