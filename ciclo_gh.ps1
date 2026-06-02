@@ -93,12 +93,23 @@ $sectorMap = @{
     'MSFT'='Enterprise/Cloud';'LLY'='Farmaceutico';'AMAT'='Semicon Equip';
     'LRCX'='Semicon Equip';'ORCL'='Cloud/Database';'HON'='Industrial';
     'UBER'='Movilidad/Tech';'GE'='Aeroespacial';'COST'='Consumo Defensivo';'NEE'='Utilities/Energy' }
+$nameMap = @{
+    'NVDA'='NVIDIA Corporation';'MU'='Micron Technology';'DELL'='Dell Technologies';'AVGO'='Broadcom Inc.';
+    'DDOG'='Datadog Inc.';'SMCI'='Super Micro Computer';'SNOW'='Snowflake Inc.';'CRWD'='CrowdStrike Holdings';
+    'NOW'='ServiceNow Inc.';'TSM'='Taiwan Semiconductor';'ARM'='Arm Holdings';'OKTA'='Okta Inc.';
+    'HPE'='Hewlett Packard Enterprise';'NTAP'='NetApp Inc.';'CLS'='Celestica Inc.';
+    'AAPL'='Apple Inc.';'AMZN'='Amazon.com Inc.';'GOOGL'='Alphabet Inc.';'META'='Meta Platforms Inc.';
+    'MSFT'='Microsoft Corporation';'LLY'='Eli Lilly and Company';'AMAT'='Applied Materials Inc.';
+    'LRCX'='Lam Research Corporation';'PANW'='Palo Alto Networks Inc.';'ORCL'='Oracle Corporation';
+    'HON'='Honeywell International Inc.';'UBER'='Uber Technologies Inc.';'GE'='GE Aerospace';
+    'COST'='Costco Wholesale Corp.';'NEE'='NextEra Energy Inc.' }
 
 foreach ($t in $TICKERS) {
+    $stockData[$t]['sector'] = $sectorMap[$t]
+    $stockData[$t]['name'] = $nameMap[$t]
     if ($stockData[$t]['prob'] -eq 50 -or -not $prices.ContainsKey($t)) {
         $stockData[$t]['prob'] = $probDefaults[$t]
         $stockData[$t]['conf'] = $confDefaults[$t]
-        $stockData[$t]['sector'] = $sectorMap[$t]
     }
     if (-not $prices.ContainsKey($t)) {
         $base = $probDefaults[$t] * 3 + 50

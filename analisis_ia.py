@@ -8,13 +8,21 @@ import json, os, sys, urllib.request, urllib.error, time, re, random
 API_KEY = os.environ.get('OPENROUTER_KEY')
 
 MODELOS = [
-    'google/gemini-2.0-flash-exp:free',
-    'mistralai/mistral-small-24b-instruct-2501:free',
-    'microsoft/phi-4:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'deepseek/deepseek-chat:free',
-    'qwen/qwen-2.5-7b-instruct:free',
-    'cohere/command-r-08-2024:free'
+    'openrouter/free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'nvidia/nemotron-3-super-120b-a12b:free',
+    'nousresearch/hermes-3-llama-3.1-405b:free',
+    'openai/gpt-oss-120b:free',
+    'google/gemma-4-31b-it:free',
+    'qwen/qwen3-coder:free',
+    'google/gemma-4-26b-a4b-it:free',
+    'moonshotai/kimi-k2.6:free',
+    'openai/gpt-oss-20b:free',
+    'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+    'nvidia/nemotron-3-nano-30b-a3b:free',
+    'z-ai/glm-4.5-air:free',
+    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+    'meta-llama/llama-3.2-3b-instruct:free'
 ]
 
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
@@ -71,7 +79,7 @@ def llamar_modelo(modelo):
             {'role': 'user', 'content': USER_PROMPT}
         ],
         'temperature': 0.1,
-        'max_tokens': 4000
+        'max_tokens': 2000
     }).encode('utf-8')
     req = urllib.request.Request(url, data=payload,
         headers={
@@ -81,7 +89,7 @@ def llamar_modelo(modelo):
             'X-Title': 'Agente IA Financiero'
         },
         method='POST')
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())['choices'][0]['message']['content']
 
 def extraer_json(texto):
