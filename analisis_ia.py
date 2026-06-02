@@ -87,23 +87,17 @@ if os.path.exists(NEWS_PATH):
     except Exception as e:
         print(f'[!] Error cargando noticias: {e}')
 
-# Cargar precision historica para feedback de aprendizaje
+# Cargar retroalimentacion de aprendizaje del ciclo anterior
 feedback_precision = ''
-CALIB_PATH = os.path.join(DATA_DIR, 'Datos', 'calibracion.json')
-HIST_PATH = os.path.join(DATA_DIR, 'Datos', 'predicciones_hist.json')
-if os.path.exists(CALIB_PATH):
+IA_OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
+if os.path.exists(IA_OUTPUT_PATH):
     try:
-        cal = json.load(open(CALIB_PATH))
-        pg = cal.get('precision_global', 0.5)
-        te = cal.get('total_evaluado', 0)
-        if te > 0:
-            lines = [f'Precision global historica: {pg:.1%} ({te} predicciones)']
-            for t in TICKERS[:10]:
-                f = cal['factores'].get(t, {})
-                if f.get('total', 0) > 0:
-                    lines.append(f'{t}: precision {f["precision"]:.0%} ({f["aciertos"]}/{f["total"]})')
-            feedback_precision = '\n'.join(lines)
-    except: pass
+        prev = json.load(open(IA_OUTPUT_PATH))
+        fb = prev.get('feedback_aprendizaje', '')
+        if fb:
+            feedback_precision = '\n' + fb + '\n'
+    except:
+        pass
 
 SYSTEM_PROMPT = 'Eres un analista financiero experto con 20 anos de experiencia en mercados globales. Respondes SOLO con JSON valido, sin markdown, sin explicaciones.'
 
@@ -115,7 +109,8 @@ HISTORIAL DE PRECISION:
 
 IMPORTANTE: Ajusta tus probabilidades segun tu precision historica.
 Si tienes alta precision en un ticker, puedes aumentar la confianza.
-Si tienes baja precision, reduce tu confianza y probabilidad.'''
+Si tienes baja precision, reduce tu confianza y probabilidad.
+Usa los rangos de probabilidad para calibrar: si en rango 60-65% tu precision es baja, se mas conservador ahi.'''
 
 USER_PROMPT = f'''Genera analisis para estos 30 tickers. Precios actuales: {texto_precios}{feedback_section}{texto_noticias}
 
@@ -245,6 +240,7 @@ for t in TICKERS:
     prob = p.get('probabilidad', PROBS_BASE.get(t, 50))
     direccion = 'up' if prob >= 50 else 'down'
     sent_noticias = news_sentimiento.get(t, {})
+    modelo_usado_pred = resultado.get('modelo_usado', 'desconocido')
     hist_preds[t]['predicciones'].append({
         'fecha': ahora[:10],
         'hora': ahora[11:16],
@@ -255,6 +251,7 @@ for t in TICKERS:
         'resultado': None,
         'precio_real': None,
         'acertada': None,
+        'modelo_usado': modelo_usado_pred,
         'news_sentimiento': sent_noticias.get('sentimiento') if sent_noticias else None,
         'news_score': sent_noticias.get('score') if sent_noticias else None
     })

@@ -28,13 +28,14 @@ $TICKERS = @(
 
 $stockData = @{}
 foreach ($t in $TICKERS) {
-    $stockData[$t] = @{ 'prob' = 50; 'conf' = 50; 'sector' = 'General'; 'name' = $t; 'analisis' = ''; 'target_30d' = 0 }
+    $stockData[$t] = @{ 'prob' = 50; 'conf' = 50; 'sector' = 'General'; 'name' = $t; 'analisis' = ''; 'target_30d' = 0; 'precision_hist' = 0.5 }
 }
 
 $prices = @{}
 $dataSource = 'simulada'
 $aiModel = 'none'
 $aiResumen = ''
+$aiFeedback = ''
 $aiTitulares = @()
 $aiSectores = @{}
 $precisionGlobal = 0
@@ -65,7 +66,9 @@ if (Test-Path $iaPath) {
         if ($iaData.titulares) { $aiTitulares = @($iaData.titulares) }
         if ($iaData.sectores) { $aiSectores = $iaData.sectores }
         if ($iaData.precision_global) { $precisionGlobal = $iaData.precision_global }
+        if ($iaData.precision_ponderada) { $precisionGlobal = $iaData.precision_ponderada }
         if ($iaData.total_evaluado) { $totalEvaluado = $iaData.total_evaluado }
+        if ($iaData.feedback_aprendizaje) { $aiResumen = $iaData.feedback_aprendizaje; $aiFeedback = $iaData.feedback_aprendizaje }
         foreach ($t in $TICKERS) {
             $iaInfo = $iaData.probabilidades.$t
             if ($iaInfo) {
@@ -73,6 +76,7 @@ if (Test-Path $iaPath) {
                 $stockData[$t]['conf'] = [int]$iaInfo.confianza
                 $stockData[$t]['analisis'] = [string]$iaInfo.analisis
                 $stockData[$t]['target_30d'] = [double]($iaInfo.precio_objetivo_30d)
+                $stockData[$t]['precision_hist'] = [double]($iaInfo.precision_historica)
             }
         }
         Write-Output "[OK] Analisis IA ($aiModel) cargado"
@@ -202,9 +206,14 @@ foreach ($t in $TICKERS) {
     $sc = $sectorCSS[$info['sector']]
     $pc = if ($info['prob'] -ge 65) { 'pb-h' } elseif ($info['prob'] -ge 58) { 'pb-m' } else { 'pb-l' }
     $cf = if ($info['conf'] -ge 60) { 'cd-h' } elseif ($info['conf'] -ge 55) { 'cd-m' } else { 'cd-l' }
+    $ph = $info['precision_hist']
+    if ($ph -gt 0) {
+        $phc = if ($ph -ge 0.7) { 'ph-h' } elseif ($ph -ge 0.5) { 'ph-m' } else { 'ph-l' }
+    } else { $phc = 'ph-l'; $ph = 0 }
+    $phLabel = if ($ph -gt 0) { "$([math]::Round($ph * 100))%" } else { '--' }
     $an = $info['analisis']
     $titleAttr = if ($an) { " title=`"$an`"" } else { "" }
-    $tableRows += "<tr$titleAttr><td class=`"$rc`">$rank</td><td class=`"tk`">$t</td><td class=`"nm hm`">$($info['name'])</td><td><span class=`"sb $sc`">$($info['sector'])</span></td><td class=`"pr $cc`">`$$($pr['price'])</td><td class=`"ch $cc`">$sg`$$($pr['change'])</td><td class=`"ch $cc`">$sg$($pr['pct'])%</td><td><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`">$($info['prob'])%</span></div></td><td><div class=`"cc`"><span class=`"cd $cf`"></span>$($info['conf'])%</div></td></tr>"
+    $tableRows += "<tr$titleAttr><td class=`"$rc`">$rank</td><td class=`"tk`">$t</td><td class=`"nm hm`">$($info['name'])</td><td><span class=`"sb $sc`">$($info['sector'])</span></td><td class=`"pr $cc`">`$$($pr['price'])</td><td class=`"ch $cc`">$sg`$$($pr['change'])</td><td class=`"ch $cc`">$sg$($pr['pct'])%</td><td><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`">$($info['prob'])%</span></div></td><td><div class=`"cc`"><span class=`"cd $cf`"></span>$($info['conf'])%</div></td><td class=`"ph $phc`">$phLabel</td></tr>"
     $tc = if ($pr['change'] -ge 0) { 'cup' } else { 'cdn' }
     $tickerItems += "<span class=`"ti`"><span class=`"sy`">$t</span><span class=`"prc`">`$$($pr['price'])</span><span class=`"$tc`">$sg$($pr['pct'])%</span></span>"
     $rank++
@@ -212,6 +221,8 @@ foreach ($t in $TICKERS) {
 
 $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0b0e;color:#e8eaed}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0a0b0e}::-webkit-scrollbar-thumb{background:#2a2d35}.hdr{background:linear-gradient(135deg,#0d0e12,#14161b);border-bottom:1px solid #1e2028;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}.logo{width:36px;height:36px;background:linear-gradient(135deg,#00c853,#00e676);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#0a0b0e}.hl{display:flex;align-items:center;gap:16px}.ht{font-size:16px;font-weight:700}.hs{font-size:11px;color:#6b7280}.badge{font-size:11px;font-weight:600;color:#00c853;background:rgba(0,200,83,0.08);padding:4px 12px;border-radius:20px}.stats{display:flex;gap:12px;padding:12px 24px;background:#0d0e12;border-bottom:1px solid #1e2028;flex-wrap:wrap}.sc{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px 16px;flex:1;min-width:100px}.sc .l{font-size:10px;text-transform:uppercase;color:#6b7280}.sc .v{font-size:16px;font-weight:700}.resumen{background:linear-gradient(135deg,#0d0e12,#14161b);border-bottom:1px solid #1e2028;padding:12px 24px;font-size:13px;color:#9ca3af}.tc{padding:24px;overflow-x:auto}table{width:100%;border-collapse:separate}th{font-size:10px;font-weight:600;text-transform:uppercase;color:#6b7280;padding:10px 12px;text-align:left;border-bottom:1px solid #1e2028;background:#0a0b0e;position:sticky;top:0;z-index:2}td{padding:12px;font-size:13px;border-bottom:1px solid #15171d}tr:hover{background:rgba(0,200,83,0.03);cursor:default}.r1{color:#ffd700;font-weight:800}.r2{color:#c0c0c0;font-weight:800}.r3{color:#cd7f32;font-weight:800}.tk{font-weight:700}.nm{color:#9ca3af;font-size:12px}.pr{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.ch{font-weight:600;text-align:right}.gn{color:#00c853}.rd{color:#ff5252}.pb{display:flex;align-items:center;gap:8px}.pbb{flex:1;height:6px;background:#1e2028;border-radius:3px;overflow:hidden}.pbf{height:100%;border-radius:3px}.pb-h{background:linear-gradient(90deg,#00c853,#00e676)}.pb-m{background:linear-gradient(90deg,#ffc107,#ffd54f)}.pb-l{background:linear-gradient(90deg,#ff5252,#ff8a80)}.pt{font-weight:700;font-size:12px;min-width:36px;text-align:right}.cc{display:flex;align-items:center;gap:5px}.cd{width:5px;height:5px;border-radius:50%}.cd-h{background:#00c853}.cd-m{background:#ffc107}.cd-l{background:#ff5252}.ft{padding:16px 24px;border-top:1px solid #1e2028;font-size:10px;color:#4b5563;text-align:center}.tb{background:#0d0e12;border-bottom:1px solid #1e2028;padding:6px 0;overflow:hidden;white-space:nowrap}.tbi{display:inline-flex;gap:32px;animation:scroll 40s linear infinite}@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.ti{display:inline-flex;align-items:center;gap:6px;font-size:12px}.ti .sy{font-weight:600;color:#9ca3af}.ti .prc{font-weight:700}.cup{color:#00c853}.cdn{color:#ff5252}.sb{font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;font-weight:500;background:#1e2028;color:#9ca3af}.sa{background:rgba(0,200,83,0.1);color:#00c853}.ss{background:rgba(33,150,243,0.1);color:#64b5f6}.sw{background:rgba(156,39,176,0.1);color:#ce93d8}.sc{background:rgba(255,152,0,0.1);color:#ffb74d}.st{background:rgba(0,188,212,0.1);color:#4dd0e1}.sm{background:rgba(233,30,99,0.1);color:#f48fb1}.scu{background:rgba(63,81,181,0.1);color:#9fa8da}.scc{background:rgba(63,81,181,0.1);color:#9fa8da}.sci{background:rgba(63,81,181,0.1);color:#9fa8da}.scl{background:rgba(156,39,176,0.1);color:#ce93d8}.sce{background:rgba(63,81,181,0.1);color:#9fa8da}.sph{background:rgba(0,150,136,0.1);color:#80cbc4}.seq{background:rgba(0,200,83,0.1);color:#00c853}.scd{background:rgba(63,81,181,0.1);color:#9fa8da}.sin{background:rgba(121,85,72,0.1);color:#a1887f}.smo{background:rgba(121,85,72,0.1);color:#a1887f}.sae{background:rgba(121,85,72,0.1);color:#a1887f}.sde{background:rgba(255,87,34,0.1);color:#ffab91}.sut{background:rgba(255,193,7,0.1);color:#ffe082}
 .sbar{display:flex;gap:8px;padding:8px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.sbar input{flex:1;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none}.sbar input:focus{border-color:#00c853}.sbar input::placeholder{color:#4b5563}.sbar select{background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px;color:#e8eaed;font-size:12px;outline:none;cursor:pointer}.sbar .rcount{color:#4b5563;font-size:11px;align-self:center;white-space:nowrap}
+.ph{font-size:11px;text-align:right;font-weight:600}.ph-h{color:#00c853}.ph-m{color:#ffc107}.ph-l{color:#6b7280}
+.fb{background:#0d0e12;border-bottom:1px solid #1e2028;padding:12px 24px}.fb summary{cursor:pointer;font-size:11px;font-weight:700;color:#00c853;display:flex;align-items:center;gap:6px}.fb pre{font-size:10px;color:#6b7280;line-height:1.5;margin-top:8px;white-space:pre-wrap;font-family:monospace}
 .t5{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.t5h{font-size:13px;font-weight:700;color:#00c853;margin-bottom:12px;display:flex;align-items:center;gap:8px}.t5h span{font-size:10px;color:#4b5563;font-weight:400}.t5g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.t5c{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative;overflow:hidden}.t5c .rk{position:absolute;top:0;left:0;background:#00c853;color:#0a0b0e;font-size:10px;font-weight:800;padding:2px 8px;border-radius:0 0 6px 0}.t5c .tk{font-size:14px;font-weight:700;margin-top:6px}.t5c .nm{font-size:11px;color:#9ca3af;margin-bottom:4px}.t5c .pr{font-size:13px;font-weight:700}.t5c .tp{font-size:11px;color:#00c853;margin-top:2px}.t5c .up{font-size:12px;font-weight:700;color:#00c853;margin-top:1px}.t5c .an{font-size:10px;color:#6b7280;margin-top:6px;line-height:1.3}.t5c .pb{display:flex;align-items:center;gap:6px;margin-top:4px}.t5c .pb .pbb{flex:1;height:4px;background:#1e2028;border-radius:2px;overflow:hidden}.t5c .pb .pbf{height:100%;border-radius:2px}.t5c .pb .pt{font-size:11px;font-weight:700;min-width:30px;text-align:right}"
 
 $HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Top 30 - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
@@ -222,6 +233,10 @@ $precLabel = if ($precisionGlobal -gt 0) { "$([math]::Round($precisionGlobal * 1
 $HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Precision</div><div class=`"v`" style=`"color:$precColor;font-size:14px`">$precLabel</div></div><div class=`"sc`"><div class=`"l`">Modelo IA</div><div class=`"v`" style=`"font-size:12px;color:#ce93d8`">$aiModel</div></div></div>"
 if ($aiResumen) {
     $HTML += "<div class=`"resumen`">$aiResumen</div>"
+}
+# Feedback de aprendizaje
+if ($aiFeedback) {
+    $HTML += "<details class=`"fb`"><summary>APRENDIZAJE ACTIVO &rsaquo; Precision historica &amp; calibracion</summary><pre>$aiFeedback</pre></details>"
 }
 # Top 5 recomendaciones
 $sorted5 = $TICKERS | Sort-Object { $stockData[$_]['prob'] } -Descending
@@ -238,7 +253,9 @@ for ($i = 0; $i -lt 5; $i++) {
     if (-not $tp -or $tp -le 0) { $tp = $pr['price'] * (1 + ($info['prob'] - 50) / 200) }
     $up = [math]::Round(($tp / $pr['price'] - 1) * 100, 1)
     $upColor = if ($up -ge 5) { '#00c853' } elseif ($up -ge 2) { '#76ff03' } else { '#ffc107' }
-    $top5Html += "<div class=`"t5c`"><div class=`"rk`">#$($i+1)</div><div class=`"tk`">$t</div><div class=`"nm`">$($info['name'])</div><div class=`"pr`" style=`"color:$cc`">`$$($pr['price']) <span style=`"font-size:11px;font-weight:400`">$sg$($pr['pct'])%</span></div><div class=`"tp`">Objetivo 30d: `$$([math]::Round($tp,2))</div><div class=`"up`" style=`"color:$upColor`">Proy. subida: +$up%</div><div class=`"an`">$an</div><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc2`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`" style=`"color:$cc`">$($info['prob'])%</span></div></div>"
+    $ph = $info['precision_hist']
+    $phLabel = if ($ph -gt 0) { "Prec: $([math]::Round($ph * 100))%" } else { '' }
+    $top5Html += "<div class=`"t5c`"><div class=`"rk`">#$($i+1)</div><div class=`"tk`">$t</div><div class=`"nm`">$($info['name'])</div><div class=`"pr`" style=`"color:$cc`">`$$($pr['price']) <span style=`"font-size:11px;font-weight:400`">$sg$($pr['pct'])%</span></div><div class=`"tp`">Objetivo 30d: `$$([math]::Round($tp,2))</div><div class=`"up`" style=`"color:$upColor`">Proy. subida: +$up% $(if ($phLabel) { "| $phLabel" })</div><div class=`"an`">$an</div><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc2`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`" style=`"color:$cc`">$($info['prob'])%</span></div></div>"
 }
 $top5Html += "</div></div>"
 $HTML += $top5Html
@@ -246,7 +263,7 @@ $HTML += "<div class=`"sbar`"><input type=`"text`" id=`"searchInput`" placeholde
 $sectoresUnicos = $sectorGroups.Keys | Sort-Object
 foreach ($s in $sectoresUnicos) { $HTML += "<option value=`"$s`">$s</option>" }
 $HTML += "</select><span class=`"rcount`" id=`"resultCount`">30/30</span></div>"
-$HTML += "<div class=`"tc`"><table><thead><tr><th>#</th><th>Ticker</th><th class=`"hm`">Compania</th><th>Sector</th><th style=`"text-align:right`">Precio</th><th style=`"text-align:right`">Cambio</th><th style=`"text-align:right`">%</th><th style=`"text-align:right`">Prob.</th><th>Conf.</th></tr></thead><tbody>$tableRows</tbody></table></div>"
+$HTML += "<div class=`"tc`"><table><thead><tr><th>#</th><th>Ticker</th><th class=`"hm`">Compania</th><th>Sector</th><th style=`"text-align:right`">Precio</th><th style=`"text-align:right`">Cambio</th><th style=`"text-align:right`">%</th><th style=`"text-align:right`">Prob.</th><th>Conf.</th><th style=`"text-align:right`">Prec.H</th></tr></thead><tbody>$tableRows</tbody></table></div>"
 $HTML += "<div class=`"ft`">IA: $aiModel | Precios: $dataSource | $FECHA_HUMANA | 30 tickers | Generado por IA. No constituye asesoramiento financiero.</div>"
 $HTML += "<script>function filtrarTabla(){var q=document.getElementById('searchInput').value.toUpperCase();var s=document.getElementById('sectorFilter').value;var rows=document.querySelectorAll('tbody tr');var v=0;rows.forEach(function(r){var tk=r.cells[1].textContent.toUpperCase();var nm=r.cells[2].textContent.toUpperCase();var sc=r.cells[3].textContent;var match=q===''||tk.includes(q)||nm.includes(q)||sc.toUpperCase().includes(q);if(s!==''&&sc!==s)match=false;r.style.display=match?'':'none';if(match)v++;});document.getElementById('resultCount').textContent=v+'/'+rows.length;}</script>"
 $HTML += "</body></html>"

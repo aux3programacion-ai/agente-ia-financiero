@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-aprendizaje.py - Sistema de aprendizaje autonomo.
-Evalua predicciones pasadas vs resultados reales y calibra
-probabilidades usando ajuste bayesiano.
+aprendizaje.py - Sistema de aprendizaje autonomo multi-factor.
+Evaluacion temporal ponderada, calibracion por sector/rango/modelo,
+decaimiento exponencial, y retroalimentacion estructurada al AI.
 """
 import json, os, time, math
+from datetime import datetime, timezone
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 HIST_PATH = os.path.join(DATA_DIR, 'Datos', 'predicciones_hist.json')
@@ -17,6 +18,28 @@ os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
            'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
            'LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
+
+SECTOR_MAP = {
+    'Semiconductores': ['NVDA','MU','AVGO','TSM','ARM'],
+    'Servidores IA': ['DELL','SMCI','HPE'],
+    'Software IA': ['DDOG','SNOW','NOW'],
+    'Ciberseguridad': ['CRWD','PANW','OKTA'],
+    'Almacenamiento': ['NTAP','CLS'],
+    'Consumer Tech': ['AAPL','AMZN','GOOGL','META','MSFT'],
+    'Farmaceutico': ['LLY'],
+    'Semicon Equip': ['AMAT','LRCX'],
+    'Cloud/Database': ['ORCL'],
+    'Industrial': ['HON','GE'],
+    'Movilidad/Tech': ['UBER'],
+    'Consumo Defensivo': ['COST'],
+    'Utilities/Energy': ['NEE']
+}
+
+RANGOS_PROB = [(0,40),(40,50),(50,55),(55,60),(60,65),(65,70),(70,80),(80,100)]
+
+def peso_temporal(dias_antiguedad):
+    """Decaimiento exponencial: los mas recientes pesan mas. Half-life 14 dias."""
+    return math.exp(-dias_antiguedad * math.log(2) / 14)
 
 # --- Cargar base historica ---
 hist = {}
@@ -31,20 +54,6 @@ for t in TICKERS:
     if t not in hist:
         hist[t] = {'predicciones': [], 'total': 0, 'aciertos': 0, 'precision': 0.5}
 
-# --- Cargar sentimiento de noticias para correlacion ---
-noticias_sentimiento = {}
-if os.path.exists(NEWS_PATH):
-    try:
-        nd = json.load(open(NEWS_PATH)).get('por_ticker', {})
-        for t in TICKERS:
-            td = nd.get(t, {})
-            if isinstance(td, dict):
-                sent = td.get('sentimiento')
-                if sent and isinstance(sent, dict) and sent.get('sentimiento'):
-                    noticias_sentimiento[t] = sent
-    except Exception as e:
-        print(f'[!] Error cargando noticias: {e}')
-
 # --- Cargar precios actuales ---
 precios = {}
 if os.path.exists(PRECIOS_PATH):
@@ -56,7 +65,17 @@ if os.path.exists(PRECIOS_PATH):
     except Exception as e:
         print(f'[!] Error precios: {e}')
 
+# --- Cargar sentimiento de noticias ---
+if os.path.exists(NEWS_PATH):
+    try:
+        nd = json.load(open(NEWS_PATH)).get('por_ticker', {})
+    except:
+        nd = {}
+else:
+    nd = {}
+
 # --- Evaluar predicciones pendientes ---
+hoy = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 evaluados = 0
 for t in TICKERS:
     preds = hist[t]['predicciones']
@@ -66,12 +85,33 @@ for t in TICKERS:
             p['resultado'] = 'up' if cambio_real >= 0 else 'down'
             p['precio_real'] = precios[t]['price']
             p['acertada'] = p['direccion'] == p['resultado']
+            p['fecha_evaluacion'] = hoy
             if p['acertada']:
                 hist[t]['aciertos'] += 1
             hist[t]['total'] += 1
             evaluados += 1
 
-# Recalcular precision
+# --- Calcular precision PONDERADA por tiempo ---
+for t in TICKERS:
+    preds = hist[t]['predicciones']
+    peso_total = 0
+    aciertos_pond = 0
+    for p in preds:
+        if p.get('acertada') is not None:
+            try:
+                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d')).days
+            except:
+                dias = 30
+            w = peso_temporal(dias)
+            peso_total += w
+            if p['acertada']:
+                aciertos_pond += w
+    if peso_total > 0:
+        hist[t]['precision_ponderada'] = round(aciertos_pond / peso_total, 4)
+    else:
+        hist[t]['precision_ponderada'] = 0.5
+
+# --- Recalcular precision simple ---
 for t in TICKERS:
     total = hist[t]['total']
     aciertos = hist[t]['aciertos']
@@ -82,48 +122,88 @@ total_global = sum(hist[t]['total'] for t in TICKERS)
 aciertos_global = sum(hist[t]['aciertos'] for t in TICKERS)
 precision_global = round(aciertos_global / total_global, 4) if total_global > 0 else 0.5
 
+# Precision ponderada global
+peso_total_global = 0
+aciertos_pond_global = 0
+for t in TICKERS:
+    for p in hist[t]['predicciones']:
+        if p.get('acertada') is not None:
+            try:
+                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d')).days
+            except:
+                dias = 30
+            w = peso_temporal(dias)
+            peso_total_global += w
+            if p['acertada']:
+                aciertos_pond_global += w
+precision_pond_global = round(aciertos_pond_global / peso_total_global, 4) if peso_total_global > 0 else 0.5
+
 # --- Guardar historico actualizado ---
 with open(HIST_PATH, 'w') as f:
     json.dump(hist, f, indent=2, ensure_ascii=False)
 
-# --- Generar calibracion bayesiana con tracking de noticias ---
-# Correlacion sentimiento vs acierto
-aciertos_sent_pos = 0; total_sent_pos = 0
-aciertos_sent_neg = 0; total_sent_neg = 0
-aciertos_sent_neu = 0; total_sent_neu = 0
+# ============================================================
+# CALIBRACION MULTI-FACTOR
+# ============================================================
 
+# --- 1. Calibracion por SECTOR ---
+sector_stats = {}
+for sector, tickers in SECTOR_MAP.items():
+    total_s = 0; aciertos_s = 0
+    peso_s = 0; aciertos_pond_s = 0
+    for t in tickers:
+        for p in hist[t]['predicciones']:
+            if p.get('acertada') is not None:
+                total_s += 1
+                if p['acertada']: aciertos_s += 1
+    sector_stats[sector] = {
+        'total': total_s,
+        'aciertos': aciertos_s,
+        'precision': round(aciertos_s / total_s, 4) if total_s > 0 else 0.5
+    }
+
+# --- 2. Calibracion por RANGO DE PROBABILIDAD ---
+rango_stats = {}
+for (lo, hi) in RANGOS_PROB:
+    total_r = 0; aciertos_r = 0
+    for t in TICKERS:
+        for p in hist[t]['predicciones']:
+            if p.get('acertada') is not None:
+                prob = p.get('probabilidad', 50)
+                if lo <= prob < hi:
+                    total_r += 1
+                    if p['acertada']: aciertos_r += 1
+    rango_stats[f'{lo}-{hi}'] = {
+        'total': total_r,
+        'aciertos': aciertos_r,
+        'precision': round(aciertos_r / total_r, 4) if total_r > 0 else None
+    }
+
+# --- 3. Calibracion por MODELO IA ---
+modelo_stats = {}
 for t in TICKERS:
     for p in hist[t]['predicciones']:
-        ns = p.get('news_sentimiento')
-        acertada = p.get('acertada')
-        if ns and acertada is not None:
-            if ns == 'positivo':
-                total_sent_pos += 1
-                if acertada: aciertos_sent_pos += 1
-            elif ns == 'negativo':
-                total_sent_neg += 1
-                if acertada: aciertos_sent_neg += 1
-            elif ns == 'neutral':
-                total_sent_neu += 1
-                if acertada: aciertos_sent_neu += 1
+        if p.get('acertada') is not None:
+            mod = p.get('modelo_usado', 'desconocido')
+            if mod not in modelo_stats:
+                modelo_stats[mod] = {'total': 0, 'aciertos': 0}
+            modelo_stats[mod]['total'] += 1
+            if p['acertada']:
+                modelo_stats[mod]['aciertos'] += 1
+for m in modelo_stats:
+    modelo_stats[m]['precision'] = round(modelo_stats[m]['aciertos'] / modelo_stats[m]['total'], 4)
 
-prec_sent_pos = round(aciertos_sent_pos / total_sent_pos, 4) if total_sent_pos > 0 else None
-prec_sent_neg = round(aciertos_sent_neg / total_sent_neg, 4) if total_sent_neg > 0 else None
-
+# --- 4. Calibracion por ticker con temporal weighting ---
 calibracion = {
     'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
     'precision_global': precision_global,
+    'precision_ponderada': precision_pond_global,
     'total_evaluado': total_global,
     'aciertos_global': aciertos_global,
     'evaluados_este_ciclo': evaluados,
-    'correlacion_noticias': {
-        'prec_sentimiento_positivo': prec_sent_pos,
-        'total_sentimiento_positivo': total_sent_pos,
-        'prec_sentimiento_negativo': prec_sent_neg,
-        'total_sentimiento_negativo': total_sent_neg,
-        'total_sentimiento_neutral': total_sent_neu,
-        'aciertos_sentimiento_neutral': aciertos_sent_neu
-    },
+    'sectores': sector_stats,
+    'rangos_probabilidad': rango_stats,
+    'modelos_ia': modelo_stats,
     'factores': {}
 }
 
@@ -131,31 +211,91 @@ for t in TICKERS:
     h = hist[t]
     total = h['total']
     precision = h['precision']
+    precision_pond = h['precision_ponderada']
 
-    # Ajuste bayesiano: combinamos precision del ticker con precision global
-    # Si hay pocos datos (< 5), pesa mas la precision global
+    # Factor base: ponderada por tiempo
     peso_local = min(total / 5, 1.0)
-    precision_ajustada = precision * peso_local + precision_global * (1 - peso_local)
+    precision_combinada = precision_pond * peso_local + precision_pond_global * (1 - peso_local)
 
-    # Factor de calibracion: precision_ajustada / 0.5 (0.5 = baseline sin info)
-    factor = precision_ajustada / 0.5 if precision_ajustada > 0 else 1.0
+    # Ajuste por sector
+    sector = None
+    for s, tkrs in SECTOR_MAP.items():
+        if t in tkrs:
+            sector = s
+            break
+    prec_sector = sector_stats.get(sector, {}).get('precision', 0.5) if sector else 0.5
+
+    # Factor final: promedio ponderado entre ticker, sector, y global
+    w_ticker = min(total / 8, 0.6)
+    w_sector = 0.2
+    w_global = 1.0 - w_ticker - w_sector
+    precision_final = (precision_combinada * w_ticker +
+                       prec_sector * w_sector +
+                       precision_pond_global * w_global)
+
+    factor = precision_final / 0.5 if precision_final > 0 else 1.0
 
     calibracion['factores'][t] = {
         'total': total,
         'aciertos': h['aciertos'],
         'precision': precision,
-        'precision_ajustada': round(precision_ajustada, 4),
+        'precision_ponderada': precision_pond,
+        'precision_final': round(precision_final, 4),
         'factor': round(factor, 4),
-        'peso_local': round(peso_local, 2)
+        'peso_local': round(peso_local, 2),
+        'sector': sector,
+        'precision_sector': prec_sector
     }
 
 with open(CALIB_PATH, 'w') as f:
     json.dump(calibracion, f, indent=2, ensure_ascii=False)
 
-# --- Aplicar calibracion a analisis actual ---
+# ============================================================
+# APLICAR CALIBRACION y generar retroalimentacion para el AI
+# ============================================================
 if os.path.exists(IA_PATH):
     try:
         ia = json.load(open(IA_PATH))
+        feedback_lines = [
+            f'[APRENDIZAJE] Precision global: {precision_pond_global:.1%} ponderada ({precision_global:.1%} simple)',
+            f'[APRENDIZAJE] Evaluados: {total_global} predicciones ({evaluados} este ciclo)',
+            '',
+            '[SECTORES CON MEJOR PRECISION]:'
+        ]
+        sectores_ordenados = sorted(sector_stats.items(), key=lambda x: x[1]['precision'], reverse=True)
+        for s, st in sectores_ordenados[:5]:
+            if st['total'] > 0:
+                feedback_lines.append(f'  {s}: {st["precision"]:.0%} ({st["aciertos"]}/{st["total"]})')
+
+        feedback_lines.append('')
+        feedback_lines.append('[RANGOS DE PROBABILIDAD]:')
+        for (lo, hi) in RANGOS_PROB:
+            rs = rango_stats.get(f'{lo}-{hi}', {})
+            if rs.get('total', 0) > 0:
+                rp = rs['precision']
+                feedback_lines.append(f'  {lo}-{hi}%: {rp:.0%} ({rs["aciertos"]}/{rs["total"]})')
+
+        feedback_lines.append('')
+        feedback_lines.append('[PRECISION POR TICKER (ponderada)]:')
+        for t in TICKERS:
+            f = calibracion['factores'][t]
+            if f['total'] > 0:
+                feedback_lines.append(f'  {t}: {f["precision_ponderada"]:.0%} ({f["aciertos"]}/{f["total"]})')
+
+        feedback_lines.append('')
+        feedback_lines.append('[MEJORES MODELOS IA]:')
+        mejores_modelos = sorted(modelo_stats.items(), key=lambda x: x[1]['precision'], reverse=True)[:5]
+        for m, ms in mejores_modelos:
+            if ms['total'] >= 3:
+                feedback_lines.append(f'  {m}: {ms["precision"]:.0%} ({ms["aciertos"]}/{ms["total"]})')
+
+        feedback_text = '\n'.join(feedback_lines)
+        ia['feedback_aprendizaje'] = feedback_text
+        ia['precision_ponderada'] = precision_pond_global
+        ia['precision_global'] = precision_global
+        ia['total_evaluado'] = total_global
+
+        # Aplicar calibracion a probabilidades
         for t in TICKERS:
             if t in ia.get('probabilidades', {}):
                 prob = ia['probabilidades'][t]['probabilidad']
@@ -168,13 +308,14 @@ if os.path.exists(IA_PATH):
                 ia['probabilidades'][t]['probabilidad'] = prob_calib
                 ia['probabilidades'][t]['confianza'] = conf_calib
                 ia['probabilidades'][t]['factor_calibracion'] = round(factor, 4)
+                ia['probabilidades'][t]['precision_historica'] = calibracion['factores'][t]['precision_ponderada']
+
         ia['calibracion_aplicada'] = True
-        ia['precision_global'] = precision_global
-        ia['total_evaluado'] = total_global
         json.dump(ia, open(IA_PATH, 'w'), indent=2, ensure_ascii=False)
-        print(f'[OK] Calibracion aplicada a {len(TICKERS)} tickers')
+        print(f'[OK] Calibracion multi-factor aplicada a {len(TICKERS)} tickers')
     except Exception as e:
         print(f'[!] Error aplicando calibracion: {e}')
 
-print(f'[OK] Precision global: {precision_global:.1%} ({aciertos_global}/{total_global})')
-print(f'[OK] Evaluados este ciclo: {evaluados} predicciones')
+print(f'[OK] Precision global ponderada: {precision_pond_global:.1%} ({aciertos_global}/{total_global})')
+print(f'[OK] Evaluados este ciclo: {evaluados}')
+print(f'[OK]{len(modelo_stats)} modelos tracking | {len([r for r in rango_stats.values() if r["total"]>0])} rangos calibrados')
