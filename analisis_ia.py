@@ -53,6 +53,25 @@ NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
 SCREENING_PATH = os.path.join(DATA_DIR, 'Datos', 'screening_global.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
+# --- Load portfolio tickers (always included in analysis) ---
+PORTAFOLIO_TICKERS = set()
+PORTAFOLIO_PATH = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
+if os.path.exists(PORTAFOLIO_PATH):
+    try:
+        pf = json.load(open(PORTAFOLIO_PATH))
+        if isinstance(pf, list):
+            PORTAFOLIO_TICKERS = set(t.upper().strip() for t in pf if isinstance(t, str) and t.strip())
+            print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(sorted(PORTAFOLIO_TICKERS))}')
+    except Exception as e:
+        print(f'[!] Error cargando portafolio_usuario.json: {e}')
+
+# Ensure portfolio tickers have base data entries
+for t in PORTAFOLIO_TICKERS:
+    if t not in PROBS_BASE:
+        PROBS_BASE[t] = 55
+        CONF_BASE[t] = 50
+        PRICES_BASE[t] = 100
+
 # Load global screening to determine TICKERS to analyze (all markets)
 MAX_TICKERS_AI = 120
 TICKERS = list(TICKERS_CORE)
@@ -80,6 +99,9 @@ if os.path.exists(SCREENING_PATH):
                         break
                     sampled.add(c)
                 remaining = MAX_TICKERS_AI - len(sampled)
+
+        # Ensure portfolio tickers are always included
+        sampled.update(PORTAFOLIO_TICKERS)
 
         merged = list(dict.fromkeys(list(sampled)))
         TICKERS = merged[:MAX_TICKERS_AI]
@@ -123,6 +145,34 @@ if os.path.exists(NEWS_PATH):
             texto_noticias = '\n'.join(lines_n)
     except Exception as e:
         print(f'[!] Error cargando noticias: {e}')
+
+# --- Fetch fundamental analyst data for portfolio tickers from Yahoo Finance ---
+texto_analisis_portafolio = ''
+if PORTAFOLIO_TICKERS:
+    lines_pf = ['\nDATOS FUNDAMENTALES PORTAFOLIO (analistas web en tiempo real):']
+    for t in PORTAFOLIO_TICKERS:
+        try:
+            url = f'https://query2.finance.yahoo.com/v10/finance/quoteSummary/{t}?modules=price,summaryDetail,financialData,defaultKeyStatistics'
+            req_pf = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req_pf, timeout=10) as resp_pf:
+                qs = json.loads(resp_pf.read())['quoteSummary']['result'][0]
+                fd = qs.get('financialData', {})
+                price = qs.get('price', {})
+                sd = qs.get('summaryDetail', {})
+                target_mean = fd.get('targetMeanPrice', {}).get('raw', 'N/A')
+                target_high = fd.get('targetHighPrice', {}).get('raw', 'N/A')
+                target_low = fd.get('targetLowPrice', {}).get('raw', 'N/A')
+                rec = fd.get('recommendationKey', 'N/A')
+                num_analysts = fd.get('numberOfAnalystOpinions', {}).get('raw', 'N/A')
+                pe = sd.get('trailingPE', {}).get('raw', 'N/A')
+                mcap = price.get('marketCap', {}).get('raw', 'N/A')
+                prev_close = sd.get('previousClose', {}).get('raw', 'N/A')
+                lines_pf.append(f'  {t}: Recomendacion: {rec.upper()} | Analistas: {num_analysts} | Target: ${target_mean} ($ {target_low} - ${target_high}) | PE: {pe} | MktCap: ${mcap:,}')
+        except Exception as e:
+            print(f'  [Fundamental {t}] No se pudieron obtener datos: {e}')
+            lines_pf.append(f'  {t}: Datos fundamentales no disponibles')
+    if len(lines_pf) > 1:
+        texto_analisis_portafolio = '\n'.join(lines_pf)
 
 # --- Cargar tecnicos + regimen de mercado ---
 texto_tecnicos = ''
@@ -188,6 +238,7 @@ USER_PROMPT_TEMPLATE = f'''Genera analisis para estos {len(TICKERS)} tickers de 
 Tickers: {ticker_list_str}
 Precios actuales: {texto_precios}
 {texto_noticias}
+{texto_analisis_portafolio}
 {texto_tecnicos}
 {feedback_section}
 

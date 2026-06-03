@@ -12,6 +12,23 @@ TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
            'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
            'LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
+DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
+
+# Load portfolio tickers (always monitored for news)
+PORTAFOLIO_TICKERS = set()
+PF_PATH = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
+if os.path.exists(PF_PATH):
+    try:
+        pf = json.load(open(PF_PATH))
+        if isinstance(pf, list):
+            PORTAFOLIO_TICKERS = set(t.upper().strip() for t in pf if isinstance(t, str) and t.strip())
+            print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(PORTAFOLIO_TICKERS)}')
+    except Exception as e:
+        print(f'[!] Error cargando portafolio: {e}')
+
+# Merge portfolio tickers into core list (deduped)
+TICKERS = list(dict.fromkeys(TICKERS + sorted(PORTAFOLIO_TICKERS)))
+
 SECTOR_MAP = {
     'Semiconductores': ['NVDA','MU','AVGO','TSM','ARM'],
     'Servidores IA': ['DELL','SMCI','HPE'],
@@ -27,8 +44,13 @@ SECTOR_MAP = {
     'Consumo Defensivo': ['COST'],
     'Utilities/Energy': ['NEE']
 }
-
-DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
+# Add any portfolio tickers not already mapped to "Portafolio" sector
+all_mapped = set()
+for v in SECTOR_MAP.values():
+    all_mapped.update(v)
+for t in PORTAFOLIO_TICKERS:
+    if t not in all_mapped:
+        SECTOR_MAP['Portafolio'] = SECTOR_MAP.get('Portafolio', []) + [t]
 OUT_DIR = os.path.join(DATA_DIR, 'Datos')
 os.makedirs(OUT_DIR, exist_ok=True)
 
