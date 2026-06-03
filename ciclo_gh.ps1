@@ -495,7 +495,7 @@ $HTML += "<div class=`"ft`">IA: $aiModel | Precios: $dataSource | $FECHA_HUMANA 
 $HTML += "<script>function showMercado(m){document.querySelectorAll('.mc').forEach(function(e){e.style.display=e.id==='mc-'+m?'block':'none'});document.querySelectorAll('.mnb-btn').forEach(function(b){b.style.opacity=b.getAttribute('data-market')===m?'1':'0.4'});}function mostrarTodos(){document.querySelectorAll('.mc').forEach(function(e){e.style.display='block'});document.querySelectorAll('.mnb-btn').forEach(function(b){b.style.opacity='1'});}function filtrarMercados(){var q=document.getElementById('searchInput').value.toUpperCase();var s=document.getElementById('sectorFilter').value;var mf=document.getElementById('mercadoFilter').value;var total=0;var vis=0;document.querySelectorAll('.mc').forEach(function(mc){var mercadoId=mc.id.replace('mc-','');if(mf!==''&&mercadoId!==mf){mc.style.display='none';return}mc.style.display='block';var rows=mc.querySelectorAll('tbody tr');var cv=0;rows.forEach(function(r){var tk=r.cells[1].textContent.toUpperCase();var nm=r.cells[2].textContent.toUpperCase();var sc=r.cells[3].textContent;var match=q===''||tk.includes(q)||nm.includes(q)||sc.toUpperCase().includes(q);if(s!==''&&sc!==s)match=false;r.style.display=match?'':'none';if(match)cv++});if(cv===0)mc.style.display='none';vis+=cv;total+=rows.length});document.getElementById('resultCount').textContent=vis+'/'+total;}</script>"
 $LIVE_SCRIPT = @'
 <script>
-(function(){var P='https://api.allorigins.win/raw?url=',B=10;
+(function(){var PS=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?url=','https://api.codetabs.com/v1/proxy?quest=','https://thingproxy.freeboard.io/fetch/'],B=10;
 function apply(t,p,ch,pc){if(PD[t]){PD[t].p=Math.round(p*100)/100;PD[t].ch=Math.round(ch*100)/100;PD[t].pc=Math.round(pc*100)/100}
 var gn=ch>=0,sg=gn?'+':'',cl=gn?'gn':'rd';
 var rows=document.querySelectorAll('tbody tr');
@@ -510,16 +510,18 @@ if(sy&&sy.textContent.trim()===t){
 var pr=items[i].querySelector('.prc'),pt=items[i].querySelector('.cup,.cdn');
 if(pr)pr.textContent='$'+p.toFixed(2);
 if(pt){pt.textContent=sg+pc.toFixed(2)+'%';pt.className=pc>=0?'cup':'cdn';}}}}
-function up(){var ts=Object.keys(PD),batches=[];
-for(var i=0;i<ts.length;i+=B)batches.push(ts.slice(i,i+B));
-batches.forEach(function(b){var u=P+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+b.join(',')+'?interval=1d&range=5d');
+function fetchBatch(b,i){if(i>=PS.length)return;
+var u=PS[i]+encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/'+b.join(',')+'?interval=1d&range=5d');
 fetch(u).then(function(r){if(!r.ok)throw Error();return r.json()}).then(function(d){
-if(!d.chart||!d.chart.result)return;
+if(!d.chart||!d.chart.result)throw Error();
 d.chart.result.forEach(function(rr){try{var m=rr.meta,s=m.symbol,p=m.regularMarketPrice;
 if(!p||!s)return;
 var qc=rr.indicators.quote[0].close.filter(function(v){return v!==null});
 var pp=qc.length>0?qc[qc.length-1]:p,ch=p-pp,pc=pp>0?(ch/pp*100):0;
-apply(s,p,ch,pc);}catch(e){}});}).catch(function(){});});}
+apply(s,p,ch,pc);}catch(e){}});}).catch(function(){fetchBatch(b,i+1)});}
+function up(){var ts=Object.keys(PD),batches=[];
+for(var i=0;i<ts.length;i+=B)batches.push(ts.slice(i,i+B));
+batches.forEach(function(b){fetchBatch(b,0)});}
 window.addEventListener('load',function(){setTimeout(up,1000)});
 setInterval(up,45000);})();
 </script>

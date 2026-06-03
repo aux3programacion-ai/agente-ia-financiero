@@ -42,15 +42,23 @@ function parseYahooResponse(d,t){
 function fetchYahooDirect(t){
   fetch(yahooUrl(t)).then(function(r){if(!r.ok)throw Error();return r.json()}).then(function(d){parseYahooResponse(d,t)}).catch(function(){LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'Ticker no encontrado - verifica el simbolo',nm:t,sc:'Global',ph:0,mc:'GLOBAL'};renderPortfolio()});
 }
+var PROXIES=[
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://thingproxy.freeboard.io/fetch/'
+];
+function tryProxies(t,i){
+  if(i>=PROXIES.length){fetchYahooDirect(t);return}
+  fetch(PROXIES[i]+encodeURIComponent(yahooUrl(t)))
+    .then(function(r){if(!r.ok)throw Error();return r.json()})
+    .then(function(d){parseYahooResponse(d,t)})
+    .catch(function(){tryProxies(t,i+1)});
+}
 function fetchLivePrice(t){
   LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'Cargando...',nm:t,sc:'Global',ph:0,mc:'GLOBAL'};
   renderPortfolio();
-  // Try CORS proxy first, fallback to direct
-  var proxy='https://api.allorigins.win/raw?url=';
-  fetch(proxy+encodeURIComponent(yahooUrl(t)))
-    .then(function(r){if(!r.ok)throw Error();return r.json()})
-    .then(function(d){parseYahooResponse(d,t)})
-    .catch(function(){fetchYahooDirect(t)});
+  tryProxies(t,0);
 }
 
 function tickerCard(t,d,isLive){
