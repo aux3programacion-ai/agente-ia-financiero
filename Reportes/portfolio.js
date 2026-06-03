@@ -1,4 +1,6 @@
 var PD={},ND={},PF=[],LD={};
+var mcLabels={'US':'US','MEXICO':'MX','EUROPA':'EU','ASIA':'AS','GLOBAL':'GL'};
+var mcColors={'US':'#00c853','MEXICO':'#ffc107','EUROPA':'#64b5f6','ASIA':'#ff5252','GLOBAL':'#ce93d8'};
 
 function getPortafolio(){
   var ls=JSON.parse(localStorage.getItem('pf_local')||'[]');
@@ -27,24 +29,28 @@ function eliminarDelPortafolio(t){
   renderPortfolio();
 }
 
+function yahooUrl(t){return 'https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(t)+'?interval=1d&range=5d';}
+function parseYahooResponse(d,t){
+  try{
+    var m=d.chart.result[0].meta;
+    var p=m.regularMarketPrice;var qc=d.chart.result[0].indicators.quote[0].close.filter(function(v){return v!==null});
+    var pp=qc.length>0?qc[qc.length-1]:p;var ch=p-pp;var pt=pp>0?((p-pp)/pp*100).toFixed(2):'0.00';
+    LD[t]={p:(p||0),ch:(ch||0),pc:parseFloat(pt),pr:50,cf:50,tg:p||0,an:'Precio en vivo via Yahoo Finance',nm:t,sc:'Global',ph:0,mc:'GLOBAL'};
+    renderPortfolio();
+  }catch(e){fetchYahooDirect(t)}
+}
+function fetchYahooDirect(t){
+  fetch(yahooUrl(t)).then(function(r){if(!r.ok)throw Error();return r.json()}).then(function(d){parseYahooResponse(d,t)}).catch(function(){LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'Ticker no encontrado - verifica el simbolo',nm:t,sc:'Global',ph:0,mc:'GLOBAL'};renderPortfolio()});
+}
 function fetchLivePrice(t){
-  LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'Cargando...',nm:t,sc:'Global',ph:0};
+  LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'Cargando...',nm:t,sc:'Global',ph:0,mc:'GLOBAL'};
   renderPortfolio();
-  fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+encodeURIComponent(t)+'?interval=1d&range=5d')
-    .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
-    .then(function(d){
-      var m=d.chart.result[0].meta;
-      var p=m.regularMarketPrice,pc=m.chart.result[0].indicators.quote[0].close.filter(function(v){return v!==null});
-      var pp=pc.length>0?pc[pc.length-1]:p;
-      var ch=p-pp;
-      var pt=pp>0?((p-pp)/pp*100).toFixed(2):'0.00';
-      LD[t]={p:(p||0),ch:(ch||0),pc:parseFloat(pt),pr:50,cf:50,tg:p||0,an:'Precio en vivo via Yahoo Finance',nm:t,sc:'Global',ph:0};
-      renderPortfolio();
-    })
-    .catch(function(){
-      LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'No disponible - verifica el ticker',nm:t,sc:'Global',ph:0};
-      renderPortfolio();
-    });
+  // Try CORS proxy first, fallback to direct
+  var proxy='https://api.allorigins.win/raw?url=';
+  fetch(proxy+encodeURIComponent(yahooUrl(t)))
+    .then(function(r){if(!r.ok)throw Error();return r.json()})
+    .then(function(d){parseYahooResponse(d,t)})
+    .catch(function(){fetchYahooDirect(t)});
 }
 
 function tickerCard(t,d,isLive){
@@ -53,7 +59,11 @@ function tickerCard(t,d,isLive){
   var delB='<button class="del" onclick="eliminarDelPortafolio(\''+t+'\')">&times;</button>';
   var badge=PF.indexOf(t)>-1?'<span style="font-size:8px;background:#1b5e20;color:#fff;padding:1px 5px;border-radius:3px;margin-left:6px">S</span>':'<span style="font-size:8px;background:#e65100;color:#fff;padding:1px 5px;border-radius:3px;margin-left:6px">L</span>';
   var srcBadge=isLive?'<span style="font-size:8px;background:#1565c0;color:#fff;padding:1px 5px;border-radius:3px;margin-left:6px">YF</span>':'';
-  var header='<div class="tk">'+t+badge+srcBadge+'</div>';
+  var mc=d.mc||'GLOBAL';
+  var mcC=mcColors[mc]||'#9ca3af';
+  var mcL=mcLabels[mc]||mc;
+  var mktBadge='<span style="font-size:8px;background:'+mcC+';color:#0a0b0e;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:800">'+mcL+'</span>';
+  var header='<div class="tk">'+t+mktBadge+badge+srcBadge+'</div>';
   if(isLive){
     var prc=d.p>0?'<div class="pr" style="color:'+cc+'">$'+d.p.toFixed(2)+' <span style="font-size:10px;font-weight:400">'+sg+d.pc+'%</span></div>':'<div class="pr" style="color:#6b7280">'+d.an+'</div>';
     return '<div class="pfc">'+delB+header+'<div class="nm" style="color:#9ca3af">Precio en vivo</div>'+prc+'<div class="scm"><span class="sb" style="background:#37474f">Global</span></div></div>';
@@ -62,12 +72,16 @@ function tickerCard(t,d,isLive){
   var ndt=ND[t]||null;
   var nhtml='';
   if(ndt){
-    var nsc=ndt.sc>=0?'positivo':'negativo';
-    var nco=ndt.sc>=0.3?'#00c853':ndt.sc<-0.3?'#ff5252':'#ffc107';
-    nhtml='<div class="ns"><div class="nl">Noticia</div><div class="nt">'+ndt.t.substring(0,80)+'</div><div class="nsm" style="color:'+nco+'">'+nsc+' ('+ndt.sc+')</div></div>';
+    var scNum=typeof ndt.sc==='number'?ndt.sc:0;
+    var nsc=scNum>=0.01?'positivo':scNum<=-0.01?'negativo':'neutral';
+    var nco=scNum>=0.3?'#00c853':scNum<=-0.3?'#ff5252':'#ffc107';
+    nhtml='<div class="ns"><div class="nl">Noticia</div><div class="nt">'+ndt.t.substring(0,80)+'</div><div class="nsm" style="color:'+nco+'">'+nsc+' ('+scNum.toFixed(2)+')</div></div>';
   }
   var sbg=d.sc=='Semiconductores'?'#1565c0':d.sc=='Servidores IA'?'#e65100':d.sc=='Software IA'?'#00695c':d.sc=='Ciberseguridad'?'#b71c1c':d.sc=='Consumer Tech'?'#4a148c':'#37474f';
-  return '<div class="pfc">'+delB+header+'<div class="nm">'+d.nm+'</div><div class="pr" style="color:'+cc+'">$'+d.p+' <span style="font-size:10px;font-weight:400">'+sg+d.pc+'%</span></div><div class="scm"><span class="sb" style="background:'+sbg+'">'+d.sc.substring(0,12)+'</span><span style="color:#00c853;font-size:11px">$'+d.tg+'</span></div><div style="margin-top:4px"><div class="pb"><div class="pbb"><div class="pbf '+pbc+'" style="width:'+d.pr+'%"></div></div><span class="pt" style="color:'+cc+'">'+d.pr+'%</span></div></div>'+nhtml+'</div>';
+  var priceStr=typeof d.p==='number'?d.p.toFixed(2):d.p;
+  var pctStr=typeof d.pc==='number'?d.pc.toFixed(2):d.pc;
+  var tgStr=typeof d.tg==='number'?d.tg.toFixed(2):d.tg;
+  return '<div class="pfc">'+delB+header+'<div class="nm">'+d.nm+'</div><div class="pr" style="color:'+cc+'">$'+priceStr+' <span style="font-size:10px;font-weight:400">'+sg+pctStr+'%</span></div><div class="scm"><span class="sb" style="background:'+sbg+'">'+d.sc.substring(0,12)+'</span><span style="color:#00c853;font-size:11px">$'+tgStr+'</span></div><div style="margin-top:4px"><div class="pb"><div class="pbb"><div class="pbf '+pbc+'" style="width:'+d.pr+'%"></div></div><span class="pt" style="color:'+cc+'">'+d.pr+'%</span></div></div>'+nhtml+'</div>';
 }
 
 function renderPortfolio(){

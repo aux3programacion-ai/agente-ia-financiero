@@ -53,15 +53,37 @@ NEWS_PATH = os.path.join(DATA_DIR, 'Datos', 'noticias_recientes.json')
 SCREENING_PATH = os.path.join(DATA_DIR, 'Datos', 'screening_global.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
-# Load global screening to determine TICKERS to analyze
+# Load global screening to determine TICKERS to analyze (all markets)
+MAX_TICKERS_AI = 120
 TICKERS = list(TICKERS_CORE)
 if os.path.exists(SCREENING_PATH):
     try:
         scr = json.load(open(SCREENING_PATH))
         top50 = scr.get('top50_tickers', [])
-        merged = list(dict.fromkeys(top50 + TICKERS_CORE))
-        TICKERS = merged[:50]
-        print(f'[Screen] Cargados {len(top50)} screening + {len(TICKERS_CORE)} core = {len(TICKERS)} a analizar')
+        por_mercado = scr.get('por_mercado', {})
+
+        # Sample proportionally from each market
+        sampled = set(TICKERS_CORE)
+        remaining = MAX_TICKERS_AI - len(sampled)
+        if remaining > 0 and por_mercado:
+            # Distribute remaining slots proportionally
+            market_counts = {m: len(v) for m, v in por_mercado.items()}
+            total_extra = sum(market_counts.values())
+            for m in sorted(market_counts, key=lambda x: market_counts[x], reverse=True):
+                if remaining <= 0:
+                    break
+                # Exclude already included core tickers
+                candidates = [t['ticker'] for t in por_mercado[m] if t['ticker'] not in sampled]
+                alloc = max(1, int(remaining * market_counts[m] / total_extra))
+                for c in candidates[:alloc]:
+                    if len(sampled) >= MAX_TICKERS_AI:
+                        break
+                    sampled.add(c)
+                remaining = MAX_TICKERS_AI - len(sampled)
+
+        merged = list(dict.fromkeys(list(sampled)))
+        TICKERS = merged[:MAX_TICKERS_AI]
+        print(f'[Screen] Cargados {len(top50)} screening + {len(TICKERS_CORE)} core de {len(por_mercado)} mercados = {len(TICKERS)} a analizar')
     except Exception as e:
         print(f'[!] Error cargando screening: {e}')
 
@@ -195,7 +217,7 @@ def llamar_modelo(modelo, prompt):
             {'role': 'user', 'content': prompt}
         ],
         'temperature': 0.1,
-        'max_tokens': 2000
+        'max_tokens': 4000
     }).encode('utf-8')
     req = urllib.request.Request(url, data=payload,
         headers={

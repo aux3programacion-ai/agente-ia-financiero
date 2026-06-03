@@ -67,6 +67,22 @@ def main():
     with open(UNIV_FILE) as f:
         univ = json.load(f)
     todos = univ.get("todos", [])
+
+    # Build ticker-to-market mapping from market categories
+    market_labels = {
+        "sp500": "US",
+        "ipc_mexico": "MEXICO",
+        "dax": "EUROPA",
+        "nikkei": "ASIA",
+        "ftse": "EUROPA",
+        "hangseng": "ASIA",
+        "core_30": "US"
+    }
+    ticker_mercado = {}
+    for mercado, label in market_labels.items():
+        for t in univ.get(mercado, []):
+            ticker_mercado[t.upper()] = label
+
     print(f"[SCREENING] Evaluando {len(todos)} tickers...")
     resultados = []
     errores = 0
@@ -75,22 +91,34 @@ def main():
             print(f"  Progreso: {i+1}/{len(todos)} - OK: {len(resultados)} Err: {errores}")
         r = screen_ticker(t)
         if r:
+            r["mercado"] = ticker_mercado.get(t.upper(), "GLOBAL")
             resultados.append(r)
         else:
             errores += 1
         time.sleep(0.05)
     resultados.sort(key=lambda x: x['score'], reverse=True)
     top50 = resultados[:50]
+
+    # Group all results by market
+    por_mercado = {}
+    for r in resultados:
+        m = r.get("mercado", "GLOBAL")
+        por_mercado.setdefault(m, []).append(r)
+
     output = {
         "total_evaluados": len(todos),
         "con_datos": len(resultados),
         "errores": errores,
         "top50": top50,
-        "top50_tickers": [r['ticker'] for r in top50]
+        "top50_tickers": [r['ticker'] for r in top50],
+        "todos": resultados,
+        "por_mercado": por_mercado,
+        "total_por_mercado": {m: len(por_mercado[m]) for m in por_mercado}
     }
     with open(SCREENING_FILE, "w") as f:
         json.dump(output, f, indent=2)
-    print(f"[OK] Screening: {len(resultados)} con datos | Top 50 score minimo: {top50[-1]['score'] if top50 else 0}")
+    mercados_summary = ', '.join(f"{m}: {len(por_mercado[m])}" for m in sorted(por_mercado))
+    print(f"[OK] Screening: {len(resultados)} con datos | {mercados_summary}")
 
 if __name__ == "__main__":
     main()

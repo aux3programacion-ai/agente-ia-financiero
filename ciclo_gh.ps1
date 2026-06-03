@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 $HORA = Get-Date -Format "HH:mm"
 $FECHA = Get-Date -Format "yyyy-MM-dd"
 $FECHA_HUMANA = Get-Date -Format "dddd, d 'de' MMMM 'de' yyyy HH:mm"
-$BASE_DIR = $env:GITHUB_WORKSPACE
+$BASE_DIR = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
 $DATOS_DIR = "$BASE_DIR/Datos"
 $REPORTES_DIR = "$BASE_DIR/Reportes"
 New-Item -ItemType Directory -Path $DATOS_DIR -Force | Out-Null
@@ -66,10 +66,12 @@ if (Test-Path $iaPath) {
         # Use dynamic tickers from AI analysis (global universe)
         if ($iaData.tickers_analizados -and $iaData.tickers_analizados.Count -gt 0) {
             $TICKERS = @($iaData.tickers_analizados)
+        } elseif ($iaData.probabilidades) {
+            $TICKERS = @($iaData.probabilidades.PSObject.Properties.Name)
         }
         foreach ($t in $TICKERS) {
             if (-not $stockData.ContainsKey($t)) {
-                $stockData[$t] = @{ 'prob' = 50; 'conf' = 50; 'sector' = 'Global'; 'name' = $t; 'analisis' = ''; 'target_30d' = 0; 'target_3m' = 0; 'target_6m' = 0; 'target_1y' = 0; 'precision_hist' = 0.5; 'mercado' = 'US' }
+                $stockData[$t] = @{ 'prob' = 50; 'conf' = 50; 'sector' = 'Global'; 'name' = $t; 'analisis' = ''; 'target_30d' = 0; 'target_3m' = 0; 'target_6m' = 0; 'target_1y' = 0; 'precision_hist' = 0.5; 'mercado' = '' }
             }
             $iaInfo = $iaData.probabilidades.$t
             if ($iaInfo) {
@@ -88,8 +90,9 @@ if (Test-Path $iaPath) {
     } catch { Write-Output "[!] Error cargando analisis IA" }
 }
 
-# Cargar screening global para mercado/origen
+# Cargar screening global para mercado/origen (todos los mercados)
 $screeningPath = "$DATOS_DIR/screening_global.json"
+$screenPorMercado = @{}
 if (Test-Path $screeningPath) {
     try {
         $scrData = Get-Content $screeningPath -Raw | ConvertFrom-Json
@@ -97,7 +100,25 @@ if (Test-Path $screeningPath) {
         foreach ($s in $top50) {
             $tickerMercados[$s.ticker] = $s.mercado
         }
-    } catch {}
+        # Load full market-grouped data
+        if ($scrData.por_mercado) {
+            foreach ($m in $scrData.por_mercado.PSObject.Properties) {
+                $screenPorMercado[$m.Name] = $m.Value
+                foreach ($s in $m.Value) {
+                    if (-not $tickerMercados.ContainsKey($s.ticker)) {
+                        $tickerMercados[$s.ticker] = $s.mercado
+                    }
+                }
+            }
+        }
+        if ($scrData.todos) {
+            foreach ($s in $scrData.todos) {
+                if (-not $tickerMercados.ContainsKey($s.ticker)) {
+                    $tickerMercados[$s.ticker] = $s.mercado
+                }
+            }
+        }
+    } catch { Write-Output "[!] Error cargando screening global: $_" }
 }
 
 # Fallback: asignar defaults para tickers sin precio
@@ -133,6 +154,22 @@ $nameMap = @{
 $sectorDefaults = @{}; $nameDefaults = @{}
 foreach ($kv in $sectorMap.GetEnumerator()) { $sectorDefaults[$kv.Key] = $kv.Value }
 foreach ($kv in $nameMap.GetEnumerator()) { $nameDefaults[$kv.Key] = $kv.Value }
+# Expand TICKERS to include all screened tickers from all markets
+$allScreenedTickers = @()
+foreach ($m in $screenPorMercado.Keys) {
+    foreach ($s in $screenPorMercado[$m]) {
+        $allScreenedTickers += $s.ticker
+    }
+}
+$TICKERS = @($TICKERS + $allScreenedTickers | Select-Object -Unique)
+
+# Initialize stockData for any new tickers from screening
+foreach ($t in $TICKERS) {
+    if (-not $stockData.ContainsKey($t)) {
+        $stockData[$t] = @{ 'prob' = 50; 'conf' = 50; 'sector' = 'Global'; 'name' = $t; 'analisis' = ''; 'target_30d' = 0; 'target_3m' = 0; 'target_6m' = 0; 'target_1y' = 0; 'precision_hist' = 0.5; 'mercado' = '' }
+    }
+}
+
 foreach ($t in $TICKERS) {
     if ($sectorDefaults.ContainsKey($t)) { $stockData[$t]['sector'] = $sectorDefaults[$t] }
     if ($nameDefaults.ContainsKey($t)) { $stockData[$t]['name'] = $nameDefaults[$t] }
@@ -146,6 +183,23 @@ foreach ($t in $TICKERS) {
         $live = [math]::Round($base + (Get-Random -Minimum -$var -Maximum $var), 2)
         $chg = [math]::Round($live - $base, 2)
         $prices[$t] = @{ 'price' = $live; 'change' = $chg; 'pct' = [math]::Round(($chg / $base) * 100, 2) }
+    }
+    # Set market label: try AI analysis, then screening, then suffix-based fallback
+    if (-not $stockData[$t]['mercado'] -or $stockData[$t]['mercado'] -eq '') {
+        $mFromScreen = $tickerMercados[$t]
+        if ($mFromScreen) {
+            $stockData[$t]['mercado'] = $mFromScreen
+        } elseif ($t -match '\.MX$') {
+            $stockData[$t]['mercado'] = 'MEXICO'
+        } elseif ($t -match '\.DE$') {
+            $stockData[$t]['mercado'] = 'EUROPA'
+        } elseif ($t -match '\.L$') {
+            $stockData[$t]['mercado'] = 'EUROPA'
+        } elseif ($t -match '\.HK$|\.T$') {
+            $stockData[$t]['mercado'] = 'ASIA'
+        } else {
+            $stockData[$t]['mercado'] = 'US'
+        }
     }
 }
 
@@ -196,14 +250,23 @@ $globalPath = "$BASE_DIR/Bitacora_Aprendizaje.txt"
 if (-not (Test-Path $globalPath)) {
     Set-Content -Path $globalPath -Value "BITACORA GLOBAL - Inicializada $FECHA" -Force
 }
-Add-Content -Path $globalPath -Value "[$FECHA] CICLO 30T INTRA $HORA - IA: $aiModel - $($headlines.Count) titulares" -Force
-Write-Output "[OK] 30 bitacoras actualizadas"
+Add-Content -Path $globalPath -Value "[$FECHA] CICLO ${totalTickers}T INTRA $HORA - IA: $aiModel - $($headlines.Count) titulares" -Force
+Write-Output "[OK] $totalTickers bitacoras actualizadas"
+
+# Build sector groups (used in dashboard)
+$sectorGroups = @{}
+foreach ($t in $TICKERS) {
+    $sec = $stockData[$t]['sector']
+    if (-not $sectorGroups.ContainsKey($sec)) { $sectorGroups[$sec] = @() }
+    $sectorGroups[$sec] += $t
+}
 
 # ============================================================
 # PASO 4: DASHBOARD HTML
 # ============================================================
+$totalTickers = $TICKERS.Count
 $probSum = 0; foreach ($t in $TICKERS) { $probSum += $stockData[$t]['prob'] }
-$avgProb = [math]::Round($probSum / 30)
+$avgProb = if ($totalTickers -gt 0) { [math]::Round($probSum / $totalTickers) } else { 0 }
 $greenCount = 0; $redCount = 0
 foreach ($t in $TICKERS) { if ($prices[$t]['change'] -ge 0) { $greenCount++ } else { $redCount++ } }
 
@@ -216,27 +279,76 @@ $sectorCSS = @{
     'Movilidad/Tech'='smo'; 'Aeroespacial'='sae'; 'Consumo Defensivo'='sde'
     'Utilities/Energy'='sut'
 }
+# Market display names and colors
+$mercadoDisplay = @{
+    'MEXICO' = 'MEXICO'; 'US' = 'ESTADOS UNIDOS'; 'ASIA' = 'ASIA'
+    'EUROPA' = 'EUROPA'; 'GLOBAL' = 'GLOBAL'
+}
+$mercadoCSS = @{
+    'MEXICO' = 'mmx'; 'US' = 'mus'; 'ASIA' = 'mas'; 'EUROPA' = 'meu'; 'GLOBAL' = 'mgl'
+}
+$mercadoColors = @{
+    'MEXICO' = '#ffc107'; 'US' = '#00c853'; 'ASIA' = '#ff5252'; 'EUROPA' = '#64b5f6'; 'GLOBAL' = '#ce93d8'
+}
+$mercadoOrder = @('MEXICO', 'US', 'ASIA', 'EUROPA', 'GLOBAL')
 
-$tableRows = ""; $tickerItems = ""; $rank = 1
+# Generate market-grouped table rows
+$marketTableRows = @{}
+$marketCounts = @{}
+$tickerListByMarket = @{}
+foreach ($m in $mercadoOrder) {
+    $marketTableRows[$m] = ""
+    $marketCounts[$m] = 0
+    $tickerListByMarket[$m] = @()
+}
 foreach ($t in $TICKERS) {
-    $info = $stockData[$t]; $pr = $prices[$t]
-    $cc = if ($pr['change'] -ge 0) { 'gn' } else { 'rd' }
+    $m = $stockData[$t]['mercado']
+    if (-not $m) { $m = 'GLOBAL' }
+    if (-not $marketCounts.ContainsKey($m)) { $marketCounts[$m] = 0; $marketTableRows[$m] = ""; $tickerListByMarket[$m] = @() }
+    $tickerListByMarket[$m] += $t
+}
+foreach ($m in $mercadoOrder) {
+    if ($marketCounts.ContainsKey($m) -and $tickerListByMarket[$m].Count -gt 0) {
+        $sortedM = $tickerListByMarket[$m] | Sort-Object { $stockData[$_]['prob'] } -Descending
+        $marketCounts[$m] = $sortedM.Count
+        $rank = 1
+        foreach ($t in $sortedM) {
+            $info = $stockData[$t]; $pr = $prices[$t]
+            $cc = if ($pr['change'] -ge 0) { 'gn' } else { 'rd' }
+            $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
+            $rc = if ($rank -eq 1) { 'r1' } elseif ($rank -eq 2) { 'r2' } elseif ($rank -eq 3) { 'r3' } else { '' }
+            $sc = $sectorCSS[$info['sector']]
+            $pc = if ($info['prob'] -ge 65) { 'pb-h' } elseif ($info['prob'] -ge 58) { 'pb-m' } else { 'pb-l' }
+            $cf = if ($info['conf'] -ge 60) { 'cd-h' } elseif ($info['conf'] -ge 55) { 'cd-m' } else { 'cd-l' }
+            $ph = $info['precision_hist']
+            if ($ph -gt 0) { $phc = if ($ph -ge 0.7) { 'ph-h' } elseif ($ph -ge 0.5) { 'ph-m' } else { 'ph-l' } } else { $phc = 'ph-l'; $ph = 0 }
+            $phLabel = if ($ph -gt 0) { "$([math]::Round($ph * 100))%" } else { '--' }
+            $an = $info['analisis']
+            $titleAttr = if ($an) { " title=`"$an`"" } else { "" }
+            $marketTableRows[$m] += "<tr$titleAttr><td class=`"$rc`">$rank</td><td class=`"tk`">$t</td><td class=`"nm hm`">$($info['name'])</td><td><span class=`"sb $sc`">$($info['sector'])</span></td><td class=`"pr $cc`">`$$($pr['price'])</td><td class=`"ch $cc`">$sg`$$($pr['change'])</td><td class=`"ch $cc`">$sg$($pr['pct'])%</td><td><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`">$($info['prob'])%</span></div></td><td><div class=`"cc`"><span class=`"cd $cf`"></span>$($info['conf'])%</div></td><td class=`"ph $phc`">$phLabel</td></tr>"
+            $rank++
+        }
+    }
+}
+# Build ticker bar items (all tickers)
+$tickerItems = ""
+foreach ($t in $TICKERS) {
+    $pr = $prices[$t]
     $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
-    $rc = if ($rank -eq 1) { 'r1' } elseif ($rank -eq 2) { 'r2' } elseif ($rank -eq 3) { 'r3' } else { '' }
-    $sc = $sectorCSS[$info['sector']]
-    $pc = if ($info['prob'] -ge 65) { 'pb-h' } elseif ($info['prob'] -ge 58) { 'pb-m' } else { 'pb-l' }
-    $cf = if ($info['conf'] -ge 60) { 'cd-h' } elseif ($info['conf'] -ge 55) { 'cd-m' } else { 'cd-l' }
-    $ph = $info['precision_hist']
-    if ($ph -gt 0) {
-        $phc = if ($ph -ge 0.7) { 'ph-h' } elseif ($ph -ge 0.5) { 'ph-m' } else { 'ph-l' }
-    } else { $phc = 'ph-l'; $ph = 0 }
-    $phLabel = if ($ph -gt 0) { "$([math]::Round($ph * 100))%" } else { '--' }
-    $an = $info['analisis']
-    $titleAttr = if ($an) { " title=`"$an`"" } else { "" }
-    $tableRows += "<tr$titleAttr><td class=`"$rc`">$rank</td><td class=`"tk`">$t</td><td class=`"nm hm`">$($info['name'])</td><td><span class=`"sb $sc`">$($info['sector'])</span></td><td class=`"pr $cc`">`$$($pr['price'])</td><td class=`"ch $cc`">$sg`$$($pr['change'])</td><td class=`"ch $cc`">$sg$($pr['pct'])%</td><td><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`">$($info['prob'])%</span></div></td><td><div class=`"cc`"><span class=`"cd $cf`"></span>$($info['conf'])%</div></td><td class=`"ph $phc`">$phLabel</td></tr>"
     $tc = if ($pr['change'] -ge 0) { 'cup' } else { 'cdn' }
     $tickerItems += "<span class=`"ti`"><span class=`"sy`">$t</span><span class=`"prc`">`$$($pr['price'])</span><span class=`"$tc`">$sg$($pr['pct'])%</span></span>"
-    $rank++
+}
+# Build market summary strings
+$marketSummary = ""
+$marketStatsCards = ""
+foreach ($m in $mercadoOrder) {
+    if ($marketCounts.ContainsKey($m) -and $marketCounts[$m] -gt 0) {
+        $mcolor = $mercadoColors[$m]
+        $mdisplay = $mercadoDisplay[$m]
+        if ($marketSummary) { $marketSummary += " | " }
+        $marketSummary += "<span style='color:$mcolor;font-weight:700'>$mdisplay</span>: $($marketCounts[$m])"
+        $marketStatsCards += "<div class='sc'><div class='l' style='color:$mcolor'>$mdisplay</div><div class='v' style='color:$mcolor'>$($marketCounts[$m])</div></div>"
+    }
 }
 
 $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0b0e;color:#e8eaed}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0a0b0e}::-webkit-scrollbar-thumb{background:#2a2d35}.hdr{background:linear-gradient(135deg,#0d0e12,#14161b);border-bottom:1px solid #1e2028;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}.logo{width:36px;height:36px;background:linear-gradient(135deg,#00c853,#00e676);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#0a0b0e}.hl{display:flex;align-items:center;gap:16px}.ht{font-size:16px;font-weight:700}.hs{font-size:11px;color:#6b7280}.badge{font-size:11px;font-weight:600;color:#00c853;background:rgba(0,200,83,0.08);padding:4px 12px;border-radius:20px}.stats{display:flex;gap:12px;padding:12px 24px;background:#0d0e12;border-bottom:1px solid #1e2028;flex-wrap:wrap}.sc{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px 16px;flex:1;min-width:100px}.sc .l{font-size:10px;text-transform:uppercase;color:#6b7280}.sc .v{font-size:16px;font-weight:700}.resumen{background:linear-gradient(135deg,#0d0e12,#14161b);border-bottom:1px solid #1e2028;padding:12px 24px;font-size:13px;color:#9ca3af}.tc{padding:24px;overflow-x:auto}table{width:100%;border-collapse:separate}th{font-size:10px;font-weight:600;text-transform:uppercase;color:#6b7280;padding:10px 12px;text-align:left;border-bottom:1px solid #1e2028;background:#0a0b0e;position:sticky;top:0;z-index:2}td{padding:12px;font-size:13px;border-bottom:1px solid #15171d}tr:hover{background:rgba(0,200,83,0.03);cursor:default}.r1{color:#ffd700;font-weight:800}.r2{color:#c0c0c0;font-weight:800}.r3{color:#cd7f32;font-weight:800}.tk{font-weight:700}.nm{color:#9ca3af;font-size:12px}.pr{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.ch{font-weight:600;text-align:right}.gn{color:#00c853}.rd{color:#ff5252}.pb{display:flex;align-items:center;gap:8px}.pbb{flex:1;height:6px;background:#1e2028;border-radius:3px;overflow:hidden}.pbf{height:100%;border-radius:3px}.pb-h{background:linear-gradient(90deg,#00c853,#00e676)}.pb-m{background:linear-gradient(90deg,#ffc107,#ffd54f)}.pb-l{background:linear-gradient(90deg,#ff5252,#ff8a80)}.pt{font-weight:700;font-size:12px;min-width:36px;text-align:right}.cc{display:flex;align-items:center;gap:5px}.cd{width:5px;height:5px;border-radius:50%}.cd-h{background:#00c853}.cd-m{background:#ffc107}.cd-l{background:#ff5252}.ft{padding:16px 24px;border-top:1px solid #1e2028;font-size:10px;color:#4b5563;text-align:center}.tb{background:#0d0e12;border-bottom:1px solid #1e2028;padding:6px 0;overflow:hidden;white-space:nowrap}.tbi{display:inline-flex;gap:32px;animation:scroll 40s linear infinite}@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.ti{display:inline-flex;align-items:center;gap:6px;font-size:12px}.ti .sy{font-weight:600;color:#9ca3af}.ti .prc{font-weight:700}.cup{color:#00c853}.cdn{color:#ff5252}.sb{font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;font-weight:500;background:#1e2028;color:#9ca3af}.sa{background:rgba(0,200,83,0.1);color:#00c853}.ss{background:rgba(33,150,243,0.1);color:#64b5f6}.sw{background:rgba(156,39,176,0.1);color:#ce93d8}.sc{background:rgba(255,152,0,0.1);color:#ffb74d}.st{background:rgba(0,188,212,0.1);color:#4dd0e1}.sm{background:rgba(233,30,99,0.1);color:#f48fb1}.scu{background:rgba(63,81,181,0.1);color:#9fa8da}.scc{background:rgba(63,81,181,0.1);color:#9fa8da}.sci{background:rgba(63,81,181,0.1);color:#9fa8da}.scl{background:rgba(156,39,176,0.1);color:#ce93d8}.sce{background:rgba(63,81,181,0.1);color:#9fa8da}.sph{background:rgba(0,150,136,0.1);color:#80cbc4}.seq{background:rgba(0,200,83,0.1);color:#00c853}.scd{background:rgba(63,81,181,0.1);color:#9fa8da}.sin{background:rgba(121,85,72,0.1);color:#a1887f}.smo{background:rgba(121,85,72,0.1);color:#a1887f}.sae{background:rgba(121,85,72,0.1);color:#a1887f}.sde{background:rgba(255,87,34,0.1);color:#ffab91}.sut{background:rgba(255,193,7,0.1);color:#ffe082}
@@ -244,14 +356,13 @@ $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-syste
 .ph{font-size:11px;text-align:right;font-weight:600}.ph-h{color:#00c853}.ph-m{color:#ffc107}.ph-l{color:#6b7280}
 .fb{background:#0d0e12;border-bottom:1px solid #1e2028;padding:12px 24px}.fb summary{cursor:pointer;font-size:11px;font-weight:700;color:#00c853;display:flex;align-items:center;gap:6px}.fb pre{font-size:10px;color:#6b7280;line-height:1.5;margin-top:8px;white-space:pre-wrap;font-family:monospace}
 .t5{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.t5h{font-size:13px;font-weight:700;color:#00c853;margin-bottom:12px;display:flex;align-items:center;gap:8px}.t5h span{font-size:10px;color:#4b5563;font-weight:400}.t5g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}.t5c{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative;overflow:hidden}.t5c .rk{position:absolute;top:0;left:0;background:#00c853;color:#0a0b0e;font-size:10px;font-weight:800;padding:2px 8px;border-radius:0 0 6px 0}.t5c .tk{font-size:14px;font-weight:700;margin-top:6px}.t5c .nm{font-size:11px;color:#9ca3af;margin-bottom:4px}.t5c .pr{font-size:13px;font-weight:700}.t5c .tp{font-size:10px;color:#00c853;margin-top:2px;line-height:1.5}.t5c .an{font-size:10px;color:#6b7280;margin-top:6px;line-height:1.3}.t5c .pb{display:flex;align-items:center;gap:6px;margin-top:4px}.t5c .pb .pbb{flex:1;height:4px;background:#1e2028;border-radius:2px;overflow:hidden}.t5c .pb .pbf{height:100%;border-radius:2px}.t5c .pb .pt{font-size:11px;font-weight:700;min-width:30px;text-align:right}
-.pf{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.pfh{font-size:13px;font-weight:700;color:#e8eaed;margin-bottom:12px;display:flex;align-items:center;gap:8px}.pfh span{font-size:10px;color:#4b5563;font-weight:400}.pfi{display:flex;gap:8px;margin-bottom:12px}.pfi input{flex:1;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase}.pfi input:focus{border-color:#7c4dff}.pfi button{background:#7c4dff;border:none;border-radius:6px;padding:6px 16px;color:#fff;font-weight:700;font-size:18px;cursor:pointer}.pfi button:hover{background:#651fff}.pfl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.pfc{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative}.pfc .del{position:absolute;top:4px;right:6px;background:none;border:none;color:#6b7280;font-size:14px;cursor:pointer;padding:2px 4px}.pfc .del:hover{color:#ff5252}.pfc .tk{font-size:14px;font-weight:700}.pfc .nm{font-size:11px;color:#9ca3af;margin-bottom:2px}.pfc .pr{font-size:13px;font-weight:700}.pfc .scm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}.pfc .scm .sb{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600}.pfc .ns{margin-top:6px;padding-top:6px;border-top:1px solid #1e2028}.pfc .ns .nl{font-size:9px;color:#4b5563;text-transform:uppercase}.pfc .ns .nt{font-size:10px;color:#6b7280;line-height:1.3;margin-top:2px}.pfc .ns .nsm{font-size:9px;font-weight:600;margin-top:2px}.pfs{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}.pfs .pv{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px 14px;text-align:center}.pfs .pv .l{font-size:9px;text-transform:uppercase;color:#4b5563}.pfs .pv .v{font-size:15px;font-weight:700}"
+.pf{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.pfh{font-size:13px;font-weight:700;color:#e8eaed;margin-bottom:12px;display:flex;align-items:center;gap:8px}.pfh span{font-size:10px;color:#4b5563;font-weight:400}.pfi{display:flex;gap:8px;margin-bottom:12px}.pfi input{flex:1;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase}.pfi input:focus{border-color:#7c4dff}.pfi button{background:#7c4dff;border:none;border-radius:6px;padding:6px 16px;color:#fff;font-weight:700;font-size:18px;cursor:pointer}.pfi button:hover{background:#651fff}.pfl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.pfc{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative}.pfc .del{position:absolute;top:4px;right:6px;background:none;border:none;color:#6b7280;font-size:14px;cursor:pointer;padding:2px 4px}.pfc .del:hover{color:#ff5252}.pfc .tk{font-size:14px;font-weight:700}.pfc .nm{font-size:11px;color:#9ca3af;margin-bottom:2px}.pfc .pr{font-size:13px;font-weight:700}.pfc .scm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}.pfc .scm .sb{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600}.pfc .ns{margin-top:6px;padding-top:6px;border-top:1px solid #1e2028}.pfc .ns .nl{font-size:9px;color:#4b5563;text-transform:uppercase}.pfc .ns .nt{font-size:10px;color:#6b7280;line-height:1.3;margin-top:2px}.pfc .ns .nsm{font-size:9px;font-weight:600;margin-top:2px}.pfs{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}.pfs .pv{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px 14px;text-align:center}.pfs .pv .l{font-size:9px;text-transform:uppercase;color:#4b5563}.pfs .pv .v{font-size:15px;font-weight:700}
+.mnb{display:flex;gap:6px;padding:8px 24px;background:#0d0e12;border-bottom:1px solid #1e2028;flex-wrap:wrap}.mnb-btn{background:transparent;border:1px solid #444;border-radius:6px;padding:6px 14px;color:#e8eaed;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}.mnb-btn:hover{background:rgba(255,255,255,0.05)}.mc{margin:0 24px 16px}.mc-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#14161b;border-bottom:1px solid #1e2028;border-radius:8px 8px 0 0;margin-top:16px}.mc-hdr-txt{font-size:14px;font-weight:800;letter-spacing:0.5px}.mc-hdr-cnt{font-size:10px;color:#6b7280;font-weight:600}.ft{padding:16px 24px;text-align:center;font-size:10px;color:#4b5563;border-top:1px solid #1e2028}"
 
-$HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Top 30 - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
-$HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Top $($TICKERS.Count) Global - Probabilidad Alcista</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA | $($TICKERS.Count) tickers US/MX/EU/ASIA</div></div></div><div class=`"badge`">$(if ($aiRegimen) { $aiRegimen.ToUpper() } else { 'GLOBAL' })</div></header>"
+$HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Mercados Globales - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
+$HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Mercados Globales - $($TICKERS.Count) activos</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA | $marketSummary</div></div></div><div class=`"badge`">$(if ($aiRegimen) { $aiRegimen.ToUpper() } else { 'GLOBAL' })</div></header>"
 $HTML += "<div class=`"tb`"><div class=`"tbi`">$tickerItems $tickerItems</div></div>"
-$precColor = if ($precisionGlobal -ge 0.7) { '#00c853' } elseif ($precisionGlobal -ge 0.5) { '#ffc107' } else { '#ff5252' }
-$precLabel = if ($precisionGlobal -gt 0) { "$([math]::Round($precisionGlobal * 100))%" } else { '--' }
-$HTML += "<div class=`"stats`"><div class=`"sc`"><div class=`"l`">Activos</div><div class=`"v`">30</div></div><div class=`"sc`"><div class=`"l`">Prob. Promedio</div><div class=`"v`">$avgProb%</div></div><div class=`"sc`"><div class=`"l`">Verde</div><div class=`"v`" style=`"color:#00c853`">$greenCount</div></div><div class=`"sc`"><div class=`"l`">Rojo</div><div class=`"v`" style=`"color:#ff5252`">$redCount</div></div><div class=`"sc`"><div class=`"l`">Precision</div><div class=`"v`" style=`"color:$precColor;font-size:14px`">$precLabel</div></div><div class=`"sc`"><div class=`"l`">Regimen</div><div class=`"v`" style=`"font-size:12px;color:#64b5f6`">$(if ($aiRegimen) { $aiRegimen -replace '^-.*','' } else { '--' })</div></div><div class=`"sc`"><div class=`"l`">Modelo IA</div><div class=`"v`" style=`"font-size:12px;color:#ce93d8`">$aiModel</div></div></div>"
+$HTML += "<div class=`"stats`">$marketStatsCards</div>"
 if ($aiResumen) {
     $HTML += "<div class=`"resumen`">$aiResumen</div>"
 }
@@ -259,40 +370,36 @@ if ($aiResumen) {
 if ($aiFeedback) {
     $HTML += "<details class=`"fb`"><summary>APRENDIZAJE ACTIVO &rsaquo; Precision historica &amp; calibracion</summary><pre>$aiFeedback</pre></details>"
 }
-# Top 10 recomendaciones globales
-$numTop = [math]::Min(10, $TICKERS.Count)
-$sortedTop = $TICKERS | Sort-Object { $stockData[$_]['prob'] } -Descending
-$mercadoColors = @{'US'='#00c853';'MEXICO'='#ffc107';'EUROPA'='#64b5f6';'ASIA'='#ff5252';'GLOBAL'='#ce93d8'}
-$top10Html = "<div class=`"t5`"><div class=`"t5h`">TOP $numTop GLOBAL <span>Recomendaciones multi-mercado basadas en IA + tecnicos + noticias</span></div><div class=`"t5g`">"
-for ($i = 0; $i -lt $numTop; $i++) {
-    $t = $sortedTop[$i]
-    $info = $stockData[$t]; $pr = $prices[$t]
-    $cc = if ($pr['change'] -ge 0) { '#00c853' } else { '#ff5252' }
-    $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
-    $pc2 = if ($info['prob'] -ge 65) { 'pb-h' } elseif ($info['prob'] -ge 58) { 'pb-m' } else { 'pb-l' }
-    $an = $info['analisis']
-    if (-not $an -or $an -eq '') { $an = 'Sin analisis disponible' }
-    $tp30 = $info['target_30d']; $tp3m = $info['target_3m']; $tp6m = $info['target_6m']; $tp1y = $info['target_1y']
-    $prc = $pr['price']
-    if (-not $tp30 -or $tp30 -le 0) { $tp30 = $prc * (1 + ($info['prob'] - 50) / 200) }
-    if (-not $tp3m -or $tp3m -le 0) { $tp3m = $prc * (1 + ($info['prob'] - 50) / 150) }
-    if (-not $tp6m -or $tp6m -le 0) { $tp6m = $prc * (1 + ($info['prob'] - 50) / 100) }
-    if (-not $tp1y -or $tp1y -le 0) { $tp1y = $prc * (1 + ($info['prob'] - 50) / 80) }
-    $up30 = [math]::Round(($tp30 / $prc - 1) * 100, 1)
-    $up3m = [math]::Round(($tp3m / $prc - 1) * 100, 1)
-    $up6m = [math]::Round(($tp6m / $prc - 1) * 100, 1)
-    $up1y = [math]::Round(($tp1y / $prc - 1) * 100, 1)
-    $mercado = $info['mercado']
-    if (-not $mercado -or $mercado -eq '') { $mercado = 'US' }
-    $mcolor = $mercadoColors[$mercado]
-    if (-not $mcolor) { $mcolor = '#9ca3af' }
-    $ph = $info['precision_hist']
-    $phLabel = if ($ph -gt 0) { "Prec: $([math]::Round($ph * 100))%" } else { '' }
-    $phDiv = if ($phLabel) { "<div style=`"font-size:9px;color:#6b7280;margin-top:4px`">$phLabel</div>" } else { '' }
-    $top10Html += "<div class=`"t5c`"><div class=`"rk`">#$($i+1)</div><div class=`"tk`">$t <span style=`"font-size:9px;color:$mcolor;font-weight:600;margin-left:4px`">$mercado</span></div><div class=`"nm`">$($info['name'])</div><div class=`"pr`" style=`"color:$cc`">`$$($prc) <span style=`"font-size:11px;font-weight:400`">$sg$($pr['pct'])%</span></div><div class=`"tp`" style=`"font-size:10px;line-height:1.5`">30d: `$$([math]::Round($tp30,2)) (+$up30%) | 3m: `$$([math]::Round($tp3m,2)) (+$up3m%)<br>6m: `$$([math]::Round($tp6m,2)) (+$up6m%) | 1y: `$$([math]::Round($tp1y,2)) (+$up1y%)</div><div class=`"an`">$an</div><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc2`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`" style=`"color:$cc`">$($info['prob'])%</span></div>$phDiv</div>"
+# Top picks by market
+$topPicksHtml = ""
+foreach ($m in $mercadoOrder) {
+    if ($marketCounts.ContainsKey($m) -and $marketCounts[$m] -gt 0) {
+        $sortedM = $tickerListByMarket[$m] | Sort-Object { $stockData[$_]['prob'] } -Descending
+        $mcolor = $mercadoColors[$m]
+        $mdisplay = $mercadoDisplay[$m]
+        $n = [math]::Min(5, $sortedM.Count)
+        $topPicksHtml += "<div class=`"t5`"><div class=`"t5h`" style=`"color:$mcolor`">TOP $n $mdisplay <span style=`"color:$mcolor!important`">Mejores probabilidades del mercado</span></div><div class=`"t5g`">"
+        for ($i = 0; $i -lt $n; $i++) {
+            $t = $sortedM[$i]
+            $info = $stockData[$t]; $pr = $prices[$t]
+            $cc = if ($pr['change'] -ge 0) { '#00c853' } else { '#ff5252' }
+            $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
+            $pc2 = if ($info['prob'] -ge 65) { 'pb-h' } elseif ($info['prob'] -ge 58) { 'pb-m' } else { 'pb-l' }
+            $an = $info['analisis']
+            if (-not $an -or $an -eq '') { $an = 'Sin analisis disponible' }
+            $tp30 = $info['target_30d']
+            $prc = $pr['price']
+            if (-not $tp30 -or $tp30 -le 0) { $tp30 = $prc * (1 + ($info['prob'] - 50) / 200) }
+            $up30 = [math]::Round(($tp30 / $prc - 1) * 100, 1)
+            $ph = $info['precision_hist']
+            $phLabelN = if ($ph -gt 0) { "Prec: $([math]::Round($ph * 100))%" } else { '' }
+            $phDivN = if ($phLabelN) { "<div style=`"font-size:9px;color:#6b7280;margin-top:4px`">$phLabelN</div>" } else { '' }
+            $topPicksHtml += "<div class=`"t5c`"><div class=`"rk`">#$($i+1)</div><div class=`"tk`">$t</div><div class=`"nm`">$($info['name'])</div><div class=`"pr`" style=`"color:$cc`">`$$($prc) <span style=`"font-size:11px;font-weight:400`">$sg$($pr['pct'])%</span></div><div class=`"tp`">30d: `$$([math]::Round($tp30,2)) (+$up30%)</div><div class=`"an`">$an</div><div class=`"pb`"><div class=`"pbb`"><div class=`"pbf $pc2`" style=`"width:$($info['prob'])%`"></div></div><span class=`"pt`" style=`"color:$cc`">$($info['prob'])%</span></div>$phDivN</div>"
+        }
+        $topPicksHtml += "</div></div>"
+    }
 }
-$top10Html += "</div></div>"
-$HTML += $top10Html
+$HTML += $topPicksHtml
 
 # Build embedded data for portfolio JS
 $pfData = @{}
@@ -300,6 +407,7 @@ foreach ($t in $TICKERS) {
     $pr = $prices[$t]; $info = $stockData[$t]
     $tp = $info['target_30d']
     if (-not $tp -or $tp -le 0) { $tp = $pr['price'] * (1 + ($info['prob'] - 50) / 200) }
+    $prc = $pr['price']
     $tp30f = $info['target_30d']; $tp3mf = $info['target_3m']; $tp6mf = $info['target_6m']; $tp1yf = $info['target_1y']
     if (-not $tp30f -or $tp30f -le 0) { $tp30f = $prc * (1 + ($info['prob'] - 50) / 200) }
     if (-not $tp3mf -or $tp3mf -le 0) { $tp3mf = $prc * (1 + ($info['prob'] - 50) / 150) }
@@ -319,8 +427,8 @@ if (Test-Path $newsPath) {
             if ($nd -and $nd.noticias) {
                 $notis = @()
                 foreach ($n in $nd.noticias) {
-                    $st = if ($nd.sentimiento) { $nd.sentimiento.sentimiento } else { '' }
-                    $ss = if ($nd.sentimiento) { $nd.sentimiento.score } else { '' }
+                    $st = if ($nd.sentimiento -and $nd.sentimiento.sentimiento) { $nd.sentimiento.sentimiento } else { 'neutral' }
+                    $ss = if ($nd.sentimiento -and $nd.sentimiento.score -ne '') { $nd.sentimiento.score } else { 0 }
                     $notis += @{t=$n.titulo;s=$st;sc=$ss}
                 }
                 if ($notis.Count -gt 0) { $newsForJs[$t] = $notis[0] }
@@ -348,15 +456,40 @@ $HTML += "<div class=`"pfi`"><input type=`"text`" id=`"pfInput`" placeholder=`"E
 $HTML += "<div class=`"pfs`" id=`"pfStats`"></div>"
 $HTML += "<div id=`"pfStatus`"></div>"
 $HTML += "<div class=`"pfl`" id=`"pfList`"><div style=`"color:#4b5563;font-size:12px;grid-column:1/-1;text-align:center;padding:20px`">Agrega tickers arriba para seguir su probabilidad en tiempo real</div></div></div>"
-$HTML += "<div class=`"sbar`"><input type=`"text`" id=`"searchInput`" placeholder=`"Buscar ticker, compania o sector...`" oninput=`"filtrarTabla()`"><select id=`"sectorFilter`" onchange=`"filtrarTabla()`"><option value=`"`">Todos los sectores</option>"
+# Build market navigation tabs + search bar
+$mercadoNav = "<div class=`"mnb`"><button class=`"mnb-btn`" style=`"border-color:#00c853;color:#00c853`" onclick=`"mostrarTodos()`">TODOS</button>"
+foreach ($m in $mercadoOrder) {
+    if ($marketCounts.ContainsKey($m) -and $marketCounts[$m] -gt 0) {
+        $mcolor = $mercadoColors[$m]
+        $mdisplay = $mercadoDisplay[$m]
+        $mercadoNav += "<button class=`"mnb-btn`" data-market=`"$m`" style=`"border-color:$mcolor;color:$mcolor`" onclick=`"showMercado('$m')`">$mdisplay ($($marketCounts[$m]))</button>"
+    }
+}
+$mercadoNav += "</div>"
+
+# Build search bar with market filter
+$HTML += "<div class=`"sbar`"><input type=`"text`" id=`"searchInput`" placeholder=`"Buscar ticker, compania o sector...`" oninput=`"filtrarMercados()`"><select id=`"sectorFilter`" onchange=`"filtrarMercados()`"><option value=`"`">Todos los sectores</option>"
 $sectoresUnicos = $sectorGroups.Keys | Sort-Object
 foreach ($s in $sectoresUnicos) { $HTML += "<option value=`"$s`">$s</option>" }
-$HTML += "</select><span class=`"rcount`" id=`"resultCount`">30/30</span></div>"
-$HTML += "<div class=`"tc`"><table><thead><tr><th>#</th><th>Ticker</th><th class=`"hm`">Compania</th><th>Sector</th><th style=`"text-align:right`">Precio</th><th style=`"text-align:right`">Cambio</th><th style=`"text-align:right`">%</th><th style=`"text-align:right`">Prob.</th><th>Conf.</th><th style=`"text-align:right`">Prec.H</th></tr></thead><tbody>$tableRows</tbody></table></div>"
+$HTML += "</select><select id=`"mercadoFilter`" onchange=`"filtrarMercados()`"><option value=`"`">Todos los mercados</option>"
+foreach ($m in $mercadoOrder) { if ($marketCounts.ContainsKey($m) -and $marketCounts[$m] -gt 0) { $HTML += "<option value=`"$m`">$($mercadoDisplay[$m])</option>" } }
+$HTML += "</select><span class=`"rcount`" id=`"resultCount`">$($TICKERS.Count)/$($TICKERS.Count)</span></div>"
+$HTML += $mercadoNav
+
+# Build market-grouped tables
+foreach ($m in $mercadoOrder) {
+    if ($marketCounts.ContainsKey($m) -and $marketCounts[$m] -gt 0) {
+        $mcolor = $mercadoColors[$m]
+        $mdisplay = $mercadoDisplay[$m]
+        $rows = $marketTableRows[$m]
+        $HTML += "<div class=`"mc`" id=`"mc-$m`"><div class=`"mc-hdr`" style=`"border-left:4px solid $mcolor`"><span class=`"mc-hdr-txt`" style=`"color:$mcolor`">$mdisplay</span><span class=`"mc-hdr-cnt`">$($marketCounts[$m]) activos</span></div>"
+        $HTML += "<div class=`"tc`"><table><thead><tr><th>#</th><th>Ticker</th><th class=`"hm`">Compania</th><th>Sector</th><th style=`"text-align:right`">Precio</th><th style=`"text-align:right`">Cambio</th><th style=`"text-align:right`">%</th><th style=`"text-align:right`">Prob.</th><th>Conf.</th><th style=`"text-align:right`">Prec.H</th></tr></thead><tbody>$rows</tbody></table></div></div>"
+    }
+}
 $HTML += "<div class=`"ft`">IA: $aiModel | Precios: $dataSource | $FECHA_HUMANA | $($TICKERS.Count) tickers globales | Generado por IA. No constituye asesoramiento financiero.</div>"
+$HTML += "<script>function showMercado(m){document.querySelectorAll('.mc').forEach(function(e){e.style.display=e.id==='mc-'+m?'block':'none'});document.querySelectorAll('.mnb-btn').forEach(function(b){b.style.opacity=b.getAttribute('data-market')===m?'1':'0.4'});}function mostrarTodos(){document.querySelectorAll('.mc').forEach(function(e){e.style.display='block'});document.querySelectorAll('.mnb-btn').forEach(function(b){b.style.opacity='1'});}function filtrarMercados(){var q=document.getElementById('searchInput').value.toUpperCase();var s=document.getElementById('sectorFilter').value;var mf=document.getElementById('mercadoFilter').value;var total=0;var vis=0;document.querySelectorAll('.mc').forEach(function(mc){var mercadoId=mc.id.replace('mc-','');if(mf!==''&&mercadoId!==mf){mc.style.display='none';return}mc.style.display='block';var rows=mc.querySelectorAll('tbody tr');var cv=0;rows.forEach(function(r){var tk=r.cells[1].textContent.toUpperCase();var nm=r.cells[2].textContent.toUpperCase();var sc=r.cells[3].textContent;var match=q===''||tk.includes(q)||nm.includes(q)||sc.toUpperCase().includes(q);if(s!==''&&sc!==s)match=false;r.style.display=match?'':'none';if(match)cv++});if(cv===0)mc.style.display='none';vis+=cv;total+=rows.length});document.getElementById('resultCount').textContent=vis+'/'+total;}</script>"
 $HTML += "<script src=`"./data.js`"></script>"
 $HTML += "<script src=`"./portfolio.js`"></script>"
-$HTML += "<script>function filtrarTabla(){var q=document.getElementById('searchInput').value.toUpperCase();var s=document.getElementById('sectorFilter').value;var rows=document.querySelectorAll('tbody tr');var v=0;rows.forEach(function(r){var tk=r.cells[1].textContent.toUpperCase();var nm=r.cells[2].textContent.toUpperCase();var sc=r.cells[3].textContent;var match=q===''||tk.includes(q)||nm.includes(q)||sc.toUpperCase().includes(q);if(s!==''&&sc!==s)match=false;r.style.display=match?'':'none';if(match)v++;});document.getElementById('resultCount').textContent=v+'/'+rows.length;}</script>"
 $HTML += "</body></html>"
 
 $dataJs = "var PD=$pfJson;var ND=$newsJson;var PF=$pfFileJson;"
@@ -368,27 +501,22 @@ Write-Output "[OK] Dashboard: $($HTML.Length) bytes | data.js: $($dataJs.Length)
 # ============================================================
 # PASO 5: REPORTE TEXTO
 # ============================================================
-$sectorGroups = @{}
-foreach ($t in $TICKERS) {
-    $sec = $stockData[$t]['sector']
-    if (-not $sectorGroups.ContainsKey($sec)) { $sectorGroups[$sec] = @() }
-    $sectorGroups[$sec] += $t
-}
 $sectorSummary = ($sectorGroups.Keys | ForEach-Object { "$($_): $($sectorGroups[$_].Count)" }) -join ', '
 
-$reporte = "REPORTE 30 TICKERS - $FECHA_HUMANA`n"
+$reporte = "REPORTE $totalTickers TICKERS - $FECHA_HUMANA`n"
 $reporte += "Modelo IA: $aiModel | Precios: $dataSource`n`n"
 $reporte += "RESUMEN IA:`n  $aiResumen`n`n"
 $reporte += "NOTICIAS:`n"
 foreach ($h in $headlines) { $reporte += "  $h`n" }
-$reporte += "`nPORTAFOLIO 30 TICKERS:`n"
+$reporte += "`nPORTAFOLIO $totalTickers TICKERS:`n"
 $reporte += "  Sectores: $sectorSummary`n"
 $reporte += "  Probabilidad promedio: $avgProb%`n"
 $reporte += "  Verdes: $greenCount | Rojos: $redCount`n"
 
 $sorted = $TICKERS | Sort-Object { $stockData[$_]['prob'] } -Descending
-$reporte += "`nRanking Top 5:`n"
-for ($i = 0; $i -lt 5; $i++) {
+$nTop = [math]::Min(5, $totalTickers)
+$reporte += "`nRanking Top ${nTop}:`n"
+for ($i = 0; $i -lt $nTop; $i++) {
     $t = $sorted[$i]
     $an = $stockData[$t]['analisis']
     $tp = $stockData[$t]['target_30d']
@@ -397,15 +525,16 @@ for ($i = 0; $i -lt 5; $i++) {
     $up = [math]::Round(($tp / $prc - 1) * 100, 1)
     $reporte += "  #$($i+1) $t (Prob: $($stockData[$t]['prob'])%) - Objetivo: `$$([math]::Round($tp,2)) (+$up% 30d) - $an`n"
 }
-$reporte += "`nRanking Bottom 5:`n"
-for ($i = 29; $i -ge 25; $i--) {
+$nBottom = [math]::Min(5, $totalTickers)
+$reporte += "`nRanking Bottom ${nBottom}:`n"
+for ($i = $totalTickers - 1; $i -ge ($totalTickers - $nBottom); $i--) {
     $t = $sorted[$i]
     $an = $stockData[$t]['analisis']
     $reporte += "  #$($i+1) $t (Prob: $($stockData[$t]['prob'])%) - $an`n"
 }
 $reporte += "`n--- Generado por IA ($aiModel). No constituye asesoramiento financiero. ---"
 
-$reporteFile = "$REPORTES_DIR/Reporte_30T_$FECHA`_$($HORA -replace ':','').txt"
+$reporteFile = "$REPORTES_DIR/Reporte_${totalTickers}T_$FECHA`_$($HORA -replace ':','').txt"
 Set-Content -Path $reporteFile -Value $reporte -Force
 Write-Output "[OK] Reporte: Reporte_30T_$FECHA`_$($HORA -replace ':','').txt"
 Write-Output "[$FECHA $HORA] === CICLO 30 TICKERS COMPLETADO ==="
