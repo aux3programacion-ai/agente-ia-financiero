@@ -952,15 +952,14 @@ setInterval(up,45000);})();
 $HTML += "<script src=`"./data.js`"></script>"
 $HTML += "<script src=`"./portfolio.js`"></script>"
 $HTML += $LIVE_SCRIPT
-$HTML += "<script>
+$TAB_SCRIPT = @'
+<script>
 document.addEventListener('DOMContentLoaded',function(){
 var TB=document.getElementById('tabBar');
 var tabs={},order=['resumen','mercados','analisis','riesgo','datos','portafolio','noticias'];
 var tabNames={resumen:'Resumen',mercados:'Mercados',analisis:'Analisis',riesgo:'Riesgo',datos:'Datos',portafolio:'Portafolio',noticias:'Noticias'};
-var tabIcons={resumen:'01',mercados:'02',analisis:'03',riesgo:'04',datos:'05',portafolio:'06',noticias:'07'};
-
-function getTabId(section){
-var h=section.querySelector('.t5h,.pfh,.mc-hdr-txt');
+function getTabId(s){
+var h=s.querySelector('.t5h,.pfh,.mc-hdr-txt');
 if(!h)return null;
 var t=h.textContent.toUpperCase();
 if(t.includes('INTELIGENCIA')||t.includes('CALENDARIO')||t.includes('PATRONES')||t.includes('SENTIMIENTO')||t.includes('GRAFICO')||t.includes('COMPARADOR')||t.includes('REBALANCEO'))return 'analisis';
@@ -971,73 +970,41 @@ if(t.includes('NOTICIA')||t.includes('GENERALE'))return 'noticias';
 if(t.includes('TOP ')||t.includes('MEJORES'))return 'mercados';
 return null;
 }
-
-// Create tab containers
 order.forEach(function(id){var d=document.createElement('div');d.id='tab-'+id;d.className='tab-content';document.body.appendChild(d);tabs[id]=d});
-
-// Move sections into tabs
-document.querySelectorAll('.t5').forEach(function(s){
-var tid=getTabId(s)||'mercados';
-tabs[tid].appendChild(s);
-});
-document.querySelectorAll('.pf').forEach(function(s){tabs['portafolio'].appendChild(s)});
-document.querySelectorAll('.sbar,.mnb,.mc').forEach(function(s){tabs['mercados'].appendChild(s)});
-document.querySelectorAll('.stats,.resumen,.fb').forEach(function(s){tabs['resumen'].appendChild(s)});
-var ft=document.querySelector('.ft');if(ft)tabs['resumen'].appendChild(ft);
-var tickerBar=document.querySelector('.tb');if(tickerBar)tabs['resumen'].insertBefore(tickerBar,tabs['resumen'].firstChild);
-
-// Add collapse toggle to all .t5h
+document.querySelectorAll('.t5').forEach(function(s){var tg=getTabId(s)||'mercados';tabs[tg].appendChild(s)});
+document.querySelectorAll('.pf').forEach(function(s){tabs.portafolio.appendChild(s)});
+document.querySelectorAll('.sbar,.mnb,.mc').forEach(function(s){tabs.mercados.appendChild(s)});
+document.querySelectorAll('.stats,.resumen,.fb').forEach(function(s){tabs.resumen.appendChild(s)});
+var ft=document.querySelector('.ft');if(ft)tabs.resumen.appendChild(ft);
+var tbar=document.querySelector('.tb');if(tbar)tabs.resumen.insertBefore(tbar,tabs.resumen.firstChild);
 document.querySelectorAll('.t5').forEach(function(sec){
-var h=sec.querySelector('.t5h,.pfh');
-if(!h)return;
-var arrow=document.createElement('span');
-arrow.className='t5h-arrow';arrow.textContent='▼';
-arrow.style.cssText='font-size:8px;color:#4b5563;transition:transform .2s;display:inline-block;margin-right:6px';
-h.insertBefore(arrow,h.firstChild);
-var count=sec.querySelectorAll('.t5c,.pfc').length;
-if(count>0){var badge=document.createElement('span');badge.className='badge-ct';badge.textContent=count;badge.style.cssText='background:rgba(255,255,255,0.06);color:#6b7280;font-size:9px;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:8px';h.appendChild(badge)}
+var h=sec.querySelector('.t5h,.pfh');if(!h)return;
+var a=document.createElement('span');a.textContent='\u25bc';a.style.cssText='font-size:8px;color:#4b5563;transition:transform .2s;display:inline-block;margin-right:6px';
+h.insertBefore(a,h.firstChild);
+var c=sec.querySelectorAll('.t5c,.pfc').length;
+if(c>0){var b=document.createElement('span');b.textContent=c;b.style.cssText='background:rgba(255,255,255,0.06);color:#6b7280;font-size:9px;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:8px';h.appendChild(b)}
 h.style.cursor='pointer';
-h.addEventListener('click',function(e){
-if(e.target.tagName==='A')return;
-var collapsed=h.classList.toggle('collapsed');
-arrow.style.transform=collapsed?'rotate(-90deg)':'rotate(0deg)';
-var sib=h.nextElementSibling;
-while(sib){sib.style.display=collapsed?'none':'';sib=sib.nextElementSibling}
+h.addEventListener('click',function(e){if(e.target.tagName==='A')return;var cl=h.classList.toggle('collapsed');a.style.transform=cl?'rotate(-90deg)':'rotate(0deg)';var sib=h.nextElementSibling;while(sib){sib.style.display=cl?'none':'';sib=sib.nextElementSibling}});
 });
-});
-
-// Hide all empty tabs
-order.forEach(function(id){
-if(tabs[id].children.length===0){tabs[id].style.display='none'}
-});
-
-// Create tab buttons
-order.forEach(function(id){
-if(tabs[id].children.length===0)return;
-var btn=document.createElement('button');
-btn.className='tab-btn';
-btn.textContent=tabIcons[id]+' '+tabNames[id];
-var cnt=tabs[id].querySelectorAll('.t5c,.pfc,.mc').length;
-var sc=tabs[id].querySelectorAll('.sc').length;
-if(cnt>0)btn.textContent+=' ('+cnt+')';
+order.forEach(function(id){if(tabs[id].children.length===0)tabs[id].style.display='none'});
+order.forEach(function(id){if(tabs[id].children.length===0)return;
+var btn=document.createElement('button');btn.className='tab-btn';btn.textContent=id.charAt(0).toUpperCase()+id.slice(1);
+var cnt=tabs[id].querySelectorAll('.t5c,.pfc,.mc').length;if(cnt>0)btn.textContent+=' ('+cnt+')';
 btn.addEventListener('click',function(){
 document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
 document.querySelectorAll('.tab-content').forEach(function(tc){tc.classList.remove('active')});
-btn.classList.add('active');
-tabs[id].classList.add('active');
+btn.classList.add('active');tabs[id].classList.add('active');
 });
 TB.appendChild(btn);
 });
-
-// Activate first visible tab
 var first=order.find(function(id){return tabs[id].children.length>0});
-if(first){var btns=TB.querySelectorAll('.tab-btn');btns[0].click()}
-
-// Reorganize portfolio section into portafolio tab
-var pfi=document.querySelector('.pfi');if(pfi&&pfi.parentElement&&pfi.parentElement.classList.contains('pf'))tabs['portafolio'].insertBefore(pfi.parentElement,tabs['portafolio'].firstChild);
-var compEl=document.querySelector('#compChart');if(compEl)tabs['analisis'].appendChild(compEl.closest('.t5')||compEl.parentElement);
+if(first){var btns=TB.querySelectorAll('.tab-btn');if(btns.length>0)btns[0].click()}
+var pfi=document.querySelector('.pfi');if(pfi&&pfi.parentElement&&pfi.parentElement.classList.contains('pf'))tabs.portafolio.insertBefore(pfi.parentElement,tabs.portafolio.firstChild);
+var compEl=document.querySelector('#compChart');if(compEl)tabs.analisis.appendChild(compEl.closest('.t5')||compEl.parentElement);
 });
 </script>
+'@
+$HTML += $TAB_SCRIPT
 $HTML += "</body></html>"
 
 $dataJs = "var PD=$pfJson;var ND=$newsJson;var PF=$pfFileJson;"
