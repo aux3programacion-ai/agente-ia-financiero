@@ -34,14 +34,15 @@ $precisionGlobal = 0
 $totalEvaluado = 0
 $tickerMercados = @{}
 
-# Cargar precios reales
+# Cargar precios reales (load ALL prices first, regardless of TICKERS being empty)
 $jsonPath = "$DATOS_DIR/precios_reales.json"
 if (Test-Path $jsonPath) {
     try {
         $realData = Get-Content $jsonPath -Raw | ConvertFrom-Json
         $dataSource = $realData.fuente
-        foreach ($t in $TICKERS) {
-            $pd = $realData.precios.$t
+        foreach ($tProp in $realData.precios.PSObject.Properties) {
+            $t = $tProp.Name
+            $pd = $tProp.Value
             if ($pd) {
                 $prices[$t] = @{ 'price' = $pd.price; 'change' = $pd.change; 'pct' = $pd.pct }
             }
