@@ -314,6 +314,7 @@ foreach ($m in $mercadoOrder) {
         $rank = 1
         foreach ($t in $sortedM) {
             $info = $stockData[$t]; $pr = $prices[$t]
+            if (-not $pr) { $pr = @{ 'price' = 0; 'change' = 0; 'pct' = 0 } }
             $cc = if ($pr['change'] -ge 0) { 'gn' } else { 'rd' }
             $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
             $rc = if ($rank -eq 1) { 'r1' } elseif ($rank -eq 2) { 'r2' } elseif ($rank -eq 3) { 'r3' } else { '' }
@@ -334,6 +335,7 @@ foreach ($m in $mercadoOrder) {
 $tickerItems = ""
 foreach ($t in $TICKERS) {
     $pr = $prices[$t]
+    if (-not $pr) { $pr = @{ 'price' = 0; 'change' = 0; 'pct' = 0 } }
     $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
     $tc = if ($pr['change'] -ge 0) { 'cup' } else { 'cdn' }
     $tickerItems += "<span class=`"ti`"><span class=`"sy`">$t</span><span class=`"prc`">`$$($pr['price'])</span><span class=`"$tc`">$sg$($pr['pct'])%</span></span>"
@@ -382,6 +384,7 @@ foreach ($m in $mercadoOrder) {
         for ($i = 0; $i -lt $n; $i++) {
             $t = $sortedM[$i]
             $info = $stockData[$t]; $pr = $prices[$t]
+            if (-not $pr) { $pr = @{ 'price' = 0; 'change' = 0; 'pct' = 0 } }
             $cc = if ($pr['change'] -ge 0) { '#00c853' } else { '#ff5252' }
             $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
             $pc2 = if ($info['prob'] -ge 65) { 'pb-h' } elseif ($info['prob'] -ge 58) { 'pb-m' } else { 'pb-l' }
@@ -389,6 +392,7 @@ foreach ($m in $mercadoOrder) {
             if (-not $an -or $an -eq '') { $an = 'Sin analisis disponible' }
             $tp30 = $info['target_30d']
             $prc = $pr['price']
+            if ($prc -le 0) { $prc = 100 }
             if (-not $tp30 -or $tp30 -le 0) { $tp30 = $prc * (1 + ($info['prob'] - 50) / 200) }
             $up30 = [math]::Round(($tp30 / $prc - 1) * 100, 1)
             $ph = $info['precision_hist']
