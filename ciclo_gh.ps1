@@ -406,6 +406,99 @@ foreach ($m in $mercadoOrder) {
 }
 $HTML += $topPicksHtml
 
+# ============================================================
+# PANEL DE INTELIGENCIA (precision global, sectores, evolucion semanal)
+# ============================================================
+$panelHtml = ''
+$calibPath = "$DATOS_DIR/calibracion.json"
+$predHistPath = "$DATOS_DIR/predicciones_hist.json"
+if (Test-Path $calibPath) {
+    try {
+        $cal = Get-Content $calibPath -Raw | ConvertFrom-Json
+        $precG = [math]::Round($cal.precision_ponderada * 100, 1)
+        $precSimple = [math]::Round($cal.precision_global * 100, 1)
+        
+        # Sector precision (top 3 / bottom 3)
+        $sectores = @()
+        foreach ($s in $cal.sectores.PSObject.Properties) {
+            $sv = $s.Value
+            $sectores += [PSCustomObject]@{nombre=$s.Name; precision=[math]::Round($sv.precision * 100, 1); aciertos=$sv.aciertos; total=$sv.total}
+        }
+        $sectores = $sectores | Sort-Object precision -Descending
+        $topS = $sectores | Select-Object -First 3
+        $bottomS = $sectores | Select-Object -Last 3
+        
+        # Weekly evolution from prediction history
+        $evolDias = @()
+        if (Test-Path $predHistPath) {
+            $ph = Get-Content $predHistPath -Raw | ConvertFrom-Json
+            $todasPreds = @()
+            foreach ($tk in $ph.PSObject.Properties) {
+                foreach ($p in $tk.Value.predicciones) {
+                    $todasPreds += $p
+                }
+            }
+            $porFecha = $todasPreds | Group-Object fecha
+            foreach ($gf in $porFecha) {
+                $total = $gf.Count
+                $acertadas = ($gf.Group | Where-Object { $_.resultado -eq $true -or $_.acertada -eq $true }).Count
+                $precDia = if ($total -gt 0) { [math]::Round($acertadas / $total * 100, 1) } else { 0 }
+                $evolDias += @{fecha=$gf.Name; precision=$precDia; total=$total; aciertos=$acertadas}
+            }
+            $evolDias = $evolDias | Sort-Object fecha
+        }
+        
+        $panelHtml = "<div class='t5' style='border-top:2px solid #7c4dff'><div class='t5h' style='color:#7c4dff'>PANEL DE INTELIGENCIA <span>Precision historica, rendimiento por sector y evolucion</span></div>"
+        
+        # Global precision big card
+        $precColor = if ($precG -ge 65) { '#00c853' } elseif ($precG -ge 50) { '#ffc107' } else { '#ff5252' }
+        $panelHtml += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:12px'>"
+        $panelHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:16px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Precision Global</div><div style='font-size:32px;font-weight:800;color:$precColor'>$precG%</div><div style='font-size:10px;color:#6b7280'>Ponderada ($precSimple% simple)</div></div>"
+        
+        # Model info if available
+        $mejModelo = ''
+        try { if ($cal.modelos_ia) { 
+            $ms = $cal.modelos_ia.PSObject.Properties | Sort-Object { $_.Value.precision } -Descending | Select-Object -First 1
+            $mejModelo = "<div style='font-size:10px;color:#4b5563'>Mejor modelo: <span style='color:#7c4dff'>$($ms.Name)</span> - $([math]::Round($ms.Value.precision*100,1))%</div>"
+        } } catch {}
+        $ultCiclo = ""
+        try { if ($cal.timestamp) { $ultCiclo = "<div style='font-size:10px;color:#4b5563'>Ultimo ciclo: $($cal.timestamp)</div>" } } catch {}
+        $panelHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:16px;display:flex;flex-direction:column;justify-content:center'>$mejModelo$ultCiclo</div>"
+        $panelHtml += "</div>"
+        
+        # Top/bottom sectors
+        $panelHtml += "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px'>"
+        $panelHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px'><div style='font-size:10px;color:#00c853;text-transform:uppercase;font-weight:700'>Mejores Sectores</div>"
+        foreach ($s in $topS) {
+            $barW = [math]::Max(5, $s.precision)
+            $panelHtml += "<div style='display:flex;align-items:center;gap:8px;margin-top:6px'><span style='font-size:10px;color:#9ca3af;min-width:80px'>$($s.nombre)</span><div style='flex:1;height:6px;background:#1e2028;border-radius:3px;overflow:hidden'><div style='height:100%;width:${barW}%;background:#00c853;border-radius:3px'></div></div><span style='font-size:10px;color:#00c853;font-weight:700;min-width:40px;text-align:right'>$($s.precision)%</span></div>"
+        }
+        $panelHtml += "</div>"
+        $panelHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px'><div style='font-size:10px;color:#ff5252;text-transform:uppercase;font-weight:700'>Sectores a Mejorar</div>"
+        foreach ($s in $bottomS) {
+            $barW = [math]::Max(5, $s.precision)
+            $panelHtml += "<div style='display:flex;align-items:center;gap:8px;margin-top:6px'><span style='font-size:10px;color:#9ca3af;min-width:80px'>$($s.nombre)</span><div style='flex:1;height:6px;background:#1e2028;border-radius:3px;overflow:hidden'><div style='height:100%;width:${barW}%;background:#ff5252;border-radius:3px'></div></div><span style='font-size:10px;color:#ff5252;font-weight:700;min-width:40px;text-align:right'>$($s.precision)%</span></div>"
+        }
+        $panelHtml += "</div></div>"
+        
+        # Weekly evolution chart (simple bars)
+        if ($evolDias.Count -gt 0) {
+            $maxPrec = ($evolDias | Measure-Object precision -Maximum).Maximum
+            if ($maxPrec -le 0) { $maxPrec = 100 }
+            $panelHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px'><div style='font-size:10px;color:#64b5f6;text-transform:uppercase;font-weight:700'>Evolucion Semanal</div><div style='display:flex;align-items:end;gap:8px;margin-top:8px;height:60px'>"
+            foreach ($d in $evolDias) {
+                $h = [math]::Max(8, $d.precision / $maxPrec * 50)
+                $dc = if ($d.precision -ge 65) { '#00c853' } elseif ($d.precision -ge 50) { '#ffc107' } else { '#ff5252' }
+                $panelHtml += "<div style='flex:1;display:flex;flex-direction:column;align-items:center'><div style='font-size:9px;color:$dc;font-weight:700'>$($d.precision)%</div><div style='width:100%;height:${h}px;background:$dc;border-radius:3px 3px 0 0;margin-top:2px'></div><div style='font-size:8px;color:#4b5563;margin-top:2px'>$($d.fecha)</div></div>"
+            }
+            $panelHtml += "</div></div>"
+        }
+        
+        $panelHtml += "</div>"
+    } catch { $panelHtml = '' }
+}
+if ($panelHtml) { $HTML += $panelHtml }
+
 # Build embedded data for portfolio JS
 $pfData = @{}
 foreach ($t in $TICKERS) {
