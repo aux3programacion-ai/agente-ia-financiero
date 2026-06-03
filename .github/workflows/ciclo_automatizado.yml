@@ -27,7 +27,7 @@ jobs:
 
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance beautifulsoup4 lxml -q
+        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas -q
 
       - name: Obtener precios reales (yfinance + scraping)
         shell: bash
@@ -72,6 +72,38 @@ jobs:
       - name: Sentimiento redes (Reddit, social media)
         shell: bash
         run: python analisis_social.py
+
+      - name: Modelo predictivo XGBoost (+ sklearn)
+        shell: bash
+        run: python modelo_xgboost.py
+
+      - name: Explicabilidad SHAP (factores que influyen en cada prediccion)
+        shell: bash
+        run: python explicabilidad.py
+
+      - name: Regimen de mercado (HMM, tendencia, volatilidad)
+        shell: bash
+        run: python regimen_mercado.py
+
+      - name: Dividendos, SEC filings, insider trading, opciones
+        shell: bash
+        run: |
+          python dividendos.py
+          python sec_filings.py
+          python insider_trading.py
+          python opciones.py
+
+      - name: Optimizacion de portafolio (Markowitz, risk parity, Monte Carlo, stress test)
+        shell: bash
+        run: python optimizacion_portafolio.py
+
+      - name: Paper trading (simulacion de compra/venta)
+        shell: bash
+        run: python paper_trading.py
+
+      - name: Broker API status
+        shell: bash
+        run: python broker_api.py
 
       - name: Evaluar predicciones y calibrar (aprendizaje autonomo)
         shell: bash

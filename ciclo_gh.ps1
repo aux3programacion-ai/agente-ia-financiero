@@ -629,6 +629,178 @@ var pr=d.pr||50;var w=Math.round(100/p.length);var sug=pr>=65?w+5:pr>=55?w:w-5;v
 html+='</div>';document.getElementById('rebalContent').innerHTML=html;},4000)</script></div>"
 $HTML += $rebalHtml
 
+# ============================================================
+# REGIMEN DE MERCADO (HMM)
+# ============================================================
+$regPath = "$DATOS_DIR/regimen_mercado.json"
+if (Test-Path $regPath) {
+    try {
+        $rm = Get-Content $regPath -Raw | ConvertFrom-Json
+        if ($rm.regimen) {
+            $regCol = @{'ALCISTA'='#00c853';'BAJISTA'='#ff5252';'LATERAL'='#ffc107';'INCIERTO'='#6b7280'}
+            $rc = $regCol[$rm.regimen]
+            $rfase = $rm.fase -replace '_', ' '
+            $HTML += "<div class='t5'><div class='t5h' style='color:$rc'>REGIMEN DE MERCADO <span>Deteccion automatica de tendencia</span></div><div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px'>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Regimen</div><div style='font-size:24px;font-weight:800;color:$rc'>$($rm.regimen)</div><div style='font-size:10px;color:#4b5563'>Confianza: $([math]::Round($rm.confianza*100))% | $rfase</div></div>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>SPY</div><div style='font-size:22px;font-weight:700'>`$$($rm.spy_precio)</div><div style='font-size:10px;color:#4b5563'>SMA50: `$$($rm.sma50) | SMA200: `$$($rm.sma200)</div></div>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Distancia SMA</div><div style='font-size:20px;font-weight:700'>+$([math]::Round($rm.dist_sma50_pct,1))% / +$([math]::Round($rm.dist_sma200_pct,1))%</div><div style='font-size:10px;color:#4b5563'>50d / 200d</div></div>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Volatilidad</div><div style='font-size:18px;font-weight:700'>$([math]::Round($rm.volatilidad_20d*100,1))%</div><div style='font-size:10px;color:#4b5563'>20d | Regimen: $($rm.vol_regimen)</div></div>"
+            $HTML += "</div></div>"
+        }
+    } catch {}
+}
+
+# ============================================================
+# SEC FILINGS + INSIDER TRADING + OPCIONES + DIVIDENDOS
+# ============================================================
+$secPath = "$DATOS_DIR/sec_filings.json"
+if (Test-Path $secPath) {
+    try {
+        $secRaw = Get-Content $secPath -Raw | ConvertFrom-Json
+        if ($secRaw.filings -or $secRaw.calendario) {
+            $HTML += "<div class='t5'><div class='t5h' style='color:#ce93d8'>FILINGS SEC <span>Reportes corporativos y calendario de ganancias</span></div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px'>"
+            $filings = @(); if ($secRaw.filings) { $filings += $secRaw.filings }
+            $cal = $null; if ($secRaw.calendario) { $cal = $secRaw.calendario }
+            foreach ($f in ($filings | Select-Object -First 15)) {
+                $sym = if ($f.ticker) { $f.ticker } elseif ($f.symbol) { $f.symbol } else { '-' }
+                $form = if ($f.form) { $f.form } elseif ($f.tipo) { $f.tipo } else { '-' }
+                $fecha = if ($f.filed) { $f.filed } elseif ($f.fecha) { $f.fecha } else { '-' }
+                $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px;font-size:10px'>"
+                if ($sym -ne '-') { $HTML += "<div style='font-weight:700'>$sym — $form</div>" } else { $HTML += "<div style='font-weight:700'>$form</div>" }
+                $HTML += "<div style='color:#6b7280'>$fecha</div></div>"
+            }
+            if ($cal -and $cal.proximas -and $cal.proximas.Count -gt 0) {
+                $HTML += "<div style='background:#1a1d23;border:1px solid #2a2d35;border-radius:8px;padding:8px;font-size:10px'>"
+                $HTML += "<div style='font-weight:700;margin-bottom:4px;color:#ffc107'>Proximas fechas de ganancias:</div>"
+                foreach ($e in ($cal.proximas | Select-Object -First 5)) { $HTML += "<div>$($e.fecha): $($e.ticker) <span style=color:#6b7280>$($e.estimado)</span></div>" }
+                $HTML += "</div>"
+            }
+            $HTML += "</div></div>"
+        }
+    } catch {}
+}
+$insPath = "$DATOS_DIR/insider_trading.json"
+if (Test-Path $insPath) {
+    try {
+        $ins = Get-Content $insPath -Raw | ConvertFrom-Json
+        if ($ins.tickers) {
+            $HTML += "<div class=t5><div class='t5h' style='color:#ff9800'>INSIDER TRADING <span>Transacciones de directivos y accionistas principales</span></div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px'>"
+            foreach ($tProp in ($ins.tickers.PSObject.Properties | Sort-Object { ($_.Value.total -or 0)*(($_.Value.neto -or 0)/1MB) } -Descending | Select-Object -First 15)) {
+                $iv = $tProp.Value
+                $insCol = if ($iv.neto -and $iv.neto -gt 0) { '#00c853' } else { '#ff5252' }
+                $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px;font-size:10px'><div style='font-weight:700'>$($tProp.Name)</div>"
+                $HTML += "<div style='color:$insCol'>Neto: `$$([math]::Round(($iv.neto -or 0)/1e6,1))M</div>"
+                $HTML += "<div style='color:#6b7280'>Transacciones: $($iv.total -or 0)</div></div>"
+            }
+            $HTML += "</div></div>"
+        }
+    } catch {}
+}
+$optPath = "$DATOS_DIR/opciones.json"
+if (Test-Path $optPath) {
+    try {
+        $opt = Get-Content $optPath -Raw | ConvertFrom-Json
+        if ($opt.put_call_ratio -or $opt.sentimiento) {
+            $pc = [math]::Round($opt.put_call_ratio -or 1, 2)
+            $pcc = if ($pc -lt 0.7) { '#00c853' } elseif ($pc -gt 1.3) { '#ff5252' } else { '#ffc107' }
+            $sen = $opt.sentimiento -or 'NEUTRAL'
+            $HTML += "<div class=t5><div class='t5h' style='color:#03a9f4'>OPCIONES <span>Put/Call ratio y sentimiento del mercado de opciones</span></div>"
+            $HTML += "<div style='display:flex;gap:8px'>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;flex:1;text-align:center'><div style='font-size:10px;color:#6b7280'>Put/Call Ratio</div><div style='font-size:22px;font-weight:700;color:$pcc'>$pc</div><div style='font-size:10px;color:#4b5563'>$sen</div></div>"
+            $HTML += "</div></div>"
+        }
+    } catch {}
+}
+$divPath = "$DATOS_DIR/dividendos.json"
+if (Test-Path $divPath) {
+    try {
+        $div = Get-Content $divPath -Raw | ConvertFrom-Json
+        if ($div.tickers) {
+            $HTML += "<div class=t5><div class='t5h' style='color:#ff9800'>DIVIDENDOS <span>Yield, ex-date, pay-date y crecimiento</span></div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px'>"
+            foreach ($tProp in ($div.tickers.PSObject.Properties | Sort-Object { [double]($_.Value.yield -or 0) } -Descending | Select-Object -First 20)) {
+                $dv = $tProp.Value
+                $y = [math]::Round(($dv.yield -or 0)*100, 2)
+                $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px'><div style='font-weight:700;font-size:11px'>$($tProp.Name) <span style='color:#ffc107;font-size:10px'>$y%</span></div>"
+                if ($dv.ex_date) { $HTML += "<div style='font-size:9px;color:#6b7280'>Ex: $($dv.ex_date)</div>" }
+                if ($dv.pay_date) { $HTML += "<div style='font-size:9px;color:#6b7280'>Pay: $($dv.pay_date)</div>" }
+                if ($dv.crecimiento_5y) { $HTML += "<div style='font-size:9px;color:#00c853'>Crec 5y: $([math]::Round($dv.crecimiento_5y*100,1))%</div>" }
+                $HTML += "</div>"
+            }
+            $HTML += "</div></div>"
+        }
+    } catch {}
+}
+
+# ============================================================
+# MODELO PREDICTIVO XGBOOST + SHAP EXPLICABILIDAD
+# ============================================================
+$xgbPath = "$DATOS_DIR/modelo_xgboost.json"
+$expPath = "$DATOS_DIR/explicabilidad.json"
+$xgbData = $null; $expData = $null
+if (Test-Path $xgbPath) { try { $xgbData = (Get-Content $xgbPath -Raw | ConvertFrom-Json).tickers } catch {} }
+if (Test-Path $expPath) { try { $expData = (Get-Content $expPath -Raw | ConvertFrom-Json).tickers } catch {} }
+if ($xgbData) {
+    $xgbHtml = "<div class='t5'><div class='t5h' style='color:#ce93d8'>MODELO PREDICTIVO XGBOOST <span>Machine learning entrenado con datos historicos</span></div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px'>"
+    foreach ($tProp in $xgbData.PSObject.Properties | Sort-Object { [double]$_.Value.prob_up_20d } -Descending) {
+        $t = $tProp.Name; $v = $tProp.Value
+        $pCol = if ($v.prediccion -eq 'alcista') { '#00c853' } elseif ($v.prediccion -eq 'bajista') { '#ff5252' } else { '#ffc107' }
+        $ex = $null
+        if ($expData) { $ex = $expData.$t }
+        $htmlCard = "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px'><div style='display:flex;justify-content:space-between'><span style='font-weight:700'>$t</span><span style='font-size:11px;color:$pCol;font-weight:700'>$($v.prediccion) ($([math]::Round($v.prob_up_20d))%)</span></div>"
+        if ($v.features_top -and $v.features_top.Count -gt 0) {
+            $htmlCard += "<div style='font-size:9px;color:#4b5563;margin-top:4px'>Factores: $($v.features_top -join ', ')</div>"
+        }
+        if ($ex -and $ex.factores) {
+            $htmlCard += "<div style='margin-top:4px'>"
+            foreach ($f in $ex.factores) {
+                $fCol = if ($f.contribuye -eq 'alcista') { '#00c853' } elseif ($f.contribuye -eq 'bajista') { '#ff5252' } else { '#ffc107' }
+                if ($f.nombre -and $f.contribuye) {
+                    $htmlCard += "<div style='font-size:9px;color:$fCol'>$($f.nombre) → $($f.contribuye) ($([math]::Round($f.peso*100))%)</div>"
+                }
+            }
+            $htmlCard += "</div>"
+            if ($ex.explicacion) { $htmlCard += "<div style='font-size:9px;color:#6b7280;margin-top:4px;line-height:1.3'>$($ex.explicacion)</div>" }
+        }
+        $htmlCard += "</div>"
+        $xgbHtml += $htmlCard
+    }
+    $xgbHtml += "</div></div>"
+    $HTML += $xgbHtml
+}
+
+# ============================================================
+# PAPER TRADING (simulacion)
+# ============================================================
+$ptPath = "$DATOS_DIR/paper_trading.json"
+if (Test-Path $ptPath) {
+    try {
+        $pt = Get-Content $ptPath -Raw | ConvertFrom-Json
+        if ($pt.valor_total) {
+            $rtn = [math]::Round($pt.retorno_total * 100, 1)
+            $rtnCol = if ($rtn -ge 0) { '#00c853' } else { '#ff5252' }
+            $wr = [math]::Round($pt.win_rate * 100, 1)
+            $dd = [math]::Round($pt.max_drawdown * 100, 1)
+            $HTML += "<div class='t5'><div class='t5h' style='color:#ff9800'>PAPER TRADING <span>Simulacion de compra/venta con capital virtual</span></div>"
+            $HTML += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px'>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Valor Total</div><div style='font-size:22px;font-weight:700;color:$rtnCol'>`$$([math]::Round($pt.valor_total))</div></div>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Retorno</div><div style='font-size:22px;font-weight:700;color:$rtnCol'>$rtn%</div></div>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Win Rate</div><div style='font-size:20px;font-weight:700'>$wr%</div><div style='font-size:10px;color:#4b5563'>$($pt.trades_ganadores)/$($pt.total_trades) trades</div></div>"
+            $HTML += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:14px;text-align:center'><div style='font-size:10px;color:#6b7280;text-transform:uppercase'>Max Drawdown</div><div style='font-size:20px;font-weight:700;color:#ff5252'>$dd%</div></div>"
+            $HTML += "</div>"
+            if ($pt.posiciones) {
+                $HTML += "<div style='overflow-x:auto'><table style='font-size:11px'><thead><tr><th>Ticker</th><th>Cant</th><th>Precio</th><th>Valor</th><th>P&L</th><th>%</th></tr></thead><tbody>"
+                foreach ($posProp in $pt.posiciones.PSObject.Properties) {
+                    $pos = $posProp.Value
+                    $pnlCol = if ($pos.pnl -ge 0) { '#00c853' } else { '#ff5252' }
+                    $HTML += "<tr><td style='font-weight:700'>$($posProp.Name)</td><td>$($pos.cantidad)</td><td>`$$([math]::Round($pos.precio_actual,2))</td><td>`$$([math]::Round($pos.valor,2))</td><td style='color:$pnlCol'>`$$([math]::Round($pos.pnl,2))</td><td style='color:$pnlCol'>$([math]::Round($pos.pct,1))%</td></tr>"
+                }
+                $HTML += "</tbody></table></div>"
+            }
+            $HTML += "</div>"
+        }
+    } catch {}
+}
+
 # Build embedded data for portfolio JS
 $pfData = @{}
 foreach ($t in $TICKERS) {
