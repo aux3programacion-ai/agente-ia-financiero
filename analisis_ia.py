@@ -129,7 +129,14 @@ if os.path.exists(NEWS_PATH):
     try:
         news_data = json.load(open(NEWS_PATH))
         pt = news_data.get('por_ticker', {})
+        ng = news_data.get('noticias_generales', [])
         lines_n = ['\nNOTICIAS RECIENTES (para usar en tu analisis):']
+        if ng:
+            lines_n.append('  [MERCADO GLOBAL - Reuters, CNBC, Bloomberg, MarketWatch]:')
+            for n in ng[:6]:
+                src = n.get('fuente', '?')
+                lines_n.append(f'    [{src}] {n["titulo"][:130]}')
+            lines_n.append('')
         for t in TICKERS:
             nd = pt.get(t, {})
             notis = nd.get('noticias', []) if isinstance(nd, dict) else []

@@ -142,6 +142,18 @@ Score: -1.0 (muy negativo) a +1.0 (muy positivo).'''
         print(f'  [Sentimiento IA] Error: {e}')
         return None
 
+# General market news RSS feeds (multiple sources)
+GENERAL_RSS = [
+    ('Reuters', 'https://www.reutersagency.com/feed/'),
+    ('Reuters Markets', 'https://www.reuters.com/tools/rss'),
+    ('CNBC', 'https://www.cnbc.com/id/100003114/device/rss/rss.html'),
+    ('CNBC Markets', 'https://www.cnbc.com/id/15839069/device/rss/rss.html'),
+    ('Bloomberg', 'https://www.bloomberg.com/feed/podcast/market-morning.xml'),
+    ('MarketWatch', 'https://feeds.marketwatch.com/marketwatch/topstories/'),
+    ('Investing.com', 'https://www.investing.com/rss/news.rss'),
+    ('Yahoo Finance', 'https://finance.yahoo.com/news/rssindex')
+]
+
 def main():
     print('[Noticias] Obteniendo noticias frescas de mercado...')
 
@@ -153,14 +165,35 @@ def main():
         except: pass
 
     noticias_por_ticker = {}
+    noticias_generales = []
     total_nuevas = 0
 
+    # --- General market news from multiple sources ---
+    print('[Noticias] Fuentes generales: Reuters, CNBC, Bloomberg, MarketWatch...')
+    for fuente, url in GENERAL_RSS:
+        try:
+            items = fetch_rss(url, max_items=4)
+            for item in items:
+                item['fuente'] = fuente
+                tid = item['titulo'][:80]
+                if tid not in vistas:
+                    vistas.add(tid)
+                    noticias_generales.append(item)
+                    total_nuevas += 1
+            time.sleep(0.3)
+        except Exception as e:
+            print(f'  [RSS {fuente}] Error: {e}')
+
+    # --- Per-ticker news ---
     for t in TICKERS:
         yahoo_url = f'https://finance.yahoo.com/rss/headline?s={t}'
         items = fetch_rss(yahoo_url, max_items=3)
         if not items:
             time.sleep(0.3)
             items = fetch_rss(f'https://news.google.com/rss/search?q={t}+stock&hl=en-US&gl=US', max_items=2)
+        if not items:
+            time.sleep(0.3)
+            items = fetch_rss(f'https://feeds.finance.yahoo.com/rss/2.0/headline?s={t}&region=US&lang=en-US', max_items=2)
 
         nuevas = []
         for item in items:
@@ -194,6 +227,8 @@ def main():
         'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'total_tickers': len(TICKERS),
         'total_noticias_nuevas': total_nuevas,
+        'noticias_generales': noticias_generales[:20],
+        'fuentes_generales': len(GENERAL_RSS),
         'por_ticker': noticias_por_ticker,
         'por_sector': por_sector
     }
@@ -207,7 +242,13 @@ def main():
 
     # Actualizar resumen TXT legible
     ahora = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
-    lines = [f'NEWS FEED - {ahora}', f'{total_nuevas} noticias nuevas | {len(TICKERS)} tickers escaneados', '']
+    lines = [f'NEWS FEED - {ahora}', f'{total_nuevas} noticias nuevas | {len(TICKERS)} tickers escaneados | {len(GENERAL_RSS)} fuentes generales', '']
+    if noticias_generales:
+        lines.append('=== MERCADO GLOBAL (Reuters, CNBC, Bloomberg, MarketWatch) ===')
+        for n in noticias_generales[:8]:
+            lines.append(f'  [{n.get("fuente","?")}] {n["titulo"][:120]}')
+        lines.append('')
+    lines.append('=== POR TICKER ===')
     for t in TICKERS:
         data = noticias_por_ticker.get(t, {'noticias': [], 'sentimiento': None})
         notis = data['noticias']

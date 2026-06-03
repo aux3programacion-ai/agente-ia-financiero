@@ -360,7 +360,7 @@ $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-syste
 .fb{background:#0d0e12;border-bottom:1px solid #1e2028;padding:12px 24px}.fb summary{cursor:pointer;font-size:11px;font-weight:700;color:#00c853;display:flex;align-items:center;gap:6px}.fb pre{font-size:10px;color:#6b7280;line-height:1.5;margin-top:8px;white-space:pre-wrap;font-family:monospace}
 .t5{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.t5h{font-size:13px;font-weight:700;color:#00c853;margin-bottom:12px;display:flex;align-items:center;gap:8px}.t5h span{font-size:10px;color:#4b5563;font-weight:400}.t5g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}.t5c{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative;overflow:hidden}.t5c .rk{position:absolute;top:0;left:0;background:#00c853;color:#0a0b0e;font-size:10px;font-weight:800;padding:2px 8px;border-radius:0 0 6px 0}.t5c .tk{font-size:14px;font-weight:700;margin-top:6px}.t5c .nm{font-size:11px;color:#9ca3af;margin-bottom:4px}.t5c .pr{font-size:13px;font-weight:700}.t5c .tp{font-size:10px;color:#00c853;margin-top:2px;line-height:1.5}.t5c .an{font-size:10px;color:#6b7280;margin-top:6px;line-height:1.3}.t5c .pb{display:flex;align-items:center;gap:6px;margin-top:4px}.t5c .pb .pbb{flex:1;height:4px;background:#1e2028;border-radius:2px;overflow:hidden}.t5c .pb .pbf{height:100%;border-radius:2px}.t5c .pb .pt{font-size:11px;font-weight:700;min-width:30px;text-align:right}
 .pf{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.pfh{font-size:13px;font-weight:700;color:#e8eaed;margin-bottom:12px;display:flex;align-items:center;gap:8px}.pfh span{font-size:10px;color:#4b5563;font-weight:400}.pfi{display:flex;gap:8px;margin-bottom:12px}.pfi input{flex:1;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase}.pfi input:focus{border-color:#7c4dff}.pfi button{background:#7c4dff;border:none;border-radius:6px;padding:6px 16px;color:#fff;font-weight:700;font-size:18px;cursor:pointer}.pfi button:hover{background:#651fff}.pfl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.pfc{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative}.pfc .del{position:absolute;top:4px;right:6px;background:none;border:none;color:#6b7280;font-size:14px;cursor:pointer;padding:2px 4px}.pfc .del:hover{color:#ff5252}.pfc .tk{font-size:14px;font-weight:700}.pfc .nm{font-size:11px;color:#9ca3af;margin-bottom:2px}.pfc .pr{font-size:13px;font-weight:700}.pfc .scm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}.pfc .scm .sb{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600}.pfc .ns{margin-top:6px;padding-top:6px;border-top:1px solid #1e2028}.pfc .ns .nl{font-size:9px;color:#4b5563;text-transform:uppercase}.pfc .ns .nt{font-size:10px;color:#6b7280;line-height:1.3;margin-top:2px}.pfc .ns .nsm{font-size:9px;font-weight:600;margin-top:2px}.pfs{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}.pfs .pv{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px 14px;text-align:center}.pfs .pv .l{font-size:9px;text-transform:uppercase;color:#4b5563}.pfs .pv .v{font-size:15px;font-weight:700}
-.mnb{display:flex;gap:6px;padding:8px 24px;background:#0d0e12;border-bottom:1px solid #1e2028;flex-wrap:wrap}.mnb-btn{background:transparent;border:1px solid #444;border-radius:6px;padding:6px 14px;color:#e8eaed;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}.mnb-btn:hover{background:rgba(255,255,255,0.05)}.mc{margin:0 24px 16px}.mc-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#14161b;border-bottom:1px solid #1e2028;border-radius:8px 8px 0 0;margin-top:16px}.mc-hdr-txt{font-size:14px;font-weight:800;letter-spacing:0.5px}.mc-hdr-cnt{font-size:10px;color:#6b7280;font-weight:600}.ft{padding:16px 24px;text-align:center;font-size:10px;color:#4b5563;border-top:1px solid #1e2028}"
+.mnb{display:flex;gap:6px;padding:8px 24px;background:#0d0e12;border-bottom:1px solid #1e2028;flex-wrap:wrap}.mnb-btn{background:transparent;border:1px solid #444;border-radius:6px;padding:6px 14px;color:#e8eaed;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}.mnb-btn:hover{background:rgba(255,255,255,0.05)}.mc{margin:0 24px 16px}.mc-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#14161b;border-bottom:1px solid #1e2028;border-radius:8px 8px 0 0;margin-top:16px}.mc-hdr-txt{font-size:14px;font-weight:800;letter-spacing:0.5px}.mc-hdr-cnt{font-size:10px;color:#6b7280;font-weight:600}.tbi{display:inline-flex;animation:scrol 120s linear infinite}.tbi:hover{animation-play-state:paused}@keyframes scrol{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.ft{padding:16px 24px;text-align:center;font-size:10px;color:#4b5563;border-top:1px solid #1e2028}"
 
 $HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Mercados Globales - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
 $HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Mercados Globales - $($TICKERS.Count) activos</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA | $marketSummary</div></div></div><div class=`"badge`">$(if ($aiRegimen) { $aiRegimen.ToUpper() } else { 'GLOBAL' })</div></header>"
@@ -441,6 +441,30 @@ if (Test-Path $newsPath) {
         }
     } catch {}
 }
+# Load general market news for dashboard display
+$generalNewsHtml = ''
+$generalNewsPath = "$DATOS_DIR/noticias_recientes.json"
+if (Test-Path $generalNewsPath) {
+    try {
+        $gnRaw = Get-Content $generalNewsPath -Raw | ConvertFrom-Json
+        $gnList = $gnRaw.noticias_generales
+        if ($gnList -and $gnList.Count -gt 0) {
+            $gnLines = @()
+            $gnLines += "<div class='t5'><div class='t5h' style='color:#64b5f6'>MERCADO GLOBAL <span>Reuters, CNBC, Bloomberg, MarketWatch y mas</span></div><div class='t5g'>"
+            $maxGN = [math]::Min(8, $gnList.Count)
+            for ($i = 0; $i -lt $maxGN; $i++) {
+                $n = $gnList[$i]
+                $src = $n.fuente
+                $tit = $n.titulo
+                if ($tit.Length -gt 150) { $tit = $tit.Substring(0, 147) + '...' }
+                $gnLines += "<div class='t5c' style='border-left:3px solid #64b5f6'><div style='font-size:9px;color:#64b5f6;font-weight:700;text-transform:uppercase'>$src</div><div style='font-size:11px;color:#e8eaed;margin-top:4px;line-height:1.3'>$tit</div></div>"
+            }
+            $gnLines += "</div></div>"
+            $generalNewsHtml = $gnLines -join ''
+        }
+    } catch {}
+}
+
 $newsJson = $newsForJs | ConvertTo-Json -Compress
 
 # Read portfolio from repo file (sincronizado entre dispositivos)
@@ -454,6 +478,9 @@ if (Test-Path $pfFilePath) {
 }
 $pfFileJson = $pfFileArray | ConvertTo-Json -Compress
 if (-not $pfFileJson) { $pfFileJson = '[]' }
+
+# Insert general market news section before portfolio
+if ($generalNewsHtml) { $HTML += $generalNewsHtml }
 
 # Portfolio section HTML
 $HTML += "<div class=`"pf`"><div class=`"pfh`">MI PORTAFOLIO <span>Se sincroniza automaticamente en todos tus dispositivos via GitHub - edita <b>Datos/portafolio_usuario.json</b> en el repo</span></div>"
