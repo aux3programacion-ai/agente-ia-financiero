@@ -86,6 +86,7 @@ def main():
     print(f"[SCREENING] Evaluando {len(todos)} tickers...")
     resultados = []
     errores = 0
+    por_mercado = {}
     for i, t in enumerate(todos):
         if (i+1) % 50 == 0:
             print(f"  Progreso: {i+1}/{len(todos)} - OK: {len(resultados)} Err: {errores}")
@@ -93,6 +94,9 @@ def main():
         if r:
             r["mercado"] = ticker_mercado.get(t.upper(), "GLOBAL")
             resultados.append(r)
+            m = r["mercado"]
+            if m not in por_mercado: por_mercado[m] = []
+            por_mercado[m].append(r["ticker"])
         else:
             errores += 1
         time.sleep(0.05)
