@@ -97,20 +97,15 @@ def main():
             errores += 1
         time.sleep(0.05)
     resultados.sort(key=lambda x: x['score'], reverse=True)
-    top50 = resultados[:50]
-
-    # Group all results by market
-    por_mercado = {}
-    for r in resultados:
-        m = r.get("mercado", "GLOBAL")
-        por_mercado.setdefault(m, []).append(r)
+    top200 = resultados[:200]
 
     output = {
-        "total_evaluados": len(todos),
-        "con_datos": len(resultados),
-        "errores": errores,
-        "top50": top50,
-        "top50_tickers": [r['ticker'] for r in top50],
+        "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+        "total_analizados": len(resultados),
+        "total_mercados": len(por_mercado),
+        "top50": top200[:50],
+        "top200": top200,
+        "top50_tickers": [r['ticker'] for r in top200[:50]],
         "todos": resultados,
         "por_mercado": por_mercado,
         "total_por_mercado": {m: len(por_mercado[m]) for m in por_mercado}

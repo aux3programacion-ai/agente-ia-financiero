@@ -3,9 +3,11 @@ name: Ciclo 30T Intradia
 on:
   schedule:
     - cron: '0 13 * * 1-5'   # 08:00 Mexico - Pre-mercado
-    - cron: '0 16 * * 1-5'   # 11:00 Mexico - Media manana
+    - cron: '0 15 * * 1-5'   # 10:00 Mexico
+    - cron: '0 17 * * 1-5'   # 12:00 Mexico
     - cron: '0 19 * * 1-5'   # 14:00 Mexico - Media tarde
     - cron: '0 21 * * 1-5'   # 16:00 Mexico - Post-mercado
+    - cron: '0 22 * * 1-5'   # 17:00 Mexico - Cierre
   workflow_dispatch:
 
 permissions:
@@ -54,6 +56,22 @@ jobs:
         run: python analisis_ia.py
         env:
           OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+
+      - name: Calendario economico (Fed, CPI, NFP, earnings)
+        shell: bash
+        run: python calendario_economico.py
+
+      - name: Analisis de riesgo (VaR, Sharpe, drawdown, correlacion)
+        shell: bash
+        run: python analisis_riesgo.py
+
+      - name: Patrones tecnicos (velas, divergencias, soporte/resistencia)
+        shell: bash
+        run: python analisis_patrones.py
+
+      - name: Sentimiento redes (Reddit, social media)
+        shell: bash
+        run: python analisis_social.py
 
       - name: Evaluar predicciones y calibrar (aprendizaje autonomo)
         shell: bash

@@ -362,7 +362,7 @@ $CSS = "*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-syste
 .pf{padding:16px 24px;background:#0d0e12;border-bottom:1px solid #1e2028}.pfh{font-size:13px;font-weight:700;color:#e8eaed;margin-bottom:12px;display:flex;align-items:center;gap:8px}.pfh span{font-size:10px;color:#4b5563;font-weight:400}.pfi{display:flex;gap:8px;margin-bottom:12px}.pfi input{flex:1;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase}.pfi input:focus{border-color:#7c4dff}.pfi button{background:#7c4dff;border:none;border-radius:6px;padding:6px 16px;color:#fff;font-weight:700;font-size:18px;cursor:pointer}.pfi button:hover{background:#651fff}.pfl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.pfc{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:12px;position:relative}.pfc .del{position:absolute;top:4px;right:6px;background:none;border:none;color:#6b7280;font-size:14px;cursor:pointer;padding:2px 4px}.pfc .del:hover{color:#ff5252}.pfc .tk{font-size:14px;font-weight:700}.pfc .nm{font-size:11px;color:#9ca3af;margin-bottom:2px}.pfc .pr{font-size:13px;font-weight:700}.pfc .scm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}.pfc .scm .sb{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600}.pfc .ns{margin-top:6px;padding-top:6px;border-top:1px solid #1e2028}.pfc .ns .nl{font-size:9px;color:#4b5563;text-transform:uppercase}.pfc .ns .nt{font-size:10px;color:#6b7280;line-height:1.3;margin-top:2px}.pfc .ns .nsm{font-size:9px;font-weight:600;margin-top:2px}.pfs{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}.pfs .pv{background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:8px 14px;text-align:center}.pfs .pv .l{font-size:9px;text-transform:uppercase;color:#4b5563}.pfs .pv .v{font-size:15px;font-weight:700}
 .mnb{display:flex;gap:6px;padding:8px 24px;background:#0d0e12;border-bottom:1px solid #1e2028;flex-wrap:wrap}.mnb-btn{background:transparent;border:1px solid #444;border-radius:6px;padding:6px 14px;color:#e8eaed;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}.mnb-btn:hover{background:rgba(255,255,255,0.05)}.mc{margin:0 24px 16px}.mc-hdr{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#14161b;border-bottom:1px solid #1e2028;border-radius:8px 8px 0 0;margin-top:16px}.mc-hdr-txt{font-size:14px;font-weight:800;letter-spacing:0.5px}.mc-hdr-cnt{font-size:10px;color:#6b7280;font-weight:600}.tbi{display:inline-flex;animation:scrol 120s linear infinite}.tbi:hover{animation-play-state:paused}@keyframes scrol{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.ft{padding:16px 24px;text-align:center;font-size:10px;color:#4b5563;border-top:1px solid #1e2028}"
 
-$HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Mercados Globales - IA Financiero $FECHA $HORA</title><style>$CSS</style></head><body>"
+$HTML = "<!DOCTYPE html><html lang=`"es`"><head><meta charset=`"UTF-8`"><meta name=`"viewport`" content=`"width=device-width,initial-scale=1.0`"><title>Mercados Globales - IA Financiero $FECHA $HORA</title><script src=`"https://cdn.jsdelivr.net/npm/chart.js`"></script><style>$CSS</style></head><body>"
 $HTML += "<header class=`"hdr`"><div class=`"hl`"><div class=`"logo`">AI</div><div><div class=`"ht`">Mercados Globales - $($TICKERS.Count) activos</div><div class=`"hs`">IA: $aiModel | Precios: $dataSource | $FECHA $HORA | $marketSummary</div></div></div><div class=`"badge`">$(if ($aiRegimen) { $aiRegimen.ToUpper() } else { 'GLOBAL' })</div></header>"
 $HTML += "<div class=`"tb`"><div class=`"tbi`">$tickerItems $tickerItems</div></div>"
 $HTML += "<div class=`"stats`">$marketStatsCards</div>"
@@ -498,6 +498,136 @@ if (Test-Path $calibPath) {
     } catch { $panelHtml = '' }
 }
 if ($panelHtml) { $HTML += $panelHtml }
+
+# ============================================================
+# NUEVOS PANELES: Calendario, Riesgo, Patrones, Social, Charts, Comparador, Rebalanceo
+# ============================================================
+
+# --- CALENDARIO ECONOMICO ---
+$calHtml = ''
+$calPath = "$DATOS_DIR/calendario_economico.json"
+if (Test-Path $calPath) {
+    try {
+        $calData = Get-Content $calPath -Raw | ConvertFrom-Json
+        $evts = $calData.proximos_eventos
+        if ($evts -and $evts.Count -gt 0) {
+            $calHtml = "<div class='t5'><div class='t5h' style='color:#ffc107'>CALENDARIO ECONOMICO <span>Proximos eventos de alto impacto</span></div><div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px'>"
+            foreach ($ev in $evts) {
+                $ec = if ($ev.impacto -eq 'alto') { '#ff5252' } elseif ($ev.impacto -eq 'medio') { '#ffc107' } else { '#64b5f6' }
+                $calHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px;border-left:3px solid $ec'><div style='font-size:9px;color:$ec;font-weight:700'>$($ev.fecha)</div><div style='font-size:11px;color:#e8eaed;margin-top:2px'>$($ev.tipo)</div><div style='font-size:9px;color:#6b7280;margin-top:2px'>$($ev.descripcion)</div></div>"
+            }
+            $calHtml += "</div></div>"
+        }
+    } catch {}
+}
+if ($calHtml) { $HTML += $calHtml }
+
+# --- RIESGO (VaR, Sharpe, Drawdown) ---
+$riskHtml = ''
+$riskPath = "$DATOS_DIR/analisis_riesgo.json"
+$riskData = $null; $corrTickers = @(); $corrMatriz = @()
+if (Test-Path $riskPath) {
+    try {
+        $rd = Get-Content $riskPath -Raw | ConvertFrom-Json
+        $riskData = $rd.tickers
+        $corrTickers = @($rd.correlacion.tickers)
+        $corrMatriz = $rd.correlacion.matriz
+        if ($riskData) {
+            $riskHtml = "<div class='t5'><div class='t5h' style='color:#ff5252'>PERFIL DE RIESGO <span>VaR, Sharpe, Drawdown, Beta</span></div><div style='overflow-x:auto;padding-bottom:8px'><table style='font-size:11px;min-width:600px'><thead><tr><th>Ticker</th><th>VaR 95%</th><th>VaR 99%</th><th>Sharpe</th><th>Drawdown</th><th>Volatilidad</th><th>Beta</th></tr></thead><tbody>"
+            $sortedRisk = $riskData.PSObject.Properties | Sort-Object { [double]$_.Value.sharpe } -Descending
+            foreach ($tProp in $sortedRisk) {
+                $t = $tProp.Name; $v = $tProp.Value
+                $shC = if ($v.sharpe -ge 1) { '#00c853' } elseif ($v.sharpe -ge 0.5) { '#ffc107' } else { '#ff5252' }
+                $ddC = if ($v.max_drawdown -le 0.2) { '#00c853' } elseif ($v.max_drawdown -le 0.4) { '#ffc107' } else { '#ff5252' }
+                $riskHtml += "<tr><td style='font-weight:700'>$t</td><td>$([math]::Round($v.var_95*100,1))%</td><td>$([math]::Round($v.var_99*100,1))%</td><td style='color:$shC;font-weight:600'>$([math]::Round($v.sharpe,2))</td><td style='color:$ddC;font-weight:600'>$([math]::Round($v.max_drawdown*100,1))%</td><td>$([math]::Round($v.vol_anual*100,1))%</td><td>$([math]::Round($v.beta,2))</td></tr>"
+            }
+            $riskHtml += "</tbody></table></div></div>"
+        }
+    } catch {}
+}
+if ($riskHtml) { $HTML += $riskHtml }
+
+# --- CORRELACION HEATMAP (Chart.js) ---
+$corrHtml = ''
+if ($corrTickers.Count -gt 1 -and $corrMatriz.Count -gt 1) {
+    $corrLabels = $corrTickers | ConvertTo-Json -Compress
+    $corrData = $corrMatriz | ConvertTo-Json -Compress -Depth 5
+    $corrHtml = "<div class='t5'><div class='t5h' style='color:#64b5f6'>MATRIZ DE CORRELACION <span>Diversificacion del portafolio</span></div><div style='position:relative;height:400px'><canvas id='corrChart'></canvas></div><script>try{var cl=$corrLabels;var cd=$corrData;var bg=[];for(var i=0;i<cl.length;i++){bg[i]=[];for(var j=0;j<cl.length;j++){var v=cd[i][j];var r=Math.round(255*(1-Math.abs(v)));var g=Math.round(255*(1-Math.max(0,v)));var b=Math.round(255*(1-Math.abs(v)));bg[i][j]='rgba('+Math.round(255*Math.abs(v))+','+Math.round(100*(1-Math.abs(v)))+','+Math.round(50*(1-Math.abs(v)))+',0.8)'}}
+new Chart(document.getElementById('corrChart'),{type:'matrix',data:{datasets:[{label:'Correlacion',data:(function(){var d=[];for(var i=0;i<cl.length;i++){for(var j=0;j<cl.length;j++){d.push({x:i,y:j,v:cd[i][j]})}}return d})(),backgroundColor:function(ctx){var v=ctx.dataset.data[ctx.dataIndex].v;var a=Math.abs(v);if(v>0)return 'rgba(0,'+Math.round(200*a)+',0,'+(0.3+0.7*a)+')';return 'rgba('+Math.round(200*a)+',0,0,'+(0.3+0.7*a)+')'},width:function(ctx){var a=ctx.chart.chartArea;return(a.right-a.left)/cl.length-2},height:function(ctx){var a=ctx.chart.chartArea;return(a.bottom-a.top)/cl.length-2}}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:false,tooltip:{callbacks:{title:function(i){return cl[i[0].dataIndex%cl.length]+' - '+cl[Math.floor(i[0].dataIndex/cl.length)]},label:function(i){return'Corr: '+i.dataset.data[i.dataIndex].v.toFixed(2)}}}},scales:{x:{type:'category',labels:cl,ticks:{font:{size:8},color:'#6b7280'}},y:{type:'category',labels:cl,ticks:{font:{size:8},color:'#6b7280'}}}}})}catch(e){}</script></div>"
+}
+if ($corrHtml) { $HTML += $corrHtml }
+
+# --- PATRONES TECNICOS ---
+$patHtml = ''
+$patPath = "$DATOS_DIR/analisis_patrones.json"
+if (Test-Path $patPath) {
+    try {
+        $pd = Get-Content $patPath -Raw | ConvertFrom-Json
+        $pts = $pd.tickers
+        if ($pts) {
+            $patHtml = "<div class='t5'><div class='t5h' style='color:#ce93d8'>PATRONES TECNICOS <span>Velas, divergencias, soporte/resistencia</span></div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px'>"
+            foreach ($tProp in $pts.PSObject.Properties) {
+                $t = $tProp.Name; $v = $tProp.Value
+                $velasStr = if ($v.velas -and $v.velas.Count -gt 0) { $v.velas -join ', ' } else { '--' }
+                $senCol = if ($v.senal -eq 'alcista') { '#00c853' } elseif ($v.senal -eq 'bajista') { '#ff5252' } else { '#6b7280' }
+                $divCol = if ($v.divergencia_macd -eq 'alcista') { '#00c853' } elseif ($v.divergencia_macd -eq 'bajista') { '#ff5252' } else { '#6b7280' }
+                $patHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px'><div style='display:flex;justify-content:space-between'><span style='font-weight:700;font-size:13px'>$t</span><span style='font-size:10px;color:$senCol;font-weight:700'>$($v.senal)</span></div><div style='font-size:10px;color:#6b7280;margin-top:4px'>Velas: $velasStr</div><div style='font-size:10px;color:#6b7280'>Soporte: $$([math]::Round($v.soporte,2)) | Resistencia: $$([math]::Round($v.resistencia,2))</div><div style='font-size:10px;color:$divCol'>MACD: $($v.divergencia_macd) | RSI: $($v.divergencia_rsi)</div></div>"
+            }
+            $patHtml += "</div></div>"
+        }
+    } catch {}
+}
+if ($patHtml) { $HTML += $patHtml }
+
+# --- SENTIMIENTO SOCIAL (Reddit) ---
+$socialHtml = ''
+$socialPath = "$DATOS_DIR/analisis_social.json"
+if (Test-Path $socialPath) {
+    try {
+        $sd = Get-Content $socialPath -Raw | ConvertFrom-Json
+        $sts = $sd.tickers
+        if ($sts) {
+            $socialHtml = "<div class='t5'><div class='t5h' style='color:#ff9800'>SENTIMIENTO REDES <span>Menciones y analisis en redes sociales</span></div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px'>"
+            $sortedSoc = $sts.PSObject.Properties | Sort-Object { [double]$_.Value.score } -Descending
+            foreach ($tProp in $sortedSoc) {
+                $t = $tProp.Name; $v = $tProp.Value
+                $scCol = if ($v.score -ge 0.2) { '#00c853' } elseif ($v.score -le -0.2) { '#ff5252' } else { '#ffc107' }
+                $barW = [math]::Min(100, [math]::Max(5, ($v.score + 1) * 50))
+                $socialHtml += "<div style='background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px'><div style='display:flex;justify-content:space-between'><span style='font-weight:700'>$t</span><span style='font-size:10px;color:$scCol'>$($v.sentimiento) ($([math]::Round($v.score,2)))</span></div><div style='height:4px;background:#1e2028;border-radius:2px;margin-top:4px;overflow:hidden'><div style='height:100%;width:${barW}%;background:$scCol;border-radius:2px'></div></div><div style='font-size:9px;color:#4b5563;margin-top:2px'>$($v.menciones) menciones | Fuentes: $($v.fuentes -join ', ')</div></div>"
+            }
+            $socialHtml += "</div></div>"
+        }
+    } catch {}
+}
+if ($socialHtml) { $HTML += $socialHtml }
+
+# --- CHART INTERACTIVO (Chart.js precio + RSI + MACD) ---
+$chartHtml = "<div class='t5'><div class='t5h' style='color:#00c853'>GRAFICO INTERACTIVO <span>Precio, RSI y MACD - escribe un ticker</span></div>"
+$chartHtml += "<div style='display:flex;gap:8px;margin-bottom:8px'><input type='text' id='chartTicker' value='NVDA' style='flex:1;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase' onkeydown='if(event.key===`"Enter`")cargarGrafico()'><button onclick='cargarGrafico()' style='background:#00c853;border:none;border-radius:6px;padding:6px 16px;color:#0a0b0e;font-weight:700;cursor:pointer'>Cargar</button></div>"
+$chartHtml += "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;height:300px'><div style='position:relative'><canvas id='priceChart'></canvas></div><div style='position:relative'><canvas id='rsiChart'></canvas></div><div style='position:relative'><canvas id='macdChart'></canvas></div></div>"
+$chartHtml += "<script>var chartInstances={};function cargarGrafico(){var t=document.getElementById('chartTicker').value.trim().toUpperCase();if(!t)return;fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+t+'?interval=1d&range=3mo').then(function(r){return r.json()}).then(function(d){var q=d.chart.result[0];var ts=q.timestamp;var o=q.indicators.quote[0].open;var h=q.indicators.quote[0].high;var l=q.indicators.quote[0].low;var c=q.indicators.quote[0].close;var v=q.indicators.quote[0].volume;var dates=ts.map(function(t){return new Date(t*1000).toLocaleDateString()});var closes=c.filter(function(v){return v!==null});if(chartInstances.price)chartInstances.price.destroy();if(chartInstances.rsi)chartInstances.rsi.destroy();if(chartInstances.macd)chartInstances.macd.destroy();chartInstances.price=new Chart(document.getElementById('priceChart'),{type:'line',data:{labels:dates,datasets:[{label:t+' Precio',data:c.filter(function(v){return v!==null}),borderColor:'#00c853',backgroundColor:'rgba(0,200,83,0.1)',borderWidth:2,fill:true,tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},scales:{x:{ticks:{font:{size:8},color:'#6b7280',maxTicksLimit:10}},y:{ticks:{font:{size:9},color:'#6b7280'}}}}});var rsi=calcRSI(closes,14);var rsiLabels=dates.slice(14);chartInstances.rsi=new Chart(document.getElementById('rsiChart'),{type:'line',data:{labels:rsiLabels,datasets:[{label:'RSI(14)',data:rsi,borderColor:'#64b5f6',borderWidth:2,tension:0.1},{label:'Sobrecompra',data:rsiLabels.map(function(){return 70}),borderColor:'#ff5252',borderWidth:1,borderDash:[3,3],pointRadius:0},{label:'Sobreventa',data:rsiLabels.map(function(){return 30}),borderColor:'#00c853',borderWidth:1,borderDash:[3,3],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:9}}}},scales:{y:{min:0,max:100,ticks:{font:{size:9},color:'#6b7280'}}}}});var macd=calcMACD(closes);var macdLabels=dates.slice(26);chartInstances.macd=new Chart(document.getElementById('macdChart'),{type:'bar',data:{labels:macdLabels,datasets:[{label:'MACD',data:macd.macd,borderColor:'#ce93d8',backgroundColor:'rgba(206,147,216,0.3)',borderWidth:2,type:'line',order:1},{label:'Senial',data:macd.signal,borderColor:'#ffc107',borderWidth:2,type:'line',order:1},{label:'Histograma',data:macd.histogram,backgroundColor:macd.histogram.map(function(v){return v>=0?'rgba(0,200,83,0.5)':'rgba(255,82,82,0.5)'}),type:'bar',order:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:9}}}},scales:{x:{ticks:{font:{size:7},color:'#6b7280',maxTicksLimit:8}},y:{ticks:{font:{size:9},color:'#6b7280'}}}}})}).catch(function(){alert('Ticker no encontrado')})}
+function calcRSI(p,n){if(p.length<n)return[];var g=[];for(var i=1;i<p.length;i++){var d=p[i]-p[i-1];g.push(d>=0?d:0)}var l=[];for(var i=1;i<p.length;i++){var d=p[i-1]-p[i];l.push(d>0?d:0)}var ag=0,al=0;for(var i=0;i<n;i++){ag+=g[i];al+=l[i]}var rs=[],rsv=[];ag/=n;al/=n;rs.push(al===0?100:100-100/(1+ag/al));rsv.push(ag+al>0?ag/(ag+al):0.5);for(var i=n;i<g.length;i++){ag=(ag*(n-1)+g[i])/n;al=(al*(n-1)+l[i])/n;rs.push(al===0?100:100-100/(1+ag/al));rsv.push(ag/(ag+al))}return rs}
+function calcMACD(p){var e12=[],e26=[],s=[];var f12=2/13,f26=2/27;e12[0]=p[0];e26[0]=p[0];for(var i=1;i<p.length;i++){e12.push(p[i]*f12+e12[i-1]*(1-f12));e26.push(p[i]*f26+e26[i-1]*(1-f26))}for(var i=0;i<Math.min(e12.length,e26.length);i++){s.push(e12[i]-e26[i])}var sig=[s[0]];var fs=2/10;for(var i=1;i<s.length;i++){sig.push(s[i]*fs+sig[i-1]*(1-fs))}var h=[];for(var i=0;i<Math.min(s.length,sig.length);i++){h.push(s[i]-sig[i])}return{macd:s.slice(9),signal:sig.slice(9),histogram:h.slice(9)}}
+setTimeout(function(){cargarGrafico()},3000)</script></div>"
+$HTML += $chartHtml
+
+# --- COMPARADOR DE TICKERS ---
+$compareHtml = "<div class='t5'><div class='t5h' style='color:#7c4dff'>COMPARADOR <span>Compara rendimiento de 2-3 tickers lado a lado</span></div>"
+$compareHtml += "<div style='display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap'><input type='text' id='comp1' value='NVDA' placeholder='Ticker 1' style='flex:1;min-width:100px;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase'><input type='text' id='comp2' value='AMD' placeholder='Ticker 2' style='flex:1;min-width:100px;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase'><input type='text' id='comp3' value='' placeholder='Ticker 3 (opcional)' style='flex:1;min-width:100px;background:#14161b;border:1px solid #1e2028;border-radius:6px;padding:8px 12px;color:#e8eaed;font-size:13px;outline:none;text-transform:uppercase'><button onclick='cargarComparador()' style='background:#7c4dff;border:none;border-radius:6px;padding:6px 16px;color:#fff;font-weight:700;cursor:pointer'>Comparar</button></div>"
+$compareHtml += "<div style='height:300px;position:relative'><canvas id='compChart'></canvas></div></div>"
+$compareHtml += "<script>var compChart=null;function cargarComparador(){var ts=[document.getElementById('comp1').value.trim().toUpperCase(),document.getElementById('comp2').value.trim().toUpperCase()];var t3=document.getElementById('comp3').value.trim().toUpperCase();if(t3)ts.push(t3);ts=ts.filter(function(t){return t!==''});if(ts.length<2)return;Promise.all(ts.map(function(t){return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+t+'?interval=1d&range=3mo').then(function(r){return r.json()}).then(function(d){var c=d.chart.result[0].indicators.quote[0].close.filter(function(v){return v!==null});var base=c[0];return{label:t,data:c.map(function(v){return((v-base)/base*100).toFixed(2)}),color:'#'+Math.floor(Math.random()*16777215).toString(16)}})})).then(function(ds){if(compChart)compChart.destroy();compChart=new Chart(document.getElementById('compChart'),{type:'line',data:{labels:Array.from({length:ds[0].data.length},function(_,i){return i}),datasets:ds.map(function(d){return{label:d.label,data:d.data,borderColor:d.color,borderWidth:2,fill:false,tension:0.1}})},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+'%'}}}},scales:{x:{ticks:{font:{size:8},color:'#6b7280',maxTicksLimit:10}},y:{title:{display:true,text:'Rendimiento %',color:'#6b7280'},ticks:{font:{size:9},color:'#6b7280',callback:function(v){return v+'%'}}}}}})})}
+setTimeout(function(){cargarComparador()},3500)</script></div>"
+$HTML += $compareHtml
+
+# --- REBALANCEO DE PORTAFOLIO ---
+$rebalPath = "$DATOS_DIR/analisis_riesgo.json"
+$rebalHtml = "<div class='t5'><div class='t5h' style='color:#ff9800'>REBALANCEO DE PORTAFOLIO <span>Sugerencias basadas en correlacion y predicciones</span></div>"
+$rebalHtml += "<div id='rebalContent' style='color:#6b7280;font-size:12px'>Analizando portafolio...</div></div>"
+$rebalHtml += "<script>setTimeout(function(){var p=getPortafolio();if(p.length<2){document.getElementById('rebalContent').innerHTML='<span style=color:#4b5563>Agrega al menos 2 tickers a tu portafolio para ver sugerencias de rebalanceo.</span>';return}
+var html='<div style=display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px>';p.forEach(function(t){var d=PD[t];if(!d){html+='<div style=background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px><div style=font-weight:700>'+t+'</div><div style=font-size:10px;color:#4b5563>Sin datos</div></div>';return}
+var pr=d.pr||50;var w=Math.round(100/p.length);var sug=pr>=65?w+5:pr>=55?w:w-5;var col=sug>w?'#00c853':sug<w?'#ff5252':'#ffc107';var sg=sug>=w?'+':'';html+='<div style=background:#14161b;border:1px solid #1e2028;border-radius:8px;padding:10px><div style=display:flex;justify-content:space-between><span style=font-weight:700>'+t+'</span><span style=color:'+col+';font-weight:700>'+sug+'%</span></div><div style=font-size:10px;color:#6b7280;margin-top:2px>Peso actual: '+w+'% | Prob: '+pr+'%</div><div style=font-size:10px;color:#4b5563;margin-top:2px>Sugerencia: '+sg+Math.abs(sug-w)+'%</div></div>'})
+html+='</div>';document.getElementById('rebalContent').innerHTML=html;},4000)</script></div>"
+$HTML += $rebalHtml
 
 # Build embedded data for portfolio JS
 $pfData = @{}

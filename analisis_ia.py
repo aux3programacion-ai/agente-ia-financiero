@@ -73,7 +73,7 @@ for t in PORTAFOLIO_TICKERS:
         PRICES_BASE[t] = 100
 
 # Load global screening to determine TICKERS to analyze (all markets)
-MAX_TICKERS_AI = 120
+MAX_TICKERS_AI = 500
 TICKERS = list(TICKERS_CORE)
 if os.path.exists(SCREENING_PATH):
     try:
@@ -81,8 +81,17 @@ if os.path.exists(SCREENING_PATH):
         top50 = scr.get('top50_tickers', [])
         por_mercado = scr.get('por_mercado', {})
 
+        # Also add top200 from screening (broader coverage for 500+)
+        top200 = scr.get('top200', [])
+        top200_tickers = [t['ticker'] for t in top200] if top200 else []
+
         # Sample proportionally from each market
         sampled = set(TICKERS_CORE)
+        for t in top200_tickers:
+            if len(sampled) >= MAX_TICKERS_AI:
+                break
+            if t not in sampled:
+                sampled.add(t)
         remaining = MAX_TICKERS_AI - len(sampled)
         if remaining > 0 and por_mercado:
             # Distribute remaining slots proportionally
@@ -152,6 +161,37 @@ if os.path.exists(NEWS_PATH):
             texto_noticias = '\n'.join(lines_n)
     except Exception as e:
         print(f'[!] Error cargando noticias: {e}')
+
+# --- Cargar calendario economico ---
+texto_calendario = ''
+CAL_PATH = os.path.join(DATA_DIR, 'Datos', 'calendario_economico.json')
+if os.path.exists(CAL_PATH):
+    try:
+        cal = json.load(open(CAL_PATH))
+        evts = cal.get('proximos_eventos', [])
+        if evts:
+            lines_cal = ['\nCALENDARIO ECONOMICO (proximos eventos de alto impacto):']
+            for e in evts[:8]:
+                lines_cal.append(f'  {e["fecha"]} | {e["tipo"]}: {e["descripcion"]} (impacto: {e["impacto"]})')
+            texto_calendario = '\n'.join(lines_cal)
+    except Exception as e:
+        print(f'[!] Error cargando calendario: {e}')
+
+# --- Cargar sentimiento social ---
+texto_social = ''
+SOC_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_social.json')
+if os.path.exists(SOC_PATH):
+    try:
+        soc = json.load(open(SOC_PATH))
+        st = soc.get('tickers', {})
+        if st:
+            lines_soc = ['\nSENTIMIENTO REDES (menciones en Reddit/foros):']
+            for t in list(st.keys())[:15]:
+                s = st[t]
+                lines_soc.append(f'  {t}: {s.get("sentimiento","?")} (score:{s.get("score",0):.2f}, {s.get("menciones",0)} menciones)')
+            texto_social = '\n'.join(lines_soc)
+    except Exception as e:
+        print(f'[!] Error cargando social: {e}')
 
 # --- Fetch fundamental analyst data for portfolio tickers from Yahoo Finance ---
 texto_analisis_portafolio = ''
@@ -245,6 +285,8 @@ USER_PROMPT_TEMPLATE = f'''Genera analisis para estos {len(TICKERS)} tickers de 
 Tickers: {ticker_list_str}
 Precios actuales: {texto_precios}
 {texto_noticias}
+{texto_social}
+{texto_calendario}
 {texto_analisis_portafolio}
 {texto_tecnicos}
 {feedback_section}
