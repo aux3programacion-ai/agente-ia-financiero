@@ -27,11 +27,13 @@ jobs:
 
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests playwright -q
+        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests -q
 
-      - name: Instalar Chromium para Playwright
+      - name: Instalar Playwright y Chromium
         shell: bash
-        run: playwright install chromium
+        run: |
+          pip install playwright -q
+          python -m playwright install --with-deps chromium 2>&1 | tail -3
 
       - name: Obtener precios reales (yfinance + scraping)
         shell: bash
@@ -57,6 +59,7 @@ jobs:
 
       - name: TIKR Terminal (ownership, noticias, ratios, estimaciones, valoracion)
         shell: bash
+        continue-on-error: true
         run: python tikr_scraper.py
         env:
           TIKR_EMAIL: ${{ secrets.TIKR_EMAIL }}
