@@ -54,16 +54,11 @@ SCREENING_PATH = os.path.join(DATA_DIR, 'Datos', 'screening_global.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 # --- Load portfolio tickers (always included in analysis) ---
-PORTAFOLIO_TICKERS = set()
-PORTAFOLIO_PATH = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
-if os.path.exists(PORTAFOLIO_PATH):
-    try:
-        pf = json.load(open(PORTAFOLIO_PATH))
-        if isinstance(pf, list):
-            PORTAFOLIO_TICKERS = set(t.upper().strip() for t in pf if isinstance(t, str) and t.strip())
-            print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(sorted(PORTAFOLIO_TICKERS))}')
-    except Exception as e:
-        print(f'[!] Error cargando portafolio_usuario.json: {e}')
+from portafolio_utils import cargar_portafolio, cargar_portafolio_cantidades
+PORTAFOLIO_TICKERS = set(cargar_portafolio(DATA_DIR))
+PORTAFOLIO_CANTIDADES = cargar_portafolio_cantidades(DATA_DIR)
+if PORTAFOLIO_TICKERS:
+    print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(sorted(PORTAFOLIO_TICKERS))}')
 
 # Ensure portfolio tickers have base data entries
 for t in PORTAFOLIO_TICKERS:
@@ -193,6 +188,83 @@ if os.path.exists(SOC_PATH):
     except Exception as e:
         print(f'[!] Error cargando social: {e}')
 
+# --- Cargar datos de Google Finance (estadisticas clave, beta, 52w, earnings) ---
+texto_google_finance = ''
+GF_PATH = os.path.join(DATA_DIR, 'Datos', 'google_finance.json')
+if os.path.exists(GF_PATH):
+    try:
+        gf = json.load(open(GF_PATH))
+        gf_tickers = gf.get('tickers', {})
+        lines_gf = ['\nDATOS GOOGLE FINANCE (fundamentales, beta, rango 52sem, earnings, relacionados):']
+        for t in TICKERS:
+            gft = gf_tickers.get(t, {})
+            if not gft:
+                continue
+            stats = gft.get('stats') or {}
+            earnings = gft.get('earnings') or {}
+            related = gft.get('related_stocks') or []
+            parts = []
+            if stats.get('beta'): parts.append(f'Beta:{stats["beta"]}')
+            if stats.get('pe_ratio'): parts.append(f'PE:{stats["pe_ratio"]}')
+            if stats.get('eps'): parts.append(f'EPS:{stats["eps"]}')
+            if stats.get('high_52w') and stats.get('low_52w'):
+                parts.append(f'52w:{stats["low_52w"]}-{stats["high_52w"]}')
+            if stats.get('dividend_yield'): parts.append(f'Div:{stats["dividend_yield"]}%')
+            if stats.get('market_cap_str'): parts.append(f'MktCap:{stats["market_cap_str"]}')
+            if stats.get('avg_volume'): parts.append(f'AvgVol:{stats["avg_volume"]}')
+            if earnings.get('surprise_pct'): parts.append(f'Sorpresa:{earnings["surprise_pct"]}')
+            if earnings.get('fiscal_period'): parts.append(f'Periodo:{earnings["fiscal_period"]}')
+            if related:
+                rel_tickers = [r['ticker'] for r in related[:4]]
+                parts.append(f'Relacionados:{" ".join(rel_tickers)}')
+            if parts:
+                lines_gf.append(f'  {t}: {" | ".join(parts)}')
+        if len(lines_gf) > 1:
+            texto_google_finance = '\n'.join(lines_gf)
+            print(f'[GF] Datos cargados para {sum(1 for t in TICKERS if t in gf_tickers)} tickers')
+    except Exception as e:
+        print(f'[!] Error cargando Google Finance: {e}')
+
+# --- Cargar datos de TIKR Terminal (ownership, news, multiples, estimaciones, ratios) ---
+texto_tikr = ''
+TIKR_PATH = os.path.join(DATA_DIR, 'Datos', 'tikr_data.json')
+if os.path.exists(TIKR_PATH):
+    try:
+        tikr = json.load(open(TIKR_PATH))
+        tikr_tickers = tikr.get('tickers', {})
+        lines_tikr = ['\nDATOS TIKR (ownership, noticias, valoracion, estimaciones, ratios):']
+        for t in TICKERS:
+            tdt = tikr_tickers.get(t, {})
+            if not tdt or 'error' in tdt:
+                continue
+            parts = []
+            about = ' '.join(tdt.get('about_text', [])[:30])
+            if '52 Week High' in about: parts.append(f'52w high/low presente en about')
+            if 'Beta' in about:
+                for ln in about.split(' '):
+                    if 'Beta' in ln and ln.replace('Beta','').strip().replace('.','').replace(',','').isdigit():
+                        parts.append(f'Beta:{ln.replace("Beta","").strip()}')
+                        break
+            own = ' '.join(tdt.get('ownership_text', [])[:50])
+            inv_count = len(re.findall(r'Inversores?\s+\d+', own))
+            if inv_count: parts.append(f'Owners:{inv_count} inversores listados')
+            news = tdt.get('news_text', [])
+            news_short = [n for n in news if len(n) > 20 and 'PRO' not in n][:3]
+            if news_short: parts.append(f'Noticias:{" | ".join(news_short)}')
+            ratios = ' '.join(tdt.get('financials_ratios_text', [])[:40])
+            if 'PRO' not in ratios[:200]:
+                for kw in ['Margen','ROE','ROA','Deuda']:
+                    if kw in ratios:
+                        parts.append(f'Ratio:{kw} disponible')
+                        break
+            if parts:
+                lines_tikr.append(f'  {t}: {" | ".join(parts)}')
+        if len(lines_tikr) > 1:
+            texto_tikr = '\n'.join(lines_tikr)
+            print(f'[TIKR] Datos cargados para {sum(1 for t in TICKERS if t in tikr_tickers)} tickers')
+    except Exception as e:
+        print(f'[!] Error cargando TIKR: {e}')
+
 # --- Fetch fundamental analyst data for portfolio tickers from Yahoo Finance ---
 texto_analisis_portafolio = ''
 if PORTAFOLIO_TICKERS:
@@ -287,7 +359,9 @@ Precios actuales: {texto_precios}
 {texto_noticias}
 {texto_social}
 {texto_calendario}
-{texto_analisis_portafolio}
+ {texto_google_finance}
+ {texto_tikr}
+ {texto_analisis_portafolio}
 {texto_tecnicos}
 {feedback_section}
 

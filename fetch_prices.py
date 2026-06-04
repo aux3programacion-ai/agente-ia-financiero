@@ -60,17 +60,35 @@ try:
 except Exception as e:
     print(f"[!] yfinance fallo: {e}")
 
-# --- FUENTE 2: Google Finance scraping ---
+# --- FUENTE 2: Google Finance scraping (con BeautifulSoup) ---
 print("[!] Intentando Google Finance scraping...")
+try:
+    from bs4 import BeautifulSoup
+    HAS_BS4 = True
+except ImportError:
+    HAS_BS4 = False
+
 for t in TICKERS:
     try:
         url = f'https://www.google.com/finance/quote/{t}:NASDAQ'
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10) as resp:
             html = resp.read().decode('utf-8')
-            m = re.search(r'"lbl":"([^"]+)"', html) or re.search(r'data-last-price="([^"]+)"', html)
-            if m:
-                price = float(m.group(1).replace(',', ''))
+            price = None
+            if HAS_BS4:
+                soup = BeautifulSoup(html, 'lxml')
+                stock_section = soup.find('div', class_='zhtAvb')
+                if stock_section:
+                    price_el = stock_section.find('span', {'jsname': 'Pdsbrc'})
+                    if price_el:
+                        try:
+                            price = float(price_el.get_text(strip=True).replace('$', '').replace(',', ''))
+                        except: pass
+            if price is None:
+                m = re.search(r'"lbl":"([^"]+)"', html) or re.search(r'data-last-price="([^"]+)"', html)
+                if m:
+                    price = float(m.group(1).replace(',', ''))
+            if price:
                 base = PRICES_BASE.get(t, price)
                 chg = round(price - base, 2) if t not in result['precios'] else 0
                 pct = round((chg/abs(base))*100, 2) if base else 0

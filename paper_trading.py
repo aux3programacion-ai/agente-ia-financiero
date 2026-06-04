@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import datetime
+from portafolio_utils import cargar_portafolio, cargar_portafolio_cantidades
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 
@@ -80,7 +81,8 @@ def run():
 
     state = load_json(PAPER_FILE)
     ia_data = load_json(IA_FILE, {})
-    portfolio_tickers = load_json(PORTFOLIO_FILE, [])
+    portfolio_tickers = cargar_portafolio(DATA_DIR)
+    portfolio_cantidades = cargar_portafolio_cantidades(DATA_DIR)
     prices_data = load_json(PRICES_FILE, {})
     optim_data = load_json(OPTIM_FILE)
     hist_data = load_json(HIST_FILE, {})
@@ -202,18 +204,28 @@ def run():
             price = hedged_prices.get(ticker, 100.0)
             if price <= 0:
                 price = 100.0
-            weight = conf / total_confidence
-            total_buy_candidates = len(buy_candidates)
-            equal_weight = 1.0 / total_buy_candidates if total_buy_candidates > 0 else 0
-            blended_weight = (equal_weight * 0.5) + (weight * 0.5)
-            alloc = cash * blended_weight
-            quantity = int(alloc / price) if price > 0 else 0
+
+            # Si el usuario especifico cantidad para este ticker, usarla
+            user_qty = portfolio_cantidades.get(ticker, 0)
+            if user_qty > 0:
+                quantity = user_qty
+            else:
+                weight = conf / total_confidence
+                total_buy_candidates = len(buy_candidates)
+                equal_weight = 1.0 / total_buy_candidates if total_buy_candidates > 0 else 0
+                blended_weight = (equal_weight * 0.5) + (weight * 0.5)
+                alloc = cash * blended_weight
+                quantity = int(alloc / price) if price > 0 else 0
+
             if quantity <= 0:
                 continue
             notional = quantity * price
             fee = notional * FEE_RATE
             cost = notional + fee
             if cost > cash:
+                if user_qty > 0:
+                    print(f"  [!] {ticker}: Efectivo insuficiente para comprar {quantity} acciones a ${price:.2f} (necesitas ${cost:.2f}, tienes ${cash:.2f})")
+                    continue
                 quantity = int((cash - fee) / price) if price > 0 else 0
                 if quantity <= 0:
                     continue
@@ -222,6 +234,7 @@ def run():
                 cost = notional + fee
             cash -= cost
             total_trades += 1
+            user_tag = ' (cantidad usuario)' if user_qty > 0 else ''
             new_positions[ticker] = {
                 'cantidad': quantity,
                 'precio_compra': round(price, 2),
@@ -229,7 +242,8 @@ def run():
                 'valor': round(notional, 2),
                 'pnl': 0.0,
                 'pct': 0.0,
-                'fecha_compra': today_str
+                'fecha_compra': today_str,
+                'cantidad_usuario': user_qty > 0
             }
             trade_record = {
                 'ticker': ticker,
@@ -240,7 +254,7 @@ def run():
                 'comision': round(fee, 2)
             }
             trades.append(trade_record)
-            print(f"  COMPRADO {ticker}: {quantity} @ ${price:.2f} (fee: ${fee:.2f})")
+            print(f"  COMPRADO {ticker}: {quantity} @ ${price:.2f} (fee: ${fee:.2f}){user_tag}")
 
     portfolio_value = 0.0
     for ticker, pos in new_positions.items():

@@ -27,7 +27,7 @@ jobs:
 
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas -q
+        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests -q
 
       - name: Obtener precios reales (yfinance + scraping)
         shell: bash
@@ -46,6 +46,17 @@ jobs:
         run: python noticias_mercado.py
         env:
           OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+
+      - name: Google Finance (estadisticas clave, beta, 52w, earnings, relacionados)
+        shell: bash
+        run: python google_finance_scraper.py
+
+      - name: TIKR Terminal (ownership, noticias, ratios, estimaciones, valoracion)
+        shell: bash
+        run: python tikr_scraper.py
+        env:
+          TIKR_EMAIL: ${{ secrets.TIKR_EMAIL }}
+          TIKR_PASSWORD: ${{ secrets.TIKR_PASSWORD }}
 
       - name: Analisis tecnico (indicadores + regimen de mercado)
         shell: bash
