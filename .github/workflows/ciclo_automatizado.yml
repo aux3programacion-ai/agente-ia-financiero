@@ -27,7 +27,11 @@ jobs:
 
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests -q
+        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests playwright -q
+
+      - name: Instalar Chromium para Playwright
+        shell: bash
+        run: playwright install chromium
 
       - name: Obtener precios reales (yfinance + scraping)
         shell: bash
