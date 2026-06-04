@@ -104,9 +104,9 @@ if (Test-Path $screeningPath) {
         # Load full market-grouped data
         if ($scrData.por_mercado) {
             foreach ($m in $scrData.por_mercado.PSObject.Properties) {
-                $screenPorMercado[$m.Name] = $m.Value
-                foreach ($s in $m.Value) {
-                    if (-not $tickerMercados.ContainsKey($s.ticker)) {
+                $screenPorMercado[$m.Name] = @($m.Value | Where-Object { $_ -and $_.ticker -and $_.ticker -ne '' })
+                foreach ($s in $screenPorMercado[$m.Name]) {
+                    if ($s.ticker -and $s.ticker -ne '' -and -not $tickerMercados.ContainsKey($s.ticker)) {
                         $tickerMercados[$s.ticker] = $s.mercado
                     }
                 }
@@ -114,7 +114,7 @@ if (Test-Path $screeningPath) {
         }
         if ($scrData.todos) {
             foreach ($s in $scrData.todos) {
-                if (-not $tickerMercados.ContainsKey($s.ticker)) {
+                if ($s.ticker -and $s.ticker -ne '' -and -not $tickerMercados.ContainsKey($s.ticker)) {
                     $tickerMercados[$s.ticker] = $s.mercado
                 }
             }
@@ -159,14 +159,14 @@ foreach ($kv in $nameMap.GetEnumerator()) { $nameDefaults[$kv.Key] = $kv.Value }
 $allScreenedTickers = @()
 foreach ($m in $screenPorMercado.Keys) {
     foreach ($s in $screenPorMercado[$m]) {
-        $allScreenedTickers += $s.ticker
+        if ($s.ticker) { $allScreenedTickers += $s.ticker }
     }
 }
-$TICKERS = @($TICKERS + $allScreenedTickers | Select-Object -Unique)
+$TICKERS = @($TICKERS + $allScreenedTickers | Where-Object { $_ } | Select-Object -Unique)
 
 # Initialize stockData for any new tickers from screening
 foreach ($t in $TICKERS) {
-    if (-not $stockData.ContainsKey($t)) {
+    if ($t -and -not $stockData.ContainsKey($t)) {
         $stockData[$t] = @{ 'prob' = 50; 'conf' = 50; 'sector' = 'Global'; 'name' = $t; 'analisis' = ''; 'target_30d' = 0; 'target_3m' = 0; 'target_6m' = 0; 'target_1y' = 0; 'precision_hist' = 0.5; 'mercado' = '' }
     }
 }
@@ -303,18 +303,22 @@ foreach ($m in $mercadoOrder) {
     $tickerListByMarket[$m] = @()
 }
 foreach ($t in $TICKERS) {
-    $m = $stockData[$t]['mercado']
+    if (-not $t -or -not $stockData.ContainsKey($t)) { continue }
+    $info = $stockData[$t]
+    if (-not $info) { continue }
+    $m = $info['mercado']
     if (-not $m) { $m = 'GLOBAL' }
     if (-not $marketCounts.ContainsKey($m)) { $marketCounts[$m] = 0; $marketTableRows[$m] = ""; $tickerListByMarket[$m] = @() }
     $tickerListByMarket[$m] += $t
 }
 foreach ($m in $mercadoOrder) {
     if ($marketCounts.ContainsKey($m) -and $tickerListByMarket[$m].Count -gt 0) {
-        $sortedM = $tickerListByMarket[$m] | Sort-Object { $stockData[$_]['prob'] } -Descending
+        $sortedM = $tickerListByMarket[$m] | Where-Object { $_ -and $stockData.ContainsKey($_) -and $stockData[$_] } | Sort-Object { $stockData[$_]['prob'] } -Descending
         $marketCounts[$m] = $sortedM.Count
         $rank = 1
         foreach ($t in $sortedM) {
             $info = $stockData[$t]; $pr = $prices[$t]
+            if (-not $info) { continue }
             if (-not $pr) { $pr = @{ 'price' = 0; 'change' = 0; 'pct' = 0 } }
             $cc = if ($pr['change'] -ge 0) { 'gn' } else { 'rd' }
             $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
@@ -335,6 +339,7 @@ foreach ($m in $mercadoOrder) {
 # Build ticker bar items (all tickers)
 $tickerItems = ""
 foreach ($t in $TICKERS) {
+    if (-not $t) { continue }
     $pr = $prices[$t]
     if (-not $pr) { $pr = @{ 'price' = 0; 'change' = 0; 'pct' = 0 } }
     $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
@@ -378,14 +383,16 @@ if ($aiFeedback) {
 $topPicksHtml = ""
 foreach ($m in $mercadoOrder) {
     if ($marketCounts.ContainsKey($m) -and $marketCounts[$m] -gt 0) {
-        $sortedM = $tickerListByMarket[$m] | Sort-Object { $stockData[$_]['prob'] } -Descending
+        $sortedM = $tickerListByMarket[$m] | Where-Object { $_ -and $stockData.ContainsKey($_) -and $stockData[$_] } | Sort-Object { $stockData[$_]['prob'] } -Descending
         $mcolor = $mercadoColors[$m]
         $mdisplay = $mercadoDisplay[$m]
         $n = [math]::Min(5, $sortedM.Count)
         $topPicksHtml += "<div class=`"t5`"><div class=`"t5h`" style=`"color:$mcolor`">TOP $n $mdisplay <span style=`"color:$mcolor!important`">Mejores probabilidades del mercado</span></div><div class=`"t5g`">"
         for ($i = 0; $i -lt $n; $i++) {
             $t = $sortedM[$i]
+            if (-not $t -or -not $stockData.ContainsKey($t)) { continue }
             $info = $stockData[$t]; $pr = $prices[$t]
+            if (-not $info) { continue }
             if (-not $pr) { $pr = @{ 'price' = 0; 'change' = 0; 'pct' = 0 } }
             $cc = if ($pr['change'] -ge 0) { '#00c853' } else { '#ff5252' }
             $sg = if ($pr['change'] -ge 0) { '+' } else { '' }
@@ -806,6 +813,7 @@ if (Test-Path $ptPath) {
 $pfData = @{}
 foreach ($t in $TICKERS) {
     $pr = $prices[$t]; $info = $stockData[$t]
+    if (-not $info) { continue }
     $tp = $info['target_30d']
     if (-not $tp -or $tp -le 0) { $tp = $pr['price'] * (1 + ($info['prob'] - 50) / 200) }
     $prc = $pr['price']
@@ -880,7 +888,7 @@ if ($generalNewsHtml) { $HTML += $generalNewsHtml }
 
 # Portfolio section HTML
 $HTML += "<div class=`"pf`"><div class=`"pfh`">MI PORTAFOLIO <span>Se sincroniza automaticamente en todos tus dispositivos via GitHub - edita <b>Datos/portafolio_usuario.json</b> en el repo</span></div>"
-$HTML += "<div class=`"pfi`"><input type=`"text`" id=`"pfInput`" placeholder=`"Ej: NVDA, AAPL, MSFT`" onkeydown=`"if(event.key==='Enter')agregarAlPortafolio()`"><button onclick=`"agregarAlPortafolio()`">+</button></div>"
+$HTML += "<div class=`"pfi`"><input type=`"text`" id=`"pfInput`" placeholder=`"Ticker (Ej: NVDA)`" style=`"width:110px`" onkeydown=`"if(event.key==='Enter')agregarAlPortafolio()`"><input type=`"number`" id=`"pfQty`" placeholder=`"Cant`" min=`"0`" style=`"width:55px`" onkeydown=`"if(event.key==='Enter')agregarAlPortafolio()`"><button onclick=`"agregarAlPortafolio()`">+</button></div>"
 $HTML += "<div class=`"pfs`" id=`"pfStats`"></div>"
 $HTML += "<div id=`"pfStatus`"></div>"
 $HTML += "<div class=`"pfl`" id=`"pfList`"><div style=`"color:#4b5563;font-size:12px;grid-column:1/-1;text-align:center;padding:20px`">Agrega tickers arriba para seguir su probabilidad en tiempo real</div></div></div>"
