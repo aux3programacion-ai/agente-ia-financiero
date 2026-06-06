@@ -12,14 +12,7 @@ TICKERS = [
     'LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE'
 ]
 
-PRICES_BASE = {
-    'NVDA':218.54,'MU':969.64,'DELL':424.81,'AVGO':420.37,'DDOG':195.27,
-    'SMCI':984.94,'SNOW':253.84,'CRWD':348.79,'NOW':123.89,'TSM':197.10,
-    'ARM':156.74,'OKTA':121.96,'HPE':60.38,'NTAP':209.45,'CLS':388.12,
-    'AAPL':245.00,'AMZN':215.00,'GOOGL':490.00,'META':620.00,'MSFT':510.00,
-    'LLY':890.00,'AMAT':245.00,'LRCX':290.00,'PANW':380.00,'ORCL':175.00,
-    'HON':235.00,'UBER':82.00,'GE':200.00,'COST':950.00,'NEE':78.00
-}
+PRICES_BASE = {}
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
@@ -60,7 +53,64 @@ try:
 except Exception as e:
     print(f"[!] yfinance fallo: {e}")
 
-# --- FUENTE 2: Google Finance scraping (con BeautifulSoup) ---
+# --- FUENTE 2: Alpha Vantage (free tier: 25 req/day, 5 req/min) ---
+AV_KEY = os.environ.get('ALPHAVANTAGE_KEY')
+if AV_KEY:
+    print("[!] Intentando Alpha Vantage...")
+    try:
+        for t in TICKERS:
+            if t in result['precios']:
+                continue
+            url = f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={t}&apikey={AV_KEY}'
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+                quote = data.get('Global Quote', {})
+                price_str = quote.get('05. price')
+                if price_str:
+                    price = float(price_str)
+                    base = PRICES_BASE.get(t, price)
+                    chg = round(price - base, 2)
+                    pct = round((chg/abs(base))*100, 2) if base else 0
+                    result['precios'][t] = {'price': price, 'change': chg, 'pct': pct}
+                    print(f"  {t}: ${price}")
+        if result['precios']:
+            result['fuente'] = 'alphavantage'
+            json.dump(result, open(OUTPUT, 'w'))
+            print(f"[OK] Alpha Vantage: {len(result['precios'])} tickers")
+            sys.exit(0)
+    except Exception as e:
+        print(f"[!] Alpha Vantage fallo: {e}")
+
+# --- FUENTE 3: Polygon.io (free tier) ---
+POLYGON_KEY = os.environ.get('POLYGON_KEY')
+if POLYGON_KEY:
+    print("[!] Intentando Polygon.io...")
+    try:
+        for t in TICKERS:
+            if t in result['precios']:
+                continue
+            url = f'https://api.polygon.io/v2/last/trade/{t}?apiKey={POLYGON_KEY}'
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+                trade = data.get('results', {})
+                price = trade.get('p')
+                if price:
+                    base = PRICES_BASE.get(t, price)
+                    chg = round(price - base, 2)
+                    pct = round((chg/abs(base))*100, 2) if base else 0
+                    result['precios'][t] = {'price': price, 'change': chg, 'pct': pct}
+                    print(f"  {t}: ${price}")
+        if result['precios']:
+            result['fuente'] = 'polygon'
+            json.dump(result, open(OUTPUT, 'w'))
+            print(f"[OK] Polygon: {len(result['precios'])} tickers")
+            sys.exit(0)
+    except Exception as e:
+        print(f"[!] Polygon fallo: {e}")
+
+# --- FUENTE 4: Google Finance scraping (con BeautifulSoup) ---
 print("[!] Intentando Google Finance scraping...")
 try:
     from bs4 import BeautifulSoup

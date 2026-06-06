@@ -1,4 +1,5 @@
 import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time, datetime, warnings, math
+from portafolio_utils import cargar_portafolio
 
 warnings.filterwarnings('ignore')
 
@@ -8,13 +9,52 @@ os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
-portfolio_path = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
-portfolio_tickers = []
-if os.path.exists(portfolio_path):
-    with open(portfolio_path, 'r') as f:
-        portfolio_tickers = json.load(f)
-    if not isinstance(portfolio_tickers, list):
-        portfolio_tickers = []
+# ============================================================
+# REGIME-AWARE POSITION SIZING
+# ============================================================
+REGIME_CONFIG = {
+    'ALCISTA':     {'max_position': 0.15, 'leverage': 1.0,  'risk_per_trade': 0.02, 'max_sector': 0.30, 'cash_reserve': 0.05},
+    'LATERAL':     {'max_position': 0.08, 'leverage': 0.5,  'risk_per_trade': 0.01, 'max_sector': 0.25, 'cash_reserve': 0.15},
+    'BAJISTA':     {'max_position': 0.05, 'leverage': 0.0,  'risk_per_trade': 0.005,'max_sector': 0.15, 'cash_reserve': 0.30},
+    'INCIERTO':    {'max_position': 0.06, 'leverage': 0.3,  'risk_per_trade': 0.008,'max_sector': 0.20, 'cash_reserve': 0.20}
+}
+
+def get_regime_params():
+    """Load regime from regimen_mercado.json and return sizing params."""
+    regime_path = os.path.join(DATA_DIR, 'Datos', 'regimen_mercado.json')
+    if os.path.exists(regime_path):
+        try:
+            with open(regime_path) as f:
+                regime_data = json.load(f)
+            regime = regime_data.get('regimen', 'INCIERTO')
+            confianza = regime_data.get('confianza', 0.5)
+            # Blend with INCIERTO if low confidence
+            if confianza < 0.5:
+                base = REGIME_CONFIG['INCIERTO']
+                target = REGIME_CONFIG.get(regime, REGIME_CONFIG['INCIERTO'])
+                return {k: base[k] * (1 - confianza) + target[k] * confianza for k in base}
+            return REGIME_CONFIG.get(regime, REGIME_CONFIG['INCIERTO'])
+        except:
+            pass
+    return REGIME_CONFIG['INCIERTO']
+
+def apply_regime_sizing(weights, regime_params, portfolio_value=100000):
+    """Apply regime-aware position sizing to portfolio weights."""
+    max_pos = regime_params['max_position']
+    leverage = regime_params['leverage']
+    cash_reserve = regime_params['cash_reserve']
+    
+    # Cap individual positions
+    capped = {k: min(v, max_pos) for k, v in weights.items()}
+    total = sum(capped.values())
+    if total > 0:
+        # Renormalize and apply leverage + cash reserve
+        invested = (1 - cash_reserve) * leverage
+        scaled = {k: v / total * invested for k, v in capped.items()}
+        return scaled
+    return capped
+
+portfolio_tickers = cargar_portafolio(DATA_DIR)
 
 all_tickers = list(dict.fromkeys(TICKERS_CORE + portfolio_tickers))
 print(f"[+] Tickers combinados ({len(all_tickers)}): {all_tickers}")
@@ -121,6 +161,76 @@ frontera_eficiente = {
     "top10": top10_portfolios
 }
 
+# ============================================================
+# HIERARCHICAL RISK PARITY (HRP)
+# ============================================================
+from scipy.cluster.hierarchy import linkage
+from scipy.spatial.distance import squareform
+from collections import OrderedDict
+
+def get_hrp_weights(cov, corr):
+    """Hierarchical Risk Parity: clustering + recursive bisection."""
+    dist = ((1 - corr) / 2) ** 0.5
+    link = linkage(squareform(dist), 'single')
+    
+    # Quasi-diagonalization (sort by cluster order)
+    sorted_idx = __sort_by_cluster(link, list(range(len(cov))))
+    sorted_cov = cov.iloc[sorted_idx, sorted_idx]
+    
+    # Recursive bisection
+    weights = __recursive_bisection(sorted_cov, list(range(len(sorted_cov))))
+    order_map = {sorted_idx[i]: weights[i] for i in range(len(weights))}
+    return np.array([order_map[i] for i in range(n_assets)])
+
+def __sort_by_cluster(link, items):
+    """Sort items by hierarchical clustering order."""
+    if len(items) <= 1:
+        return items
+    # Find the last merge
+    n = len(items)
+    if len(link) == 0:
+        return items
+    cluster = link[-1]
+    i1, i2 = int(cluster[0]), int(cluster[1])
+    # Map cluster indices back to original items
+    left = __get_cluster_items(link, i1, items)
+    right = __get_cluster_items(link, i2, items)
+    return left + right
+
+def __get_cluster_items(link, idx, items, n_original=None):
+    """Recursively get all items in a cluster."""
+    if n_original is None:
+        n_original = len(items)
+    if idx < n_original:
+        return [items[idx]]
+    cluster = link[idx - n_original]
+    i1, i2 = int(cluster[0]), int(cluster[1])
+    return __get_cluster_items(link, i1, items, n_original) + __get_cluster_items(link, i2, items, n_original)
+
+def __recursive_bisection(cov, items):
+    """Recursive bisection: split cluster, allocate variance inversely."""
+    if len(items) <= 1:
+        return [1.0]
+    
+    mid = len(items) // 2
+    left = items[:mid]
+    right = items[mid:]
+    
+    w_left = __cluster_variance(cov, left)
+    w_right = __cluster_variance(cov, right)
+    alpha = w_left / (w_left + w_right) if (w_left + w_right) > 0 else 0.5
+    
+    w_left_vec = __recursive_bisection(cov, left)
+    w_right_vec = __recursive_bisection(cov, right)
+    
+    return [x * alpha for x in w_left_vec] + [x * (1 - alpha) for x in w_right_vec]
+
+def __cluster_variance(cov, items):
+    """Compute variance of a cluster."""
+    w = np.ones(len(items)) / len(items)
+    sub = cov.iloc[items, items].values
+    return float(np.dot(w, np.dot(sub, w)))
+
 print("[+] PARTE 2: Risk Parity")
 print(f"    Calculando contribucion al riesgo...")
 
@@ -156,6 +266,89 @@ risk_parity = {
     "vol": round(float(port_vol_rp), 4),
     "retorno": round(float(np.dot(risk_parity_weights, annual_returns.values)), 4)
 }
+
+# ============================================================
+# HIERARCHICAL RISK PARITY (HRP) - mejora sobre Risk Parity
+# ============================================================
+print("[+] PARTE 2b: Hierarchical Risk Parity")
+try:
+    hrp_weights = get_hrp_weights(cov_matrix, log_returns.corr())
+    hrp_weights = hrp_weights / hrp_weights.sum()
+    hrp_return = float(np.dot(hrp_weights, annual_returns.values))
+    hrp_vol = float(np.sqrt(np.dot(hrp_weights.T, np.dot(cov_matrix.values, hrp_weights))))
+    hrp_sharpe = (hrp_return - rf) / hrp_vol if hrp_vol > 0 else 0
+    hrp_marginal = np.dot(cov_matrix.values, hrp_weights) / hrp_vol
+    hrp_risk_contrib = hrp_weights * hrp_marginal
+    hrp_risk_contrib_pct = hrp_risk_contrib / hrp_risk_contrib.sum()
+    
+    hrp_result = {
+        "pesos": {valid_tickers[j]: round(float(hrp_weights[j]), 4) for j in range(n_assets)},
+        "contribucion_riesgo": {valid_tickers[j]: round(float(hrp_risk_contrib_pct[j]), 4) for j in range(n_assets)},
+        "vol": round(hrp_vol, 4),
+        "retorno": round(hrp_return, 4),
+        "sharpe": round(hrp_sharpe, 4)
+    }
+    print(f"    HRP: retorno={hrp_return:.4f}, vol={hrp_vol:.4f}, sharpe={hrp_sharpe:.4f}")
+except Exception as e:
+    print(f"    [!] HRP fallo: {e}")
+    hrp_result = None
+
+# ============================================================
+# TAX-AWARE REBALANCING
+# ============================================================
+print("[+] PARTE 2c: Tax-Aware Rebalancing")
+tax_aware_result = {}
+try:
+    # Read current positions from paper_trading
+    paper_path = os.path.join(DATA_DIR, 'Datos', 'paper_trading.json')
+    current_holdings = {}
+    if os.path.exists(paper_path):
+        pt = json.load(open(paper_path))
+        holdings = pt.get('holdings', {})
+        for t, h in holdings.items():
+            current_holdings[t.upper()] = {
+                'cost_basis': h.get('valor_costo', 0),
+                'current_value': h.get('valor', 0),
+                'return_pct': (h.get('valor', 0) / max(h.get('valor_costo', 1), 0.01) - 1) * 100,
+                'held_days': (datetime.datetime.now() - datetime.datetime.strptime(h.get('fecha_compra', time.strftime('%Y-%m-%d')), '%Y-%m-%d')).days if h.get('fecha_compra') else 0
+            }
+    
+    target_weights = hrp_weights if hrp_result else max_sharpe_weights
+    if n_assets == len(valid_tickers) and target_weights is not None:
+        tax_aware_sells = []
+        tax_cost_total = 0
+        for i, t in enumerate(valid_tickers):
+            target_w = target_weights[i] if i < len(target_weights) else 0
+            current_w = current_holdings.get(t, {}).get('current_value', 0) / max(sum(h.get('current_value', 0) for h in current_holdings.values()), 1)
+            
+            if t in current_holdings and target_w < current_w:
+                diff = current_w - target_w
+                gain = current_holdings[t]['return_pct']
+                held = current_holdings[t]['held_days']
+                # Long-term vs short-term tax rate proxy
+                tax_rate = 0.15 if held > 365 else 0.35
+                tax_cost = diff * current_holdings[t]['current_value'] * tax_rate * gain / 100
+                tax_cost_total += abs(tax_cost)
+                tax_aware_sells.append({
+                    'ticker': t,
+                    'current_w': round(current_w * 100, 1),
+                    'target_w': round(target_w * 100, 1),
+                    'diff_pct': round(diff * 100, 1),
+                    'gain_pct': round(gain, 1),
+                    'held_days': held,
+                    'tax_rate': tax_rate,
+                    'tax_cost': round(abs(tax_cost), 2),
+                    'tax_efficient': held > 365
+                })
+        
+        tax_aware_result = {
+            'current_tax_cost': round(tax_cost_total, 2),
+            'sell_candidates': sorted(tax_aware_sells, key=lambda x: x['diff_pct'], reverse=True)[:10],
+            'recommendation': 'sell_long_term_first' if any(s['held_days'] > 365 for s in tax_aware_sells) else 'hold'
+        }
+        print(f'    Tax cost: ${tax_cost_total:.2f} | {len(tax_aware_sells)} sell candidates')
+except Exception as e:
+    print(f'    [!] Tax-Aware Rebalancing fallo: {e}')
 
 print("[+] PARTE 3: Monte Carlo Simulation")
 print(f"    Simulando 10,000 escenarios a 252 dias...")
@@ -296,14 +489,49 @@ elif max_sharpe_ret > 0.10:
 else:
     conclusion = f"El portafolio optimo prioriza estabilidad con volatilidad de {max_sharpe_v:.2f} y Sharpe de {max_sharpe_ratio:.2f}."
 
+# ============================================================
+# REGIME-AWARE POSITION SIZING
+# ============================================================
+regime_params = get_regime_params()
+print(f"[+] PARTE 5: Regime-Aware Position Sizing")
+print(f"    Regimen detectado: {regime_params}")
+
+max_sharpe_scaled = apply_regime_sizing(frontera_eficiente['max_sharpe']['pesos'], regime_params)
+min_vol_scaled = apply_regime_sizing(frontera_eficiente['min_vol']['pesos'], regime_params)
+risk_parity_scaled = apply_regime_sizing(risk_parity['pesos'], regime_params)
+
+print(f"    Max position: {regime_params['max_position']:.0%} | Leverage: {regime_params['leverage']:.1f}x | Cash reserve: {regime_params['cash_reserve']:.0%}")
+
+regime_sizing = {
+    "regimen": regime_params,
+    "max_sharpe_regime": {
+        "pesos": {k: round(v, 4) for k, v in max_sharpe_scaled.items()},
+        "total_invested": round(sum(max_sharpe_scaled.values()), 4),
+        "cash": round(regime_params['cash_reserve'], 4)
+    },
+    "min_vol_regime": {
+        "pesos": {k: round(v, 4) for k, v in min_vol_scaled.items()},
+        "total_invested": round(sum(min_vol_scaled.values()), 4),
+        "cash": round(regime_params['cash_reserve'], 4)
+    },
+    "risk_parity_regime": {
+        "pesos": {k: round(v, 4) for k, v in risk_parity_scaled.items()},
+        "total_invested": round(sum(risk_parity_scaled.values()), 4),
+        "cash": round(regime_params['cash_reserve'], 4)
+    }
+}
+
 result = {
     "timestamp": pd.Timestamp.now().isoformat(),
     "tickers": valid_tickers,
     "frontera_eficiente": frontera_eficiente,
     "risk_parity": risk_parity,
+    "hrp": hrp_result,
+    "tax_aware": tax_aware_result,
     "monte_carlo": monte_carlo,
     "stress_test": stress_results,
-    "peso_actual_sugerido": "max_sharpe",
+    "regime_sizing": regime_sizing,
+    "peso_actual_sugerido": "hrp" if hrp_result else "max_sharpe",
     "conclusion": conclusion
 }
 

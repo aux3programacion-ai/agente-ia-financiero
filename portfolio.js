@@ -115,7 +115,6 @@ function fetchYahooDirect(t){
   fetch(yahooUrl(t)).then(function(r){if(!r.ok)throw Error();return r.json()}).then(function(d){parseYahooResponse(d,t)}).catch(function(){LD[t]={p:0,ch:0,pc:0,pr:50,cf:50,tg:0,an:'Ticker no encontrado - verifica el simbolo',nm:t,sc:'Global',ph:0,mc:'GLOBAL'};renderPortfolio()});
 }
 var PROXIES=[
-  'https://api.allorigins.win/raw?url=',
   'https://corsproxy.io/?url=',
   'https://api.codetabs.com/v1/proxy?quest=',
   'https://thingproxy.freeboard.io/fetch/'

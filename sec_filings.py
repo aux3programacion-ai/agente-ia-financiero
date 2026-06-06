@@ -13,16 +13,10 @@ DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT = os.path.join(DATA_DIR, 'Datos', 'sec_filings.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
-def cargar_portafolio():
-    try:
-        ruta = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
-        with open(ruta, 'r') as f:
-            return json.load(f)
-    except:
-        return []
+from portafolio_utils import cargar_portafolio
 
 def tickers_a_procesar():
-    portafolio = cargar_portafolio()
+    portafolio = cargar_portafolio(DATA_DIR)
     combinados = list(TICKERS_CORE)
     for t in portafolio:
         t = t.strip().upper()

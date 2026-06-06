@@ -1,17 +1,13 @@
 import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time, math
 
+from portafolio_utils import cargar_portafolio
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Datos')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
-portfolio_path = os.path.join(DATA_DIR, 'portafolio_usuario.json')
-portfolio_tickers = []
-if os.path.exists(portfolio_path):
-    with open(portfolio_path, 'r') as f:
-        portfolio_tickers = json.load(f)
-    if not isinstance(portfolio_tickers, list):
-        portfolio_tickers = []
+portfolio_tickers = cargar_portafolio(os.path.dirname(DATA_DIR))
 
 all_tickers = list(dict.fromkeys(TICKERS_CORE + portfolio_tickers))
 print(f"[+] Total tickers a procesar: {len(all_tickers)}")
@@ -102,8 +98,50 @@ n = len(valid_tickers_for_corr)
 if n > 1:
     corr_data = returns[valid_tickers_for_corr].corr()
     matriz = [[round(float(corr_data.iloc[i, j]), 4) for j in range(n)] for i in range(n)]
+    
+    # --- Correlation Regime Detection ---
+    # Compute rolling average pairwise correlation
+    rolling_corr = returns[valid_tickers_for_corr].rolling(60, min_periods=30).corr()
+    # Get average pairwise correlation over time (upper triangle mean)
+    n_assets = len(valid_tickers_for_corr)
+    avg_corr_history = {}
+    for idx in rolling_corr.index.levels[0] if isinstance(rolling_corr.index, pd.MultiIndex) else rolling_corr.index:
+        try:
+            if isinstance(rolling_corr.index, pd.MultiIndex):
+                corr_slice = rolling_corr.loc[idx]
+            else:
+                corr_slice = rolling_corr
+            if isinstance(corr_slice, pd.DataFrame) and len(corr_slice) == n_assets:
+                triu = np.triu_indices(n_assets, k=1)
+                avg_c = np.mean(corr_slice.values[triu])
+                avg_corr_history[str(idx.date())] = round(float(avg_c), 4)
+        except:
+            pass
+    
+    current_avg_corr = np.mean([matriz[i][j] for i in range(n) for j in range(i+1, n)])
+    recent_avg = current_avg_corr
+    # Compare with 6 months ago
+    corr_values = list(avg_corr_history.values())
+    if len(corr_values) > 60:
+        old_avg = np.mean(corr_values[:30])
+        corr_regime_change = recent_avg - old_avg
+    else:
+        corr_regime_change = 0.0
+    
+    corr_regime = 'normal'
+    if corr_regime_change > 0.15:
+        corr_regime = 'high_correlation_crisis'
+    elif corr_regime_change > 0.08:
+        corr_regime = 'rising_correlation'
+    elif corr_regime_change < -0.1:
+        corr_regime = 'falling_correlation'
+    
+    print(f'  [Corr Regime] Avg pairwise corr={recent_avg:.3f}, change={corr_regime_change:.3f} -> {corr_regime}')
 else:
     matriz = [[1.0]]
+    avg_corr_history = {}
+    corr_regime = 'unknown'
+    recent_avg = 0
 
 fecha_inicio = str(close.index[0].date()) if len(close) > 0 else ""
 dias = len(returns)
@@ -113,7 +151,10 @@ result = {
     "tickers": ticker_results,
     "correlacion": {
         "tickers": valid_tickers_for_corr,
-        "matriz": matriz
+        "matriz": matriz,
+        "avg_pairwise_corr": round(float(recent_avg), 4) if n > 1 else 1.0,
+        "corr_history": avg_corr_history,
+        "corr_regime": corr_regime
     },
     "fecha_inicio": fecha_inicio,
     "dias": dias

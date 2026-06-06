@@ -1,18 +1,11 @@
-#!/usr/bin/env python3
 import json, os, sys, urllib.request, re, time, html
+from portafolio_utils import cargar_portafolio
+from sentimiento_finbert import vader_score, strip_html
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
-PORTAFOLIO_PATH = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
-portfolio = []
-if os.path.exists(PORTAFOLIO_PATH):
-    try:
-        pf = json.load(open(PORTAFOLIO_PATH))
-        if isinstance(pf, list):
-            portfolio = [t.upper().strip() for t in pf if isinstance(t, str) and t.strip()]
-    except:
-        pass
+portfolio = cargar_portafolio(DATA_DIR)
 
 seen = set()
 tickers = []
@@ -22,9 +15,6 @@ for t in TICKERS_CORE + portfolio:
         tickers.append(t)
 tickers = tickers[:60]
 
-KW_POS = re.compile(r'\b(moon|rocket|boom|buy|bullish|rip)\b', re.I)
-KW_NEG = re.compile(r'\b(dump|sell|bearish|crash|shit|down|drop)\b', re.I)
-
 def parse_rss_titles(xml_text):
     titles = []
     for m in re.finditer(r'<title[^>]*>(.*?)</title>', xml_text, re.DOTALL | re.I):
@@ -32,16 +22,6 @@ def parse_rss_titles(xml_text):
         if t:
             titles.append(t)
     return titles
-
-def keyword_score(titles, ticker):
-    pos = 0
-    neg = 0
-    for t in titles:
-        if ticker.upper() not in t.upper():
-            continue
-        pos += len(KW_POS.findall(t))
-        neg += len(KW_NEG.findall(t))
-    return pos, neg
 
 def fetch_titles(url):
     try:
@@ -69,9 +49,8 @@ for i, t in enumerate(tickers):
 
     all_titles = t1 + t2
     vol = min(len(all_titles), 20)
-    pos, neg = keyword_score(all_titles, t)
-    denom = pos + neg + 1
-    score = (pos - neg) / denom
+    combined = ' '.join(all_titles[:10])
+    label, score = vader_score(combined) if combined.strip() else ('neutral', 0.0)
 
     if score > 0.1:
         sent = "positivo"

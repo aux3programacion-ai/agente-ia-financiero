@@ -27,7 +27,7 @@ jobs:
 
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests -q
+        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests lightgbm catboost optuna -q
 
       - name: Instalar Playwright y Chromium
         shell: bash
@@ -79,6 +79,12 @@ jobs:
         shell: bash
         run: python calendario_economico.py
 
+      - name: Macro Features (FRED, VIX, yields, DXY)
+        shell: bash
+        run: python macro_features.py
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+
       - name: Analisis de riesgo (VaR, Sharpe, drawdown, correlacion)
         shell: bash
         run: python analisis_riesgo.py
@@ -103,15 +109,58 @@ jobs:
         shell: bash
         run: python regimen_mercado.py
 
-      - name: Dividendos, SEC filings, insider trading, opciones
+      - name: Dividendos, SEC filings, insider trading, opciones, earnings quality
         shell: bash
         run: |
           python dividendos.py
           python sec_filings.py
           python insider_trading.py
           python opciones.py
+          python earnings_quality.py
 
-      - name: Optimizacion de portafolio (Markowitz, risk parity, Monte Carlo, stress test)
+      - name: Auto Feature Engineering (interacciones, transformaciones, agregados)
+        shell: bash
+        continue-on-error: true
+        run: python auto_feature_engineering.py
+
+      - name: Analisis avanzados (short interest, analyst ratings, on-chain, sector momentum)
+        shell: bash
+        continue-on-error: true
+        run: |
+          python short_interest.py
+          python analyst_ratings.py
+          python sector_momentum.py
+          python surprise_index.py
+          python onchain_data.py
+
+      - name: NLP avanzado (Fed speeches, earnings calls)
+        shell: bash
+        continue-on-error: true
+        run: python central_bank_nlp.py
+
+      - name: Factor Attribution y Concentration Risk
+        shell: bash
+        continue-on-error: true
+        run: |
+          python factor_attribution.py
+          python concentration_risk.py
+
+      - name: Liquidity Scoring
+        shell: bash
+        continue-on-error: true
+        run: python liquidity_score.py
+
+      - name: Online Learning (SGD incremental)
+        shell: bash
+        continue-on-error: true
+        run: python online_learning.py
+
+      - name: Drawdown Stop System
+        shell: bash
+        continue-on-error: true
+        run: python drawdown_stop.py
+
+      - name: Optimizacion de portafolio (Markowitz, risk parity, HRP, tax-aware, Monte Carlo, stress test)
         shell: bash
         run: python optimizacion_portafolio.py
 
@@ -119,13 +168,44 @@ jobs:
         shell: bash
         run: python paper_trading.py
 
-      - name: Broker API status
+      - name: Broker API status (Paper-to-Live Bridge)
         shell: bash
+        continue-on-error: true
         run: python broker_api.py
+        env:
+          BROKER_MODE: ${{ secrets.BROKER_MODE || 'paper' }}
+          BROKER: ${{ secrets.BROKER || 'ibkr' }}
+          IBKR_HOST: ${{ secrets.IBKR_HOST || '127.0.0.1' }}
+          IBKR_PORT: ${{ secrets.IBKR_PORT || '7497' }}
+          IBKR_CLIENT_ID: ${{ secrets.IBKR_CLIENT_ID || '1' }}
+          ALPACA_KEY: ${{ secrets.ALPACA_KEY || '' }}
+          ALPACA_SECRET: ${{ secrets.ALPACA_SECRET || '' }}
 
       - name: Evaluar predicciones y calibrar (aprendizaje autonomo)
         shell: bash
         run: python aprendizaje.py
+
+      - name: Skill Memory (aprendizaje de patrones exitosos)
+        shell: bash
+        continue-on-error: true
+        run: python aprendizaje_skills.py
+
+      - name: Auto-Evolution (few-shot, hipotesis, auto-prompt, fine-tune simulado)
+        shell: bash
+        continue-on-error: true
+        run: python auto_evolution.py
+
+      - name: Auto Feature Discovery (LLM escribe nuevas features)
+        shell: bash
+        continue-on-error: true
+        run: python auto_feature_discovery.py
+        env:
+          OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+
+      - name: Ablation Studio (mide impacto de cada optimizacion)
+        shell: bash
+        continue-on-error: true
+        run: python ablation_studio.py
 
       - name: Ejecutar ciclo intradia (30 tickers)
         shell: pwsh

@@ -7,6 +7,7 @@ Sin API key, sin librerias externas.
 import json, os, urllib.request, time, re
 from datetime import datetime, timezone
 from xml.etree import ElementTree
+from portafolio_utils import cargar_portafolio
 
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
            'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
@@ -15,16 +16,9 @@ TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 
 # Load portfolio tickers (always monitored for news)
-PORTAFOLIO_TICKERS = set()
-PF_PATH = os.path.join(DATA_DIR, 'Datos', 'portafolio_usuario.json')
-if os.path.exists(PF_PATH):
-    try:
-        pf = json.load(open(PF_PATH))
-        if isinstance(pf, list):
-            PORTAFOLIO_TICKERS = set(t.upper().strip() for t in pf if isinstance(t, str) and t.strip())
-            print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(PORTAFOLIO_TICKERS)}')
-    except Exception as e:
-        print(f'[!] Error cargando portafolio: {e}')
+PORTAFOLIO_TICKERS = set(cargar_portafolio(DATA_DIR))
+if PORTAFOLIO_TICKERS:
+    print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(sorted(PORTAFOLIO_TICKERS))}')
 
 # Merge portfolio tickers into core list (deduped)
 TICKERS = list(dict.fromkeys(TICKERS + sorted(PORTAFOLIO_TICKERS)))

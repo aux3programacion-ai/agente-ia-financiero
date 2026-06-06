@@ -19,6 +19,19 @@ FEE_RATE = 0.001
 BUY_THRESHOLD = 60
 SELL_THRESHOLD = 40
 
+# Live execution mode (optional, requires broker_api.py)
+LIVE_MODE = os.environ.get('LIVE_MODE', '').lower() == 'true'
+broker = None
+if LIVE_MODE:
+    try:
+        from broker_api import BrokerAPI, ExecutionEngine
+        from optimizacion_portafolio import get_regime_params, apply_regime_sizing
+        broker = BrokerAPI()
+        print(f'[Broker] Live mode activo. Equity: ${broker.account_info.get("equity",0):.2f}')
+    except Exception as e:
+        print(f'[!] Live mode fallo, usando paper: {e}')
+        LIVE_MODE = False
+
 
 def load_json(path, default=None):
     try:
@@ -138,6 +151,11 @@ def run():
 
     buy_candidates = []
     for ticker, prob_data in probabilities.items():
+        # Handle both dict and string (legacy format)
+        if isinstance(prob_data, str):
+            continue
+        if not isinstance(prob_data, dict):
+            continue
         prob = prob_data.get('probabilidad')
         if prob is None:
             continue
@@ -157,18 +175,25 @@ def run():
         else:
             hedged_prices[ticker] = old_positions[ticker].get('precio_compra', 0)
 
+    def get_prob_val(ticker, key, default=0):
+        """Safely get value from probabilities dict handling both dict and legacy string formats."""
+        pdata = probabilities.get(ticker)
+        if isinstance(pdata, dict):
+            return pdata.get(key, default)
+        return default
+
     for ticker in buy_candidates:
         t = ticker[0]
         if t in prices:
             hedged_prices[t] = prices[t]['price']
         elif t in probabilities:
-            hedged_prices[t] = probabilities[t].get('precio_objetivo_30d', 0)
+            hedged_prices[t] = get_prob_val(t, 'precio_objetivo_30d', 0)
 
     new_positions = {}
     for ticker in old_positions:
         pos = dict(old_positions[ticker])
         if ticker in probabilities:
-            prob = probabilities[ticker].get('probabilidad', 50)
+            prob = get_prob_val(ticker, 'probabilidad', 50)
             signal = classify_signal(prob)
             if signal == 'sell':
                 sell_price = hedged_prices.get(ticker, pos.get('precio_actual', pos['precio_compra']))
@@ -294,9 +319,45 @@ def run():
         'equity_curve': equity_curve
     })
 
+    # ---- Live execution (if enabled) ----
+    if LIVE_MODE and broker:
+        try:
+            regime_path = os.path.join(DATA_DIR, 'Datos', 'optimizacion_portafolio.json')
+            if os.path.exists(regime_path):
+                with open(regime_path) as f:
+                    optim_data = json.load(f)
+                regime_weights = optim_data.get('regime_sizing', {}).get('max_sharpe_regime', {}).get('pesos', {})
+            else:
+                regime_weights = {}
+
+            print(f'  [Live] Ejecutando ordenes en broker...')
+            broker.sync()
+
+            # Build target positions from signals
+            target_positions = {}
+            for tk, p in new_positions.items():
+                target_positions[tk] = p['cantidad']
+
+            # Use TWAP execution
+            from optimizacion_portafolio import get_regime_params
+            engine = ExecutionEngine(broker)
+            orders = engine.execute_fills(target_positions, prices, get_regime_params(), total_value)
+
+            # Reconcile
+            from broker_api import reconcile_positions
+            alerts = reconcile_positions(new_positions, broker.positions)
+            if alerts:
+                state['reconciliation_alerts'] = alerts
+
+            broker.disconnect()
+        except Exception as e:
+            print(f'[!] Live execution error: {e}')
+
     save_json(PAPER_FILE, state)
 
     print(f"  Paper Trading: ${total_value:,.0f} ({total_return:+.0%}) | {total_trades} trades | Win rate {win_rate:.0%} | Drawdown {max_dd:.0%}")
+    if LIVE_MODE:
+        print(f"  [Live] Ordenes ejecutadas via {os.environ.get('BROKER', 'ibkr').upper()}")
 
 
 if __name__ == '__main__':

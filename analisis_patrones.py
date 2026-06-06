@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
 import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time
+from portafolio_utils import cargar_portafolio
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 DATOS_DIR = os.path.join(DATA_DIR, 'Datos')
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
-
-def load_portfolio():
-    path = os.path.join(DATOS_DIR, 'portafolio_usuario.json')
-    try:
-        with open(path, 'r') as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            return data
-        return []
-    except:
-        return []
 
 def merge_tickers(portfolio):
     combined = list(TICKERS_CORE)
