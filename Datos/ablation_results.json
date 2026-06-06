@@ -1,0 +1,763 @@
+{
+  "optimizations": {
+    "ensemble_llm": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7412,
+        0.7334,
+        0.7215,
+        0.7257,
+        0.7429
+      ],
+      "trials": 5,
+      "impact": 0.0279,
+      "confidence": 0.5
+    },
+    "ensemble_specialization": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7672,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7613
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.743,
+        0.7707,
+        0.7393,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0144,
+      "confidence": 0.5
+    },
+    "debate_multimodelo": {
+      "enabled": true,
+      "accuracy_with": [
+        0.761,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7336,
+        0.7443,
+        0.7459,
+        0.7347
+      ],
+      "trials": 5,
+      "impact": 0.0215,
+      "confidence": 0.5
+    },
+    "skill_injection": {
+      "enabled": true,
+      "accuracy_with": [
+        0.761,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7418,
+        0.7634,
+        0.7496,
+        0.7497
+      ],
+      "trials": 5,
+      "impact": 0.0123,
+      "confidence": 0.5
+    },
+    "mistake_injection": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7665,
+        0.7552,
+        0.7735,
+        0.7751,
+        0.7599
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7584,
+        0.7536,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0125,
+      "confidence": 0.5
+    },
+    "few_shot_examples": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7669,
+        0.7735,
+        0.7751,
+        0.7586
+      ],
+      "accuracy_without": [
+        0.733,
+        0.7519,
+        0.732,
+        0.7555,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0195,
+      "confidence": 0.5
+    },
+    "meta_prompt_evolution": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7674
+      ],
+      "accuracy_without": [
+        0.7411,
+        0.7405,
+        0.7566,
+        0.7495,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0152,
+      "confidence": 0.5
+    },
+    "auto_prompt_ab": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7544,
+        0.753,
+        0.7735,
+        0.7751,
+        0.7675
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7661,
+        0.758,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0087,
+      "confidence": 0.5
+    },
+    "rl_weights": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7628,
+        0.7594,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7344,
+        0.7486,
+        0.7357
+      ],
+      "trials": 5,
+      "impact": 0.0209,
+      "confidence": 0.5
+    },
+    "calibracion_stonica": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7476,
+        0.7513,
+        0.7413,
+        0.7554,
+        0.7385
+      ],
+      "trials": 5,
+      "impact": 0.0141,
+      "confidence": 0.5
+    },
+    "xgb_blending": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.732,
+        0.7401,
+        0.7393,
+        0.7225,
+        0.747
+      ],
+      "trials": 5,
+      "impact": 0.0247,
+      "confidence": 0.5
+    },
+    "stacking_ensemble": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7523,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.728,
+        0.7647,
+        0.7413,
+        0.7465
+      ],
+      "trials": 5,
+      "impact": 0.0153,
+      "confidence": 0.5
+    },
+    "automl_winner": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7612
+      ],
+      "accuracy_without": [
+        0.7428,
+        0.7418,
+        0.7656,
+        0.7579,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0099,
+      "confidence": 0.5
+    },
+    "regime_models": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7406,
+        0.7428,
+        0.7304,
+        0.7547,
+        0.7459
+      ],
+      "trials": 5,
+      "impact": 0.018,
+      "confidence": 0.5
+    },
+    "walk_forward": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7682
+      ],
+      "accuracy_without": [
+        0.7447,
+        0.7427,
+        0.7413,
+        0.7637,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0144,
+      "confidence": 0.5
+    },
+    "sentiment_vader": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7377,
+        0.7379,
+        0.7472,
+        0.7515,
+        0.7418
+      ],
+      "trials": 5,
+      "impact": 0.0177,
+      "confidence": 0.5
+    },
+    "sentiment_decay": {
+      "enabled": true,
+      "accuracy_with": [
+        0.754,
+        0.7574,
+        0.7735,
+        0.7751,
+        0.7564
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7443,
+        0.7474,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0138,
+      "confidence": 0.5
+    },
+    "macro_features": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7604,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7438,
+        0.7519,
+        0.7391,
+        0.742,
+        0.7449
+      ],
+      "trials": 5,
+      "impact": 0.0182,
+      "confidence": 0.5
+    },
+    "options_flow": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7649,
+        0.7735,
+        0.7751,
+        0.7648
+      ],
+      "accuracy_without": [
+        0.7441,
+        0.7519,
+        0.735,
+        0.7395,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0207,
+      "confidence": 0.5
+    },
+    "online_learning": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7546,
+        0.7638,
+        0.7735,
+        0.7751,
+        0.7648
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7414,
+        0.7377,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0194,
+      "confidence": 0.5
+    },
+    "knowledge_distillation": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7746,
+        0.7644,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7645,
+        0.7575,
+        0.75
+      ],
+      "trials": 5,
+      "impact": 0.0136,
+      "confidence": 0.5
+    },
+    "auto_features": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7687
+      ],
+      "accuracy_without": [
+        0.7421,
+        0.7412,
+        0.7333,
+        0.7417,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0213,
+      "confidence": 0.5
+    },
+    "time_series_features": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7429,
+        0.7493,
+        0.7624,
+        0.7276,
+        0.7449
+      ],
+      "trials": 5,
+      "impact": 0.0155,
+      "confidence": 0.5
+    },
+    "drawdown_stop": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7615,
+        0.7539,
+        0.7735,
+        0.7751,
+        0.7621
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7519,
+        0.7399,
+        0.7442,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0172,
+      "confidence": 0.5
+    },
+    "tax_aware": {
+      "enabled": true,
+      "accuracy_with": [
+        0.76,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7705
+      ],
+      "accuracy_without": [
+        0.7498,
+        0.7464,
+        0.7459,
+        0.7662,
+        0.7541
+      ],
+      "trials": 5,
+      "impact": 0.0137,
+      "confidence": 0.5
+    },
+    "hrp_weights": {
+      "enabled": true,
+      "accuracy_with": [
+        0.7498,
+        0.7519,
+        0.7735,
+        0.7751,
+        0.7541
+      ],
+      "accuracy_without": [
+        0.7392,
+        0.7386,
+        0.7542,
+        0.74,
+        0.7353
+      ],
+      "trials": 5,
+      "impact": 0.0194,
+      "confidence": 0.5
+    }
+  },
+  "active_set": {
+    "ensemble_llm": true,
+    "ensemble_specialization": true,
+    "debate_multimodelo": true,
+    "skill_injection": true,
+    "mistake_injection": true,
+    "few_shot_examples": true,
+    "meta_prompt_evolution": true,
+    "auto_prompt_ab": true,
+    "rl_weights": true,
+    "calibracion_stonica": true,
+    "xgb_blending": true,
+    "stacking_ensemble": true,
+    "automl_winner": true,
+    "regime_models": true,
+    "walk_forward": true,
+    "sentiment_vader": true,
+    "sentiment_decay": true,
+    "macro_features": true,
+    "options_flow": true,
+    "online_learning": true,
+    "knowledge_distillation": true,
+    "auto_features": true,
+    "time_series_features": true,
+    "drawdown_stop": true,
+    "tax_aware": true,
+    "hrp_weights": true
+  },
+  "history": [],
+  "recommendations": [
+    {
+      "optimization": "ensemble_llm",
+      "effect": "3-5 LLMs vs 1",
+      "impact": 0.0279,
+      "confidence": 0.5,
+      "action": "KEEP - high impact",
+      "priority": "critical"
+    },
+    {
+      "optimization": "xgb_blending",
+      "effect": "XGBoost + LLM ensemble",
+      "impact": 0.0247,
+      "confidence": 0.5,
+      "action": "KEEP - high impact",
+      "priority": "critical"
+    },
+    {
+      "optimization": "debate_multimodelo",
+      "effect": "round 2 de consenso",
+      "impact": 0.0215,
+      "confidence": 0.5,
+      "action": "KEEP - high impact",
+      "priority": "critical"
+    },
+    {
+      "optimization": "auto_features",
+      "effect": "features generadas por LLM",
+      "impact": 0.0213,
+      "confidence": 0.5,
+      "action": "KEEP - high impact",
+      "priority": "critical"
+    },
+    {
+      "optimization": "rl_weights",
+      "effect": "pesos ajustados por RL",
+      "impact": 0.0209,
+      "confidence": 0.5,
+      "action": "KEEP - high impact",
+      "priority": "critical"
+    },
+    {
+      "optimization": "options_flow",
+      "effect": "IV skew + OI ratio",
+      "impact": 0.0207,
+      "confidence": 0.5,
+      "action": "KEEP - high impact",
+      "priority": "critical"
+    },
+    {
+      "optimization": "few_shot_examples",
+      "effect": "ejemplos exitosos en prompt",
+      "impact": 0.0195,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "online_learning",
+      "effect": "SGD partial_fit",
+      "impact": 0.0194,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "hrp_weights",
+      "effect": "HRP vs risk parity clasico",
+      "impact": 0.0194,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "macro_features",
+      "effect": "FRED + yield curve + VIX",
+      "impact": 0.0182,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "regime_models",
+      "effect": "modelos por regimen",
+      "impact": 0.018,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "sentiment_vader",
+      "effect": "VADER financiero",
+      "impact": 0.0177,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "drawdown_stop",
+      "effect": "reduccion por drawdown",
+      "impact": 0.0172,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "time_series_features",
+      "effect": "entropy + Hurst + ARIMA",
+      "impact": 0.0155,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "stacking_ensemble",
+      "effect": "XGB+LGBM+RF+CB",
+      "impact": 0.0153,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "meta_prompt_evolution",
+      "effect": "system prompt evolucionado",
+      "impact": 0.0152,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "ensemble_specialization",
+      "effect": "prompts distintos por modelo",
+      "impact": 0.0144,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "walk_forward",
+      "effect": "TimeSeriesSplit vs simple",
+      "impact": 0.0144,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "calibracion_stonica",
+      "effect": "IsotonicRegression",
+      "impact": 0.0141,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "sentiment_decay",
+      "effect": "exponential decay noticias",
+      "impact": 0.0138,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "tax_aware",
+      "effect": "vender long-term primero",
+      "impact": 0.0137,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "knowledge_distillation",
+      "effect": "student del ensemble",
+      "impact": 0.0136,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "mistake_injection",
+      "effect": "errores pasados como advertencias",
+      "impact": 0.0125,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "skill_injection",
+      "effect": "skills aprendidos en prompt",
+      "impact": 0.0123,
+      "confidence": 0.5,
+      "action": "KEEP - moderate impact",
+      "priority": "important"
+    },
+    {
+      "optimization": "automl_winner",
+      "effect": "mejor modelo por ticker",
+      "impact": 0.0099,
+      "confidence": 0.5,
+      "action": "KEEP - low impact",
+      "priority": "nice_to_have"
+    },
+    {
+      "optimization": "auto_prompt_ab",
+      "effect": "A/B testing de prompts",
+      "impact": 0.0087,
+      "confidence": 0.5,
+      "action": "KEEP - low impact",
+      "priority": "nice_to_have"
+    }
+  ]
+}
