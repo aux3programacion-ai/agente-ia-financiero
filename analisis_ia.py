@@ -1089,6 +1089,7 @@ if os.path.exists(HIST_PATH):
 # FEATURE STABILITY MONITORING (detecta cambio en importancia features)
 # ============================================================
 FEATURE_STABILITY_PATH = os.path.join(DATA_DIR, 'Datos', 'feature_stability.json')
+MODELO_XGBOOST_PATH = os.path.join(DATA_DIR, 'Datos', 'modelo_xgboost.json')
 feature_alerts = []
 if os.path.exists(MODELO_XGBOOST_PATH):
     try:
