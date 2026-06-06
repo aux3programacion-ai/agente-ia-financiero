@@ -7,6 +7,8 @@ y feedback de aprendizaje. Pondera resultados por precision historica.
 import json, os, sys, urllib.request, urllib.error, time, re, random, datetime
 import numpy as np
 
+DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
+
 API_KEY = os.environ.get('OPENROUTER_KEY')
 
 MODELOS = [
@@ -118,7 +120,6 @@ for t in TICKERS_CORE:
     CONF_BASE[t] = c
     PRICES_BASE[t] = pr
 
-DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 PRECIOS_PATH = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
 IA_OUTPUT_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
 TECNICO_PATH = os.path.join(DATA_DIR, 'Datos', 'analisis_tecnico.json')
