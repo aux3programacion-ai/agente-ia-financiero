@@ -460,6 +460,8 @@ if os.path.exists(AUTO_PROMPT_PATH):
         print(f'[!] Error loading auto prompts: {e}')
 
 # --- Load few-shot examples and fine-tune injection ---
+auto_few_shot = ''
+auto_finetune = ''
 FEW_SHOT_PATH = os.path.join(DATA_DIR, 'Datos', 'few_shot_examples.json')
 if os.path.exists(FEW_SHOT_PATH):
     try:
@@ -499,6 +501,7 @@ Usa los rangos de probabilidad para calibrar: si en rango 60-65% tu precision hi
 
 # --- Skill Injection: Load learned patterns from skill memory ---
 skill_injection = ''
+mistake_injection = ''
 skill_meta_evolution = None
 SKILL_PATH = os.path.join(DATA_DIR, 'Datos', 'skill_memory.json')
 if os.path.exists(SKILL_PATH):
@@ -862,7 +865,6 @@ resultado_final['prompt_variation'] = prompt_variation_used
 # MISTAKE MEMORY: Post-mortems de errores pasados
 # ============================================================
 MISTAKE_PATH = os.path.join(DATA_DIR, 'Datos', 'mistake_memory.json')
-mistake_injection = ''
 if os.path.exists(MISTAKE_PATH):
     try:
         mm = json.load(open(MISTAKE_PATH))
