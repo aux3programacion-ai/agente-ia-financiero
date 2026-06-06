@@ -173,7 +173,7 @@ def analyze_ticker(ticker):
         return None
 
 def main():
-    portfolio = load_portfolio()
+    portfolio = cargar_portafolio(DATA_DIR)
     tickers = merge_tickers(portfolio)
     print(f'[Patrones] Tickers a analizar: {len(tickers)}')
     resultados = {'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'tickers': {}}
