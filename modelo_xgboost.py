@@ -603,6 +603,7 @@ global_fi = {}
 regime_models = {}
 regime_fi = {}
 regime_probs = {}
+output = {}
 
 if all_data:
     try:
@@ -700,7 +701,7 @@ precision_wf_std = round(np.mean([v['wf_std'] for v in ticker_results.values()])
 precision_train = round(np.mean([v['train_acc'] for v in ticker_results.values()]) if ticker_results else 0, 2)
 total_datos = sum(len(predicciones_hist.get(t, {}).get('predicciones', [])) for t in TICKERS_CORE if t in predicciones_hist)
 
-output = {
+output.update({
     'timestamp': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
     'wf_accuracy_mean': precision_wf,
     'wf_accuracy_std': precision_wf_std,
@@ -709,12 +710,11 @@ output = {
     'feature_importance_global': global_fi,
     'feature_importance_by_regime': regime_fi,
     'regime_probabilities': regime_probs,
-    'stacking_probabilities': output.get('stacking_probabilities', {}),
     'current_regime': current_regime,
     'total_datos': total_datos,
     'validation_method': 'walk_forward_expanding_regime_aware',
     'optuna_best_params': best_params if 'best_params' in locals() and best_params else None
-}
+})
 
 for tk, tr in ticker_results.items():
     output['tickers'][tk] = {
