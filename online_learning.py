@@ -1,127 +1,268 @@
-import json, os, sys, time
+#!/usr/bin/env python3
+"""
+online_learning.py - Online/incremental learning con River.
+SGD con elasticnet penalty + ADWIN drift detection + rolling accuracy.
+Reemplaza SGDClassifier estático con River para aprendizaje continuo.
+"""
+import json
+import os
+import time
 import numpy as np
-import pandas as pd
-import yfinance as yf
-from sklearn.linear_model import SGDClassifier
-from sklearn.preprocessing import StandardScaler
-import warnings
-warnings.filterwarnings('ignore')
+from collections import defaultdict, deque
+from datetime import datetime, timezone
+from pathlib import Path
 
-TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
+try:
+    from river import linear_model, optim, preprocessing, drift, metrics, ensemble
+    RIVER_AVAILABLE = True
+except ImportError:
+    RIVER_AVAILABLE = False
+
+from config.settings import get_setting
+
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
-OUTPUT = os.path.join(DATA_DIR, 'Datos', 'online_learning.json')
-MODEL_DIR = os.path.join(DATA_DIR, 'Datos', 'online_models')
-os.makedirs(MODEL_DIR, exist_ok=True)
-os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
+OUTPUT_DIR = Path(DATA_DIR) / 'Datos'
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-def compute_rsi(series, period=14):
-    delta = series.diff()
-    gain = delta.where(delta > 0, 0).rolling(period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(period).mean()
-    rs = gain / loss.replace(0, np.nan)
-    return 100 - (100 / (1 + rs))
+OL_CONFIG = get_setting('online_learning', {})
+ENABLED = OL_CONFIG.get('enabled', True)
+ALGORITHM = OL_CONFIG.get('algoritmo', 'SGDClassifier')
+LOSS = OL_CONFIG.get('loss', 'log_loss')
+PENALTY = OL_CONFIG.get('penalty', 'elasticnet')
+ALPHA = OL_CONFIG.get('alpha', 0.0001)
+LEARNING_RATE = OL_CONFIG.get('learning_rate', 'adaptive')
+ETA0 = OL_CONFIG.get('eta0', 0.01)
+MAX_TICKERS = OL_CONFIG.get('max_tickers', 5)
+ROLLING_WINDOW = OL_CONFIG.get('ventana_rolling_accuracy', 30)
 
-def extract_features(df):
-    close = df['Close']
-    features = pd.DataFrame(index=df.index)
-    features['return_1d'] = close.pct_change()
-    features['return_5d'] = close.pct_change(5)
-    features['return_20d'] = close.pct_change(20)
-    features['rsi'] = compute_rsi(close)
-    features['vol_ratio'] = df['Volume'] / df['Volume'].rolling(50).mean()
-    features['volatility'] = close.pct_change().rolling(20).std()
-    features['sma50_dist'] = (close - close.rolling(50).mean()) / close.rolling(50).mean()
-    features = features.dropna()
-    return features
+DRIFT_ENABLED = OL_CONFIG.get('drift_detection', {}).get('enabled', False)
+DRIFT_DELTA = OL_CONFIG.get('drift_detection', {}).get('delta', 0.001)
 
-def main():
-    print('[Online Learning] Entrenamiento incremental con SGD...')
-    all_results = {}
-    scaler = StandardScaler()
-    fitted = False
-    
-    for ticker in TICKERS_CORE[:5]:
+FEATURES_ORDER = [
+    'rsi_14', 'macd_hist', 'vol_ratio', 'volatility_20d',
+    'sma50_dist_pct', 'sma200_dist_pct', 'atr_pct',
+    'ret_vol_interaction', 'ret_vol_corr_20d', 'price_vol_corr',
+    'ret_skew_20d', 'ret_kurt_20d', 'ret_zscore_20d'
+]
+
+
+class OnlineLearner:
+    def __init__(self, ticker: str):
+        self.ticker = ticker
+        self.model = None
+        self.scaler = preprocessing.StandardScaler()
+        self.drift_detector = drift.ADWIN(delta=DRIFT_DELTA) if DRIFT_ENABLED and RIVER_AVAILABLE else None
+        self.rolling_accuracy = deque(maxlen=ROLLING_WINDOW)
+        self.n_updates = 0
+        self.n_correct = 0
+        self._init_model()
+
+    def _init_model(self):
+        if not RIVER_AVAILABLE or not ENABLED:
+            self.model = None
+            return
+        
         try:
-            print(f'  {ticker}...', end=' ')
-            df = yf.download(ticker, period='1y', interval='1d', progress=False, auto_adjust=True)
-            if df is None or df.empty:
-                print('[NO DATA]')
-                continue
-            if isinstance(df.columns, pd.MultiIndex):
-                df = df.xs(ticker, axis=1, level=0) if ticker in df.columns.get_level_values(0) else df
-            df = df.dropna(subset=['Close'])
-            
-            feats = extract_features(df)
-            if len(feats) < 100:
-                print('[SHORT]')
-                continue
-            
-            # Target: next 5d direction
-            target = (df['Close'].shift(-5) > df['Close']).astype(int)
-            feats = feats.join(target).dropna()
-            
-            if len(feats) < 50:
-                print('[SHORT]')
-                continue
-            
-            X_all = feats.drop(columns=['target']).values
-            y_all = feats['target'].values
-            
-            if not fitted:
-                X_scaled = scaler.fit_transform(X_all)
-                fitted = True
+            if ALGORITHM == 'SGDClassifier':
+                lr_scheduler = None
+                if LEARNING_RATE == 'adaptive':
+                    try:
+                        lr_scheduler = optim.schedulers.Adaptive(ETA0)
+                    except AttributeError:
+                        try:
+                            lr_scheduler = optim.schedulers.Optimal(ETA0)
+                        except AttributeError:
+                            lr_scheduler = optim.schedulers.Constant(ETA0)
+                else:
+                    lr_scheduler = optim.schedulers.Constant(ETA0)
+                
+                self.model = linear_model.LogisticRegression(
+                    optimizer=optim.SGD(lr=lr_scheduler),
+                    loss=LOSS,
+                    l1=0.5 if PENALTY == 'elasticnet' else 0,
+                    l2=0.5 if PENALTY == 'elasticnet' else 1
+                )
+            elif ALGORITHM == 'HedgeClassifier':
+                self.model = ensemble.HedgeClassifier([
+                    linear_model.LogisticRegression(),
+                    linear_model.PAClassifier(),
+                    linear_model.ALMAClassifier()
+                ])
             else:
-                X_scaled = scaler.transform(X_all)
-            
-            # Online learning: partial_fit in batches
-            model_path = os.path.join(MODEL_DIR, f'{ticker}_sgd.pkl')
-            model_file = f'{ticker}_sgd.pkl'
-            model_full_path = os.path.join(MODEL_DIR, model_file)
-            
-            classes = np.array([0, 1])
-            if os.path.exists(model_full_path):
-                import pickle
-                model = pickle.load(open(model_full_path, 'rb'))
-                # Update with new data
-                model.partial_fit(X_scaled, y_all, classes=classes)
-            else:
-                model = SGDClassifier(loss='log_loss', penalty='elasticnet', alpha=0.0001,
-                                      learning_rate='adaptive', eta0=0.01, random_state=42)
-                model.partial_fit(X_scaled, y_all, classes=classes)
-            
-            import pickle
-            pickle.dump(model, open(model_full_path, 'wb'))
-            
-            # Evaluate
-            proba = model.predict_proba(X_scaled[-1:])[0][1] * 100
-            train_acc = model.score(X_scaled, y_all)
-            
-            # Rolling accuracy on last 30
-            n_train = len(X_scaled)
-            if n_train > 60:
-                roll_preds = model.predict(X_scaled[-30:])
-                roll_acc = np.mean(roll_preds == y_all[-30:])
-            else:
-                roll_acc = train_acc
-            
-            all_results[ticker] = {
-                'prob_up_20d': round(proba, 1),
-                'train_accuracy': round(train_acc, 4),
-                'rolling_30d_accuracy': round(roll_acc, 4),
-                'n_samples': len(feats),
-                'model_version': time.strftime('%Y%m%d')
+                self.model = linear_model.LogisticRegression()
+        except Exception:
+            self.model = None
+
+    def partial_fit(self, features: dict, target: int):
+        if self.model is None:
+            return
+        
+        x = {k: features.get(k, 0.0) for k in FEATURES_ORDER}
+        x_scaled = self.scaler.learn_one(x).transform_one(x)
+        
+        y_pred = self.model.predict_one(x_scaled)
+        y_proba = self.model.predict_proba_one(x_scaled)
+        
+        self.model.learn_one(x_scaled, target)
+        
+        correct = y_pred == target
+        self.rolling_accuracy.append(1 if correct else 0)
+        if correct:
+            self.n_correct += 1
+        self.n_updates += 1
+        
+        if self.drift_detector is not None:
+            self.drift_detector.update(0 if correct else 1)
+        
+        return {
+            'prediction': y_pred,
+            'probability': y_proba.get(1, 0.5),
+            'correct': correct,
+            'rolling_accuracy': self.accuracy,
+            'drift_detected': self.drift_detected
+        }
+
+    @property
+    def accuracy(self) -> float:
+        if not self.rolling_accuracy:
+            return 0.5
+        return sum(self.rolling_accuracy) / len(self.rolling_accuracy)
+
+    @property
+    def drift_detected(self) -> bool:
+        if self.drift_detector is None:
+            return False
+        return self.drift_detector.drift_detected
+
+    def get_state(self) -> dict:
+        return {
+            'ticker': self.ticker,
+            'n_updates': self.n_updates,
+            'n_correct': self.n_correct,
+            'rolling_accuracy': self.accuracy,
+            'drift_detected': self.drift_detected,
+            'window_size': len(self.rolling_accuracy)
+        }
+
+    def should_retrain(self, threshold: float = 0.45) -> bool:
+        return self.accuracy < threshold and self.n_updates > ROLLING_WINDOW
+
+
+class OnlineLearningManager:
+    def __init__(self):
+        self.learners: dict[str, OnlineLearner] = {}
+        self.perf_path = OUTPUT_DIR / 'online_learning_perf.json'
+        self._load_perf()
+
+    def _load_perf(self):
+        if self.perf_path.exists():
+            try:
+                self.performance = json.loads(self.perf_path.read_text())
+            except:
+                self.performance = {'history': [], 'drift_events': []}
+        else:
+            self.performance = {'history': [], 'drift_events': []}
+
+    def _save_perf(self):
+        self.performance['history'] = self.performance['history'][-500:]
+        self.performance['drift_events'] = self.performance['drift_events'][-100:]
+        self.perf_path.write_text(json.dumps(self.performance, indent=2))
+
+    def get_or_create(self, ticker: str) -> OnlineLearner:
+        if ticker not in self.learners:
+            if len(self.learners) >= MAX_TICKERS:
+                # Reemplazar el peor performer
+                worst = min(self.learners.items(), key=lambda x: x[1].accuracy)
+                del self.learners[worst[0]]
+                print(f'[Online] Reemplazado {worst[0]} (acc={worst[1].accuracy:.2f}) por {ticker}')
+            self.learners[ticker] = OnlineLearner(ticker)
+        return self.learners[ticker]
+
+    def update(self, ticker: str, features: dict, target: int) -> dict:
+        learner = self.get_or_create(ticker)
+        result = learner.partial_fit(features, target)
+        
+        if result and result['drift_detected']:
+            event = {
+                'timestamp': datetime.now(timezone.utc).isoformat() + 'Z',
+                'ticker': ticker,
+                'accuracy_before': result['rolling_accuracy'],
+                'n_updates': learner.n_updates
             }
-            print(f'prob={proba:.0f}% acc={train_acc:.2f}')
-        except Exception as e:
-            print(f'[!] {e}')
-    
-    output = {
-        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S'),
-        'tickers': all_results
-    }
-    with open(OUTPUT, 'w', encoding='utf-8') as f:
-        json.dump(output, f, indent=2)
-    print(f'\n[OK] {len(all_results)} tickers actualizados via online learning')
+            self.performance['drift_events'].append(event)
+            print(f'[Online] Drift detectado en {ticker} (acc={result["rolling_accuracy"]:.2f})')
+            # Reset learner after drift
+            self.learners[ticker] = OnlineLearner(ticker)
+        
+        self.performance['history'].append({
+            'timestamp': datetime.now(timezone.utc).isoformat() + 'Z',
+            'ticker': ticker,
+            'accuracy': learner.accuracy,
+            'n_updates': learner.n_updates
+        })
+        self._save_perf()
+        
+        return result
+
+    def predict_one(self, ticker: str, features: dict) -> dict:
+        if ticker not in self.learners:
+            return {'prediction': None, 'probability': 0.5, 'rolling_accuracy': 0.5}
+        
+        learner = self.learners[ticker]
+        if learner.model is None:
+            return {'prediction': None, 'probability': 0.5, 'rolling_accuracy': learner.accuracy}
+        
+        x = {k: features.get(k, 0.0) for k in FEATURES_ORDER}
+        x_scaled = learner.scaler.transform_one(x)
+        
+        return {
+            'prediction': learner.model.predict_one(x_scaled),
+            'probability': learner.model.predict_proba_one(x_scaled).get(1, 0.5),
+            'rolling_accuracy': learner.accuracy,
+            'drift_detected': learner.drift_detected
+        }
+
+    def summary(self) -> dict:
+        active = sum(1 for l in self.learners.values() if l.n_updates > 0)
+        avg_acc = np.mean([l.accuracy for l in self.learners.values()]) if self.learners else 0
+        return {
+            'enabled': ENABLED and RIVER_AVAILABLE,
+            'river_available': RIVER_AVAILABLE,
+            'n_learners': len(self.learners),
+            'active_learners': active,
+            'avg_rolling_accuracy': round(float(avg_acc), 4),
+            'drift_events_total': len(self.performance.get('drift_events', [])),
+            'total_updates': sum(l.n_updates for l in self.learners.values()),
+            'learners': {t: l.get_state() for t, l in self.learners.items()}
+        }
+
+
+_manager_instance = None
+
+def get_online_learning_manager() -> OnlineLearningManager:
+    global _manager_instance
+    if _manager_instance is None:
+        _manager_instance = OnlineLearningManager()
+    return _manager_instance
+
+
+def update_online(ticker: str, features: dict, target: int) -> dict:
+    return get_online_learning_manager().update(ticker, features, target)
+
+
+def predict_online(ticker: str, features: dict) -> dict:
+    return get_online_learning_manager().predict_one(ticker, features)
+
 
 if __name__ == '__main__':
-    main()
+    print(f'[OnlineLearning] River available: {RIVER_AVAILABLE}')
+    print(f'[OnlineLearning] Config: algorithm={ALGORITHM}, drift={DRIFT_ENABLED}')
+    
+    if RIVER_AVAILABLE:
+        olm = get_online_learning_manager()
+        dummy_features = {k: np.random.randn() for k in FEATURES_ORDER}
+        for i in range(20):
+            olm.update('NVDA', dummy_features, 1 if np.random.rand() > 0.4 else 0)
+        print(json.dumps(olm.summary(), indent=2))
+    else:
+        print('[OnlineLearning] Instalar River: pip install river')

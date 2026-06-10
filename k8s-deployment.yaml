@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agente-financiero
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agente-financiero
+  template:
+    metadata:
+      labels:
+        app: agente-financiero
+    spec:
+      containers:
+      - name: main
+        image: agente-financiero:latest
+        env:
+        - name: GITHUB_WORKSPACE
+          value: "/app"
+        - name: PARALLEL_WORKERS
+          value: "16"
+        volumeMounts:
+        - name: data
+          mountPath: /app/Datos
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: agente-data-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agente-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agente-financiero-svc
+spec:
+  selector:
+    app: agente-financiero
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP

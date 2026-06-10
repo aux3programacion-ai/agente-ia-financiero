@@ -1,0 +1,672 @@
+# Configuración centralizada del Agente Financiero
+# Todos los parámetros hardcodeados se mueven aquí para versionado y auditoría
+
+# ============================================================
+# TICKERS Y UNIVERSOS
+# ============================================================
+tickers:
+  core:
+    - NVDA
+    - MU
+    - DELL
+    - AVGO
+    - DDOG
+    - SMCI
+    - SNOW
+    - CRWD
+    - NOW
+    - TSM
+    - ARM
+    - OKTA
+    - HPE
+    - NTAP
+    - CLS
+    - AAPL
+    - AMZN
+    - GOOGL
+    - META
+    - MSFT
+    - LLY
+    - AMAT
+    - LRCX
+    - PANW
+    - ORCL
+    - HON
+    - UBER
+    - GE
+    - COST
+    - NEE
+  
+  # Mapeo sectorial para análisis por sector
+  sector_map:
+    Semiconductores: [NVDA, MU, AVGO, TSM, ARM, AMAT, LRCX]
+    Servidores_IA: [DELL, SMCI, HPE]
+    Software_IA: [DDOG, SNOW, NOW]
+    Ciberseguridad: [CRWD, PANW, OKTA]
+    Almacenamiento: [NTAP, CLS]
+    Consumer_Tech: [AAPL, AMZN, GOOGL, META, MSFT]
+    Farmaceutico: [LLY]
+    Semicon_Equip: [AMAT, LRCX]
+    Cloud_Database: [ORCL]
+    Industrial: [HON, GE]
+    Movilidad_Tech: [UBER]
+    Consumo_Defensivo: [COST]
+    Utilities_Energy: [NEE]
+
+# ============================================================
+# PARÁMETROS DE APRENDIZAJE / CALIBRACIÓN
+# ============================================================
+aprendizaje:
+  # Decaimiento temporal exponencial (half-life en días)
+  temporal_half_life_days: 14
+  
+  # Rangos de probabilidad para calibración
+  rangos_probabilidad:
+    - [0, 40]
+    - [40, 50]
+    - [50, 55]
+    - [55, 60]
+    - [60, 65]
+    - [65, 70]
+    - [70, 80]
+    - [80, 100]
+  
+  # Pesos para calibración multi-factor
+  calibracion:
+    peso_ticker_max: 0.6      # max peso al ticker individual
+    peso_sector: 0.2          # peso al sector
+    peso_global_min: 0.2      # peso mínimo al global
+    min_predicciones_ticker: 5   # mínimo para peso_ticker > 0
+    min_predicciones_sector: 8   # mínimo para peso_sector > 0
+  
+  # Target 30 días
+  target_30d:
+    umbral_acierto_pct: 10    # ±10% se considera acierto
+    min_dias_verificacion: 30
+
+# ============================================================
+# INDICADORES TÉCNICOS
+# ============================================================
+tecnicos:
+  rsi:
+    periodo: 14
+    sobrecompra: 70
+    sobreventa: 30
+  
+  macd:
+    rapida: 12
+    lenta: 26
+    senial: 9
+  
+  bollinger:
+    periodo: 20
+    num_std: 2
+  
+  atr:
+    periodo: 14
+  
+  medias_moviles:
+    ma50: 50
+    ma200: 200
+  
+  volumen:
+    ventana_corta: 5
+    ventana_larga: 21
+  
+  soportes_resistencias:
+    ventana_corta: 20
+    ventana_larga: 50
+
+# ============================================================
+# REGIMEN DE MERCADO
+# ============================================================
+regimen:
+  spy_proxy: "SPY"
+  lookback_dias: 252
+  umbrales:
+    alcista_fuerte: 3.0    # % sobre MA50
+    alcista: 1.0
+    alcista_debil: -1.0
+    bajista_debil: -1.0
+    bajista: -3.0
+    bajista_fuerte: -3.0
+  
+  # HMM parameters (para mejora futura)
+  hmm:
+    n_estados: 4
+    n_iter: 100
+    covariance_type: "full"
+
+# ============================================================
+# MODELOS ML (XGBoost, Ensemble, etc.)
+# ============================================================
+ml:
+  # Walk-forward validation
+  walk_forward:
+    n_splits: 5
+    test_size_dias: 63      # ~3 meses
+    gap_dias: 5             # embargo entre train/test
+    min_train_size: 100
+  
+  # XGBoost base params
+  xgboost:
+    n_estimators: 200
+    max_depth: 5
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 3
+    gamma: 1
+    reg_alpha: 1
+    reg_lambda: 1
+    random_state: 42
+    verbosity: 0
+  
+  # Optuna hyperparameter tuning
+  optuna:
+    n_trials: 50
+    timeout_segundos: 300
+    n_splits_cv: 3
+  
+  # Stacking ensemble
+  stacking:
+    cv_splits: 3
+    meta_learner: "LogisticRegression"
+    passthrough: true
+  
+  # AutoML
+  automl:
+    modelos: ["xgboost", "lightgbm", "randomforest", "catboost"]
+    metric: "walk_forward_accuracy"
+  
+  # Calibración de probabilidades
+  calibracion:
+    metodo: "isotonic"      # "isotonic" o "platt"
+    min_muestras_calibracion: 50
+    holdout_ratio: 0.2
+  
+  # Feature selection
+  feature_selection:
+    metodo: "shap"          # "shap", "mutual_info", "permutation"
+    top_k: 30
+    shap_threshold: 0.001
+  
+  # Regime-specific models
+  regime_models:
+    min_muestras_por_regimen: 50
+    regimenes: ["ALCISTA", "BAJISTA", "LATERAL"]
+  
+  # Quantile regression para intervalos de predicción
+  quantile:
+    alphas: [0.1, 0.5, 0.9]
+  
+  # Knowledge distillation
+  distillation:
+    enabled: true
+    student_model: "xgboost_small"
+
+# ============================================================
+# ENSEMBLE LLM
+# ============================================================
+llm:
+  modelos:
+    - "openrouter/free"
+    - "meta-llama/llama-3.3-70b-instruct:free"
+    - "nvidia/nemotron-3-super-120b-a12b:free"
+    - "nousresearch/hermes-3-llama-3.1-405b:free"
+    - "openai/gpt-oss-120b:free"
+    - "google/gemma-4-31b-it:free"
+    - "qwen/qwen3-coder:free"
+    - "google/gemma-4-26b-a4b-it:free"
+    - "moonshotai/kimi-k2.6:free"
+    - "openai/gpt-oss-20b:free"
+    - "cognitivecomputations/dolphin-mistral-24b-venice-edition:free"
+    - "nvidia/nemotron-3-nano-30b-a3b:free"
+    - "z-ai/glm-4.5-air:free"
+    - "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    - "meta-llama/llama-3.2-3b-instruct:free"
+  
+  max_modelos_ensemble: 3
+  temperatura: 0.1
+  max_tokens: 4000
+  timeout_segundos: 30
+  
+  # Especialización de prompts
+  especialidades:
+    - tecnico
+    - fundamental
+    - macro
+  
+  # Debate multi-modelo
+  debate:
+    enabled: true
+    umbral_discrepancia_pct: 15
+    max_tickers_debate: 10
+  
+  # Meta-cognition review
+  meta_cognition:
+    enabled: true
+    max_tickers_review: 10
+  
+  # Active learning
+  active_learning:
+    enabled: true
+    umbral_cqs: 50
+    umbral_prob_std: 15
+    umbral_distancia_50: 5
+
+# ============================================================
+# OPTIMIZACIÓN DE PORTAFOLIO
+# ============================================================
+portfolio:
+  # Regime-aware position sizing
+  regime_sizing:
+    ALCISTA:
+      max_position: 0.15
+      leverage: 1.0
+      risk_per_trade: 0.02
+      max_sector: 0.30
+      cash_reserve: 0.05
+    LATERAL:
+      max_position: 0.08
+      leverage: 0.5
+      risk_per_trade: 0.01
+      max_sector: 0.25
+      cash_reserve: 0.15
+    BAJISTA:
+      max_position: 0.05
+      leverage: 0.0
+      risk_per_trade: 0.005
+      max_sector: 0.15
+      cash_reserve: 0.30
+    INCIERTO:
+      max_position: 0.06
+      leverage: 0.3
+      risk_per_trade: 0.008
+      max_sector: 0.20
+      cash_reserve: 0.20
+  
+  # Risk Parity
+  risk_parity:
+    max_iteraciones: 1000
+    tolerancia: 1e-8
+  
+  # Hierarchical Risk Parity (HRP)
+  hrp:
+    linkage_method: "single"
+    distance_metric: "correlation"
+  
+  # Monte Carlo
+  monte_carlo:
+    n_simulaciones: 10000
+    n_dias: 252
+    valor_inicial: 100000
+    rf: 0.05
+  
+  # Stress Testing
+  stress_test:
+    periodos:
+      - nombre: "2008_financial_crisis"
+        inicio: "2008-10-01"
+        fin: "2009-03-01"
+      - nombre: "2020_covid_crash"
+        inicio: "2020-02-15"
+        fin: "2020-04-15"
+      - nombre: "2022_rate_hike"
+        inicio: "2022-01-01"
+        fin: "2022-10-01"
+  
+  # Costos de transacción
+  transaction_costs:
+    commission_per_share: 0.005
+    min_commission: 1.0
+    bid_ask_spread_bps: 10      # basis points
+    market_impact_bps: 5        # basis points per 1% ADV
+    slippage_bps: 5
+
+  # Tax-aware
+  tax:
+    short_term_rate: 0.35
+    long_term_rate: 0.15
+    holding_period_days: 365
+
+# ============================================================
+# AUTO-EVOLUCIÓN / AUTO-ML
+# ============================================================
+auto_evolution:
+  # Few-shot examples
+  few_shot:
+    max_ejemplos_por_clave: 10
+    min_aciertos_para_guardar: 1
+  
+  # Hypothesis testing
+  hypothesis:
+    min_muestras_test: 5
+    umbral_confirmacion: 0.6
+    max_hipotesis_guardadas: 200
+  
+  # Auto-prompt engineering
+  auto_prompt:
+    plantillas: ["base", "agresivo", "conservador", "tecnico", "contra"]
+    ventana_evaluacion: 100
+    min_corridas_para_cambio: 5
+  
+  # Simulated fine-tuning
+  fine_tuning:
+    min_aciertos_para_patron: 10
+    top_sectores: 5
+    top_keywords: 8
+
+# ============================================================
+# SKILL MEMORY / META-LEARNING
+# ============================================================
+skills:
+  min_aciertos_para_skill: 3
+  umbral_success_rate: 0.55
+  niveles:
+    expert: 0.7
+    advanced: 0.6
+    developing: 0.55
+  
+  # Calibración de confianza por buckets
+  confidence_buckets:
+    - [0, 30]
+    - [30, 40]
+    - [40, 45]
+    - [45, 55]
+    - [55, 60]
+    - [60, 70]
+    - [70, 100]
+  
+  # Mistake memory
+  mistakes:
+    umbral_severidad: 15
+    max_errores_guardados: 15
+  
+  # Cross-ticker transfer
+  transfer:
+    min_diferencia_success_rate: 0.1
+    min_aciertos_fuente: 5
+  
+  # Plateau detection
+  plateau:
+    ventana_meses: 6
+    min_meses: 3
+    umbral_std: 0.03
+
+# ============================================================
+# AUTO FEATURE ENGINEERING / DISCOVERY
+# ============================================================
+features:
+  auto_engineering:
+    enabled: true
+    min_datos: 60
+  
+  auto_discovery:
+    enabled: true
+    min_predicciones_historial: 30
+    umbral_declive_accuracy: 0.15
+    umbral_accuracy_reciente: 0.45
+    max_nuevas_por_ciclo: 2
+    umbral_aprobacion_score: 0.55
+  
+  # Feature store
+  feature_store:
+    enabled: true
+    formato: "parquet"
+    particionado: ["fecha", "ticker"]
+    
+  # Model Registry (MLflow)
+  mlflow:
+    tracking_uri: "file:./mlruns"
+    experiment: "agente-financiero"
+
+# ============================================================
+# ONLINE LEARNING
+# ============================================================
+online_learning:
+  enabled: true
+  algoritmo: "SGDClassifier"      # futuro: "river" (creme)
+  loss: "log_loss"
+  penalty: "elasticnet"
+  alpha: 0.0001
+  learning_rate: "adaptive"
+  eta0: 0.01
+  max_tickers: 5
+  ventana_rolling_accuracy: 30
+  # Drift detection (ADWIN) con River
+  drift_detection:
+    enabled: true
+    metodo: "ADWIN"
+    delta: 0.001
+
+# ============================================================
+# ANÁLISIS DE RIESGO
+# ============================================================
+riesgo:
+  var:
+    confianza: [0.95, 0.99]
+  sharpe:
+    rf: 0.05
+  max_drawdown:
+    ventana: 252
+  beta:
+    benchmark: "SPY"
+    ventana: 252
+  correlacion:
+    ventana_rolling: 60
+    min_periodos: 30
+    regimen_umbrales:
+      high_correlation_crisis: 0.15
+      rising_correlation: 0.08
+      falling_correlation: -0.1
+
+# ============================================================
+# ABLATION STUDIO
+# ============================================================
+ablation:
+  n_trials: 5
+  optimizaciones:
+    - ensemble_llm
+    - ensemble_specialization
+    - debate_multimodelo
+    - skill_injection
+    - mistake_injection
+    - few_shot_examples
+    - meta_prompt_evolution
+    - auto_prompt_ab
+    - rl_weights
+    - calibracion_stonica
+    - xgb_blending
+    - stacking_ensemble
+    - automl_winner
+    - regime_models
+    - walk_forward
+    - sentiment_vader
+    - sentiment_decay
+    - macro_features
+    - options_flow
+    - online_learning
+    - knowledge_distillation
+    - auto_features
+    - time_series_features
+    - drawdown_stop
+    - tax_aware
+    - hrp_weights
+  
+  umbrales_recomendacion:
+    critical: 0.02
+    important: 0.01
+    nice_to_have: 0.005
+    review: -0.005
+    remove: -0.01
+
+# ============================================================
+# SENTIMIENTO / NOTICIAS / SOCIAL
+# ============================================================
+sentimiento:
+  vader:
+    umbral_positivo: 0.1
+    umbral_negativo: -0.1
+  
+  news_decay:
+    half_life_horas: 16.6
+    peso_maximo: 10
+  
+  social:
+    fuentes: ["reddit", "google_news", "wallstreetbets"]
+    max_titulos_por_fuente: 10
+    timeout_segundos: 10
+
+# ============================================================
+# MACRO / FUNDAMENTAL / OPTIONS
+# ============================================================
+macro:
+  fred_series:
+    - "DGS10"      # 10-Year Treasury
+    - "DGS2"       # 2-Year Treasury
+    - "DGS3MO"     # 3-Month Treasury
+    - "FEDFUNDS"   # Fed Funds Rate
+    - "VIXCLS"     # VIX
+    - "DTWEXBGS"   # DXY Dollar Index
+  
+  yield_curve:
+    inversion_threshold: 0.0
+  
+options:
+  enabled: true
+  features:
+    - put_call_ratio
+    - iv_skew
+    - avg_iv
+    - oi_weighted_iv
+    - put_call_oi_ratio
+    - vol_total
+
+# ============================================================
+# EXPLICABILIDAD
+# ============================================================
+explicabilidad:
+  shap:
+    enabled: true
+    max_muestras: 500
+    plot_top_n: 10
+  
+  ice_plots:
+    enabled: true
+    n_puntos: 20
+    top_features: 5
+  
+  counterfactuals:
+    enabled: true
+    n_counterfactuals: 3
+    max_iter: 100
+
+# ============================================================
+# LOGGING / OBSERVABILIDAD
+# ============================================================
+logging:
+  level: "INFO"
+  formato: "json"
+  structlog: true
+  prometheus:
+    enabled: false
+    puerto: 9090
+  
+  metricas_clave:
+    - precision_global
+    - precision_ponderada
+    - n_predicciones
+    - latency_ms
+    - drift_score
+    - calibration_brier_score
+
+# ============================================================
+# TESTING
+# ============================================================
+testing:
+  pytest: true
+  hypothesis: true
+  coverage_min: 0.80
+  modulos_criticos:
+    - aprendizaje
+    - modelo_xgboost
+    - analisis_ia
+    - optimizacion_portafolio
+    - auto_evolution
+    - model_store
+    - calibration
+    - walkforward_validator
+    - online_learning
+    - feature_store
+    - stress_test
+    - shap_explanations
+    - regime_models
+    - knowledge_distillation
+    - ablation_studio
+    
+# ============================================================
+# PIPELINE ORCHESTRATOR
+# ============================================================
+pipeline:
+  max_parallel_steps: 3
+  retry_on_error: true
+  max_retries: 2
+  alert_on_error: false
+  cache_yfinance: true
+  yfinance_cache_ttl: 3600
+
+# ============================================================
+# PAPER TRADING
+# ============================================================
+paper_trading:
+  enabled: true
+  default_broker: "paper"     # "paper", "alpaca", "ibkr"
+  initial_capital: 100000
+  commission: 0.0
+  max_position_pct: 0.12
+  interval_minutes: 60
+  save_state: true
+  alpaca:
+    paper_url: "https://paper-api.alpaca.markets"
+  ibkr:
+    host: "127.0.0.1"
+    port: 7497
+    client_id: 1
+
+# ============================================================
+# ALTERNATIVE DATA
+# ============================================================
+alternative_data:
+  enabled: true
+  sources:
+    - earnings
+    - macro
+    - insider
+    - search
+    - options
+  fred_api_key_env: "FRED_API_KEY"
+  finnhub_api_key_env: "FINNHUB_API_KEY"
+  update_frequency_hours: 6
+  max_tickers_per_batch: 30
+
+# ============================================================
+# REINFORCEMENT LEARNING POSITION SIZING
+# ============================================================
+rl_sizing:
+  enabled: true
+  algorithm: "PPO"            # PPO, SAC, A2C, DDPG
+  total_timesteps: 50000
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  env_config:
+    lookback: 20
+    rebalance_freq: 5
+    transaction_cost: 0.001
+    max_position: 0.15
+    max_leverage: 1.0

@@ -1,290 +1,299 @@
-import json, os, sys, time, math, random
-from collections import defaultdict
+#!/usr/bin/env python3
+"""
+ablation_studio.py - Ablation study automatizado.
+Prueba qué componentes del sistema aportan más valor.
+Sugiere qué optimizaciones mantener, revisar, o eliminar.
+"""
+import json
+import os
+import time
+import itertools
+import numpy as np
+from pathlib import Path
+from datetime import datetime, timezone
+from typing import Dict, Any, List, Optional, Callable
+
+from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
-OUTPUT = os.path.join(DATA_DIR, 'Datos', 'ablation_results.json')
-os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
+OUTPUT_DIR = Path(DATA_DIR) / 'Datos'
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-OPTIMIZATIONS = [
-    'ensemble_llm', 'ensemble_specialization', 'debate_multimodelo',
-    'skill_injection', 'mistake_injection', 'few_shot_examples',
-    'meta_prompt_evolution', 'auto_prompt_ab',
-    'rl_weights', 'calibracion_stonica',
-    'xgb_blending', 'stacking_ensemble', 'automl_winner',
-    'regime_models', 'walk_forward',
-    'sentiment_vader', 'sentiment_decay',
-    'macro_features', 'options_flow',
-    'online_learning', 'knowledge_distillation',
-    'auto_features', 'time_series_features',
-    'drawdown_stop', 'tax_aware', 'hrp_weights',
-]
+AB_CONFIG = get_setting('ablation', {})
+N_TRIALS = AB_CONFIG.get('n_trials', 5)
+OPTIMIZACIONES = AB_CONFIG.get('optimizaciones', [])
+UMBRALES = AB_CONFIG.get('umbrales_recomendacion', {})
 
-EFFECTS = {
-    'ensemble_llm': '3-5 LLMs vs 1',
-    'ensemble_specialization': 'prompts distintos por modelo',
-    'debate_multimodelo': 'round 2 de consenso',
-    'skill_injection': 'skills aprendidos en prompt',
-    'mistake_injection': 'errores pasados como advertencias',
-    'few_shot_examples': 'ejemplos exitosos en prompt',
-    'meta_prompt_evolution': 'system prompt evolucionado',
-    'auto_prompt_ab': 'A/B testing de prompts',
-    'rl_weights': 'pesos ajustados por RL',
-    'calibracion_stonica': 'IsotonicRegression',
-    'xgb_blending': 'XGBoost + LLM ensemble',
-    'stacking_ensemble': 'XGB+LGBM+RF+CB',
-    'automl_winner': 'mejor modelo por ticker',
-    'regime_models': 'modelos por regimen',
-    'walk_forward': 'TimeSeriesSplit vs simple',
-    'sentiment_vader': 'VADER financiero',
-    'sentiment_decay': 'exponential decay noticias',
-    'macro_features': 'FRED + yield curve + VIX',
-    'options_flow': 'IV skew + OI ratio',
-    'online_learning': 'SGD partial_fit',
-    'knowledge_distillation': 'student del ensemble',
-    'auto_features': 'features generadas por LLM',
-    'time_series_features': 'entropy + Hurst + ARIMA',
-    'drawdown_stop': 'reduccion por drawdown',
-    'tax_aware': 'vender long-term primero',
-    'hrp_weights': 'HRP vs risk parity clasico',
-}
 
-class AblationTracker:
+class AblationStudio:
     def __init__(self):
-        self.data = self.load()
-    
-    def load(self):
-        if os.path.exists(OUTPUT):
-            try: return json.load(open(OUTPUT))
-            except: pass
-        return {
-            'optimizations': {opt: {
-                'enabled': True, 'accuracy_with': [], 'accuracy_without': [],
-                'trials': 0, 'impact': 0, 'confidence': 0
-            } for opt in OPTIMIZATIONS},
-            'active_set': {opt: True for opt in OPTIMIZATIONS},
-            'history': [], 'recommendations': []
-        }
-    
-    def save(self):
-        with open(OUTPUT, 'w') as f:
-            json.dump(self.data, f, indent=2)
-    
-    def measure_accuracy(self, active_set):
-        """Simulate accuracy with given active set based on historical data."""
-        base = 0.50  # Random baseline
-        
-        # Each optimization contributes based on real historical effect
-        effects = {
-            'ensemble_llm': 0.035, 'xgb_blending': 0.020, 'stacking_ensemble': 0.015,
-            'debate_multimodelo': 0.010, 'calibracion_stonica': 0.025,
-            'skill_injection': 0.015, 'mistake_injection': 0.008,
-            'rl_weights': 0.012, 'walk_forward': 0.010,
-            'macro_features': 0.018, 'options_flow': 0.012,
-            'sentiment_vader': 0.010, 'regime_models': 0.015,
-            'ensemble_specialization': 0.010, 'automl_winner': 0.012,
-            'auto_prompt_ab': 0.008, 'online_learning': 0.010,
-            'auto_features': 0.010, 'time_series_features': 0.015,
-            'drawdown_stop': 0.005, 'hrp_weights': 0.008,
-            'knowledge_distillation': 0.005, 'meta_prompt_evolution': 0.005,
-            'few_shot_examples': 0.010, 'sentiment_decay': 0.005,
-            'tax_aware': 0.003
-        }
-        
-        acc = base
-        active_count = 0
-        for opt, enabled in active_set.items():
-            if enabled and opt in effects:
-                acc += effects[opt]
-                active_count += 1
-        
-        # Diminishing returns: after ~15 optimizations, each adds less
-        if active_count > 15:
-            over = active_count - 15
-            acc -= over * 0.005
-        
-        # Random noise
-        acc += random.uniform(-0.02, 0.02)
-        return max(0.3, min(0.8, acc))
-    
-    def measure_latency(self, active_set):
-        """Estimate runtime impact of each optimization."""
-        latency = {
-            'ensemble_llm': 30, 'ensemble_specialization': 2, 'debate_multimodelo': 10,
-            'xgb_blending': 1, 'stacking_ensemble': 5, 'automl_winner': 8,
-            'regime_models': 3, 'walk_forward': 2, 'macro_features': 3,
-            'options_flow': 2, 'online_learning': 4, 'auto_features': 5,
-            'drawdown_stop': 1, 'hrp_weights': 2, 'tax_aware': 1,
-            'calibracion_stonica': 1, 'rl_weights': 1, 'skill_injection': 0.5,
-            'mistake_injection': 0.5, 'few_shot_examples': 0.5,
-            'meta_prompt_evolution': 0.5, 'auto_prompt_ab': 1,
-            'sentiment_vader': 1, 'sentiment_decay': 0.5,
-            'time_series_features': 3, 'knowledge_distillation': 1,
-        }
-        total = 60  # Base 1 minute
-        for opt, enabled in active_set.items():
-            if enabled and opt in latency:
-                total += latency[opt]
-        return total
-    
-    def run_ablation(self, n_trials=5):
-        """Run ablation tests: disable each optimization and measure impact."""
-        preds_path = os.path.join(DATA_DIR, 'Datos', 'aprendizaje.json')
-        if os.path.exists(preds_path):
+        self.results_path = OUTPUT_DIR / 'ablation_results.json'
+        self.optimizaciones = OPTIMIZACIONES
+        self._load()
+
+    def _load(self):
+        if self.results_path.exists():
             try:
-                preds = json.load(open(preds_path)).get('predicciones', [])
-                if preds:
-                    actual_acc = sum(1 for p in preds[-100:] if p.get('acierto')) / max(len(preds[-100:]), 1)
-                    self.data['measured_accuracy'] = round(actual_acc, 3)
-            except: pass
+                self.results = json.loads(self.results_path.read_text())
+            except:
+                self.results = {'trials': [], 'recommendations': [], 'timestamp': None}
+        else:
+            self.results = {'trials': [], 'recommendations': [], 'timestamp': None}
+
+    def _save(self):
+        self.results_path.write_text(json.dumps(self.results, indent=2))
+
+    def run_trial(
+        self,
+        evaluator_fn: Callable[[List[str]], Dict[str, float]],
+        components: Optional[List[str]] = None,
+        baseline_name: str = 'full_system',
+        n_trials: Optional[int] = None
+    ) -> List[Dict]:
+        """
+        Ejecuta ablation trial: prueba el sistema con/sin cada componente.
         
-        print(f'[Ablation] Corriendo {n_trials} rondas...')
+        Args:
+            evaluator_fn: Función que recibe lista de componentes activos y retorna
+                         dict de métricas {metric_name: value}
+            components: Lista de componentes a probar (default: self.optimizaciones)
+            n_trials: Número de trials (default: config)
+            
+        Returns:
+            Lista de resultados por trial
+        """
+        if components is None:
+            components = self.optimizaciones
+        if n_trials is None:
+            n_trials = N_TRIALS
+        
+        results = []
         
         for trial in range(n_trials):
-            print(f'  Ronda {trial+1}/{n_trials}: midiendo impacto de cada optimizacion...')
+            print(f'[Ablation] Trial {trial + 1}/{N_TRIALS}...')
             
-            # Full system accuracy
-            full_acc = self.measure_accuracy(self.data['active_set'])
+            fixed_seed = 42 + trial
+            np.random.seed(fixed_seed)
             
-            for opt in OPTIMIZATIONS:
-                if not self.data['active_set'].get(opt, True):
-                    continue
-                
-                # Disable one optimization
-                test_set = dict(self.data['active_set'])
-                test_set[opt] = False
-                test_acc = self.measure_accuracy(test_set)
-                impact = full_acc - test_acc
-                
-                entry = self.data['optimizations'][opt]
-                if impact > 0:
-                    entry['accuracy_with'].append(round(full_acc, 4))
-                    entry['accuracy_without'].append(round(test_acc, 4))
-                else:
-                    entry['accuracy_without'].append(round(full_acc, 4))
-                    entry['accuracy_with'].append(round(test_acc, 4))
-                entry['trials'] += 1
-                
-                # Compute running impact
-                if entry['trials'] >= 2:
-                    mean_with = sum(entry['accuracy_with']) / len(entry['accuracy_with'])
-                    mean_without = sum(entry['accuracy_without']) / len(entry['accuracy_without'])
-                    entry['impact'] = round(mean_with - mean_without, 4)
-                    
-                    # Statistical confidence (more trials = more confident)
-                    entry['confidence'] = min(1, entry['trials'] / 10)
-        
-        self.save()
-        self.generate_recommendations()
-    
-    def generate_recommendations(self):
-        """Generate recommendations: what to keep, what to drop, what to tune."""
-        recs = []
-        
-        for opt, data in self.data['optimizations'].items():
-            impact = data['impact']
-            conf = data['confidence']
-            effect = EFFECTS.get(opt, '')
+            baseline_metrics = evaluator_fn(components)
             
-            if conf > 0.3:  # Enough data
-                if impact > 0.02:
-                    recs.append({
-                        'optimization': opt, 'effect': effect,
-                        'impact': impact, 'confidence': conf,
-                        'action': 'KEEP - high impact',
-                        'priority': 'critical'
-                    })
-                elif impact > 0.01:
-                    recs.append({
-                        'optimization': opt, 'effect': effect,
-                        'impact': impact, 'confidence': conf,
-                        'action': 'KEEP - moderate impact',
-                        'priority': 'important'
-                    })
-                elif impact > 0.005:
-                    recs.append({
-                        'optimization': opt, 'effect': effect,
-                        'impact': impact, 'confidence': conf,
-                        'action': 'KEEP - low impact',
-                        'priority': 'nice_to_have'
-                    })
-                elif impact > -0.005:
-                    recs.append({
-                        'optimization': opt, 'effect': effect,
-                        'impact': impact, 'confidence': conf,
-                        'action': 'CONSIDER REMOVING - neutral',
-                        'priority': 'review'
-                    })
-                else:
-                    recs.append({
-                        'optimization': opt, 'effect': effect,
-                        'impact': impact, 'confidence': conf,
-                        'action': 'REMOVE - negative impact',
-                        'priority': 'remove'
-                    })
+            for comp in components:
+                remaining = [c for c in components if c != comp]
+                metrics_without = evaluator_fn(remaining)
+                
+                diff = {}
+                for k in baseline_metrics:
+                    if k in metrics_without:
+                        diff[k] = metrics_without[k] - baseline_metrics[k]
+                
+                results.append({
+                    'trial': trial,
+                    'component': comp,
+                    'baseline': baseline_metrics,
+                    'without_component': metrics_without,
+                    'diff': diff,
+                    'avg_diff': float(np.mean(list(diff.values()))) if diff else 0,
+                    'seed': fixed_seed
+                })
         
-        recs.sort(key=lambda x: x['impact'], reverse=True)
-        self.data['recommendations'] = recs
-        self.save()
-        
-        # Print summary
-        print(f'\n[Ablation] RECOMENDACIONES ({len(recs)} optimizaciones evaluadas):')
-        print(f'  {"ACCION":<30} {"OPT":<25} {"IMPACTO":<10} {"CONF":<8}')
-        print(f'  {"-"*73}')
-        for r in recs:
-            action = r['action'][:30]
-            opt = r['optimization'][:25]
-            impact = f'{r["impact"]:+.4f}'
-            conf = f'{r["confidence"]:.0%}'
-            print(f'  {action:<30} {opt:<25} {impact:<10} {conf:<8}')
-        
-        # Compute efficiency (impact per unit latency)
-        base_set = {opt: True for opt in ['ensemble_llm', 'xgb_blending', 'calibracion_stonica', 'walk_forward']}
-        base_latency = self.measure_latency(base_set)
-        current_latency = self.measure_latency(self.data['active_set'])
-        
-        print(f'\n  Latencia base (4 esenciales): {base_latency:.0f}s')
-        print(f'  Latencia actual: {current_latency:.0f}s')
-        
-        # Suggest optimal set
-        optimal_set = dict(self.data['active_set'])
-        for r in recs:
-            if r['priority'] == 'remove':
-                optimal_set[r['optimization']] = False
-            elif r['priority'] == 'review' and r['impact'] < 0.005:
-                optimal_set[r['optimization']] = False
-        
-        opt_latency = self.measure_latency(optimal_set)
-        opt_accuracy = self.measure_accuracy(optimal_set)
-        
-        print(f'\n  CONJUNTO OPTIMO SUGERIDO:')
-        print(f'    Desactivar: {", ".join(k for k,v in optimal_set.items() if not v)}')
-        print(f'    Accuracy estimada: {opt_accuracy:.1%}')
-        print(f'    Latencia: {opt_latency:.0f}s (ahorro {current_latency - opt_latency:.0f}s)')
+        self.results['trials'] = results
+        self._save()
+        return results
 
-def main():
-    print('[Ablation Studio] Midiendo impacto de cada optimizacion...')
-    tracker = AblationTracker()
+    def _compute_component_impact(self, component: str, metric: str = 'accuracy') -> Dict:
+        """Calcula el impacto promedio de un componente en una métrica."""
+        diffs = [
+            r['diff'].get(metric, 0)
+            for r in self.results['trials']
+            if r['component'] == component
+        ]
+        
+        if not diffs:
+            return {'mean': 0, 'std': 0, 'n': 0}
+        
+        return {
+            'mean': float(np.mean(diffs)),
+            'std': float(np.std(diffs)),
+            'min': float(min(diffs)),
+            'max': float(max(diffs)),
+        'n': len(diffs),
+        'consistent': bool(abs(np.mean(diffs)) > np.std(diffs))
+        }
+
+    def generate_recommendations(self, metric: str = 'accuracy') -> List[Dict]:
+        """
+        Genera recomendaciones basadas en los resultados de ablation.
+        
+        Returns:
+            Lista de {component, impact, recommendation, detalles}
+        """
+        if not self.results['trials']:
+            return []
+        
+        recommendations = []
+        components_tested = set(r['component'] for r in self.results['trials'])
+        
+        for comp in sorted(components_tested):
+            impact = self._compute_component_impact(comp, metric)
+            
+            if impact['mean'] > UMBRALES.get('critical', 0.02):
+                rec = 'mantener'
+                reason = 'CRITICAL - impacto positivo significativo'
+            elif impact['mean'] > UMBRALES.get('important', 0.01):
+                rec = 'mantener'
+                reason = 'IMPORTANT - contribuye positivamente'
+            elif impact['mean'] > UMBRALES.get('nice_to_have', 0.005):
+                rec = 'nice_to_have'
+                reason = 'Útil pero no crítico'
+            elif impact['mean'] < UMBRALES.get('remove', -0.01):
+                rec = 'remover'
+                reason = 'NEGATIVO - empeora el sistema'
+            elif impact['mean'] < UMBRALES.get('review', -0.005):
+                rec = 'revisar'
+                reason = 'DUDOSO - impacto negativo leve'
+            else:
+                rec = 'neutral'
+                reason = 'NEUTRAL - sin impacto significativo'
+            
+            recommendations.append({
+                'component': comp,
+                'impact_mean': round(impact['mean'], 4),
+                'impact_std': round(impact['std'], 4),
+                'impact_consistent': impact['consistent'],
+                'n_trials': impact['n'],
+                'recommendation': rec,
+                'reason': reason,
+                'details': {
+                    'min_impact': round(impact['min'], 4),
+                    'max_impact': round(impact['max'], 4)
+                }
+            })
+        
+        recommendations.sort(key=lambda x: x['impact_mean'], reverse=True)
+        
+        self.results['recommendations'] = recommendations
+        self.results['metric'] = metric
+        self.results['updated'] = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        self._save()
+        
+        return recommendations
+
+    def print_report(self, metric: str = 'accuracy'):
+        """Imprime reporte de ablation en consola."""
+        if not self.results['recommendations']:
+            self.generate_recommendations(metric)
+        
+        print(f'\n{"="*60}')
+        print(f'  ABLATION STUDIO REPORT (metric: {metric.upper()})')
+        print(f'{"="*60}')
+        print(f'  Trials: {len(set(r["trial"] for r in self.results["trials"]))}')
+        print(f'  Components tested: {len(set(r["component"] for r in self.results["trials"]))}')
+        print(f'{"="*60}\n')
+        
+        emojis = {
+            'mantener': '[KEEP]',
+            'important': '[IMP]',
+            'nice_to_have': '[NICE]',
+            'revisar': '[REV]',
+            'remover': '[REM]',
+            'neutral': '[NEU]'
+        }
+        
+        for rec in self.results['recommendations']:
+            emoji = emojis.get(rec['recommendation'], '[?]')
+            sign = '+' if rec['impact_mean'] > 0 else ''
+            print(f'  {emoji} {rec["component"]:35s} {sign}{rec["impact_mean"]:.4f} ± {rec["impact_std"]:.4f}  | {rec["reason"]}')
+        
+        print(f'\n{"="*60}')
+        
+        # Summary stats
+        criticals = [r for r in self.results['recommendations'] if r['recommendation'] == 'mantener']
+        removes = [r for r in self.results['recommendations'] if r['recommendation'] == 'remover']
+        reviews = [r for r in self.results['recommendations'] if r['recommendation'] == 'revisar']
+        
+        if criticals:
+            print(f'\n  Mantener (críticos): {", ".join(r["component"] for r in criticals[:5])}')
+        if removes:
+            print(f'\n  Remover: {", ".join(r["component"] for r in removes[:5])}')
+        if reviews:
+            print(f'\n  Revisar: {", ".join(r["component"] for r in reviews[:5])}')
+        
+        print()
+
+    def export_for_dashboard(self) -> Dict:
+        """Exporta resultados para dashboard."""
+        return {
+            'n_trials': len(set(r['trial'] for r in self.results['trials'])),
+            'n_components': len(set(r['component'] for r in self.results['trials'])),
+            'recommendations': {
+                'mantener': [r for r in self.results['recommendations'] if r['recommendation'] == 'mantener'],
+                'remover': [r for r in self.results['recommendations'] if r['recommendation'] == 'remover'],
+                'revisar': [r for r in self.results['recommendations'] if r['recommendation'] == 'revisar'],
+                'neutral': [r for r in self.results['recommendations'] if r['recommendation'] == 'neutral']
+            },
+            'updated': self.results.get('updated')
+        }
+
+
+def simulate_evaluator(components: List[str]) -> Dict[str, float]:
+    """
+    Evaluador simulado para demostración.
+    En producción, reemplazar con evaluación real del sistema.
+    """
+    np.random.seed(42 + hash(frozenset(components)) % 1000)
     
-    # Read predictions to determine actual accuracy
-    preds_path = os.path.join(DATA_DIR, 'Datos', 'aprendizaje.json')
-    n_preds = 0
-    if os.path.exists(preds_path):
-        try:
-            preds = json.load(open(preds_path)).get('predicciones', [])
-            n_preds = len(preds)
-            recent = preds[-100:]
-            actual_acc = sum(1 for p in recent if p.get('acierto')) / max(len(recent), 1)
-            tracker.data['actual_accuracy'] = round(actual_acc, 3)
-            print(f'  Precisión real (últimos 100): {actual_acc:.1%}')
-            print(f'  Total predicciones: {n_preds}')
-        except: pass
+    base_acc = 0.55
+    base_sharpe = 0.8
     
-    if n_preds < 20:
-        print('  [!] Pocas predicciones para ablation significativo')
-        print('  Usando simulacion basada en efectos esperados...')
+    # Cada componente tiene un impacto simulado
+    impact_map = {
+        'ensemble_llm': (0.03, 0.05),
+        'ensemble_specialization': (0.02, 0.03),
+        'debate_multimodelo': (0.01, 0.04),
+        'skill_injection': (0.015, 0.02),
+        'mistake_injection': (0.01, 0.01),
+        'few_shot_examples': (0.005, 0.01),
+        'meta_prompt_evolution': (0.01, 0.015),
+        'auto_prompt_ab': (0.008, 0.01),
+        'calibracion_stonica': (0.02, 0.03),
+        'xgb_blending': (0.025, 0.04),
+        'stacking_ensemble': (0.02, 0.035),
+        'automl_winner': (0.015, 0.02),
+        'regime_models': (0.01, 0.025),
+        'walk_forward': (0.005, 0.01),
+        'sentiment_vader': (0.005, 0.008),
+        'online_learning': (0.015, 0.02),
+        'knowledge_distillation': (0.005, 0.01),
+        'auto_features': (0.01, 0.015),
+        'time_series_features': (0.008, 0.012)
+    }
     
-    tracker.run_ablation(n_trials=5)
-    print(f'\n[OK] Resultados guardados en {OUTPUT}')
+    acc = base_acc
+    sharpe = base_sharpe
+    
+    for comp in components:
+        impacts = impact_map.get(comp, (0, 0))
+        acc += impacts[0] + np.random.randn() * 0.005
+        sharpe += impacts[1] + np.random.randn() * 0.01
+    
+    return {
+        'accuracy': float(np.clip(acc, 0, 1)),
+        'sharpe_ratio': float(max(sharpe, 0)),
+        'win_rate': float(np.clip(acc + np.random.randn() * 0.02, 0, 1))
+    }
+
 
 if __name__ == '__main__':
-    main()
+    print('[Ablation] Running simulated ablation study...')
+    
+    studio = AblationStudio()
+    results = studio.run_trial(simulate_evaluator, n_trials=N_TRIALS)
+    
+    studio.generate_recommendations()
+    studio.print_report()
+    
+    # Export
+    out_path = OUTPUT_DIR / 'ablation_report.json'
+    with open(out_path, 'w') as f:
+        json.dump(studio.export_for_dashboard(), f, indent=2)
+    print(f'[Ablation] Reporte guardado en {out_path}')

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  agente-financiero:
+    build: .
+    container_name: agente-financiero
+    volumes:
+      - ./Datos:/app/Datos
+      - ./config:/app/config
+    env_file:
+      - .env
+    environment:
+      - GITHUB_WORKSPACE=/app
+      - PARALLEL_WORKERS=8
+      - YF_CACHE_TTL=3600
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.10.0
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlruns/mlflow.db --default-artifact-root ./mlruns
+
+  feast:
+    build: .
+    container_name: feast-server
+    ports:
+      - "6566:6566"
+    volumes:
+      - ./Datos:/app/Datos
+    command: feast serve -h 0.0.0.0 -p 6566
+
+  prefect:
+    image: prefecthq/prefect:3-latest
+    container_name: prefect-server
+    ports:
+      - "4200:4200"
+    command: prefect server start --host 0.0.0.0
+
+volumes:
+  model_data:

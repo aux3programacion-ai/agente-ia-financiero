@@ -192,7 +192,7 @@ def test_feature(ticker, feature_def):
         
         # Align with returns
         returns = df['Close'].pct_change()
-        target = (df['Close'].shift(-20) > df['Close']).astype(int)
+        target = (df['Close'].shift(-20) > df['Close'].shift(-1)).astype(int)
         
         combined = pd.DataFrame({
             'feature': feature_series,
