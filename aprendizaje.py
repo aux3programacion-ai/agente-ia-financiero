@@ -100,7 +100,7 @@ for t in TICKERS:
     for p in hist[t]['predicciones']:
         if p.get('precio_objetivo_30d') and p.get('precio_real') and not p.get('target_verificado'):
             try:
-                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d')).days
+                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)).days
             except:
                 dias = 0
             if dias >= 30 and p['precio_real'] and p['precio_objetivo_30d'] > 0:
@@ -121,6 +121,49 @@ for t in TICKERS:
 precision_target_30d = round(targets_acertados / targets_verificados, 4) if targets_verificados > 0 else None
 error_promedio_target = round(error_pct_total / targets_con_error * 100, 1) if targets_con_error > 0 else None
 
+# --- Evaluacion DIRECCIONAL a 30 dias (vs precio ~20-30 trading days after) ---
+evaluados_30d = 0
+aciertos_30d = 0
+if not precios:
+    try:
+        import yfinance as yf
+        for t in TICKERS:
+            h = yf.Ticker(t).history(period='6mo', progress=False)
+            if not h.empty:
+                precios[t] = {'price': float(h['Close'].iloc[-1]), 'change': 0}
+    except:
+        pass
+for t in TICKERS:
+    preds = hist[t]['predicciones']
+    for p in preds:
+        if p.get('resultado_30d') is None:
+            try:
+                fecha_pred = datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            except:
+                continue
+            dias_transcurridos = (datetime.now(timezone.utc) - fecha_pred).days
+            if 20 <= dias_transcurridos <= 40:
+                try:
+                    import yfinance as yf
+                    h = yf.Ticker(t).history(start=fecha_pred.strftime('%Y-%m-%d'), end='now', progress=False)
+                    if len(h) >= 15:
+                        precio_ini = float(h['Close'].iloc[0])
+                        precio_fin = float(h['Close'].iloc[-1])
+                        cambio_30d = (precio_fin - precio_ini) / precio_ini * 100
+                        p['resultado_30d'] = 'up' if cambio_30d >= 0 else 'down'
+                        p['precio_real_30d'] = round(precio_fin, 2)
+                        p['cambio_30d_pct'] = round(cambio_30d, 2)
+                        p['acertada_30d'] = p.get('direccion') == p['resultado_30d']
+                        p['fecha_eval_30d'] = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+                        if p['acertada_30d']:
+                            aciertos_30d += 1
+                        evaluados_30d += 1
+                except:
+                    pass
+precision_30d = round(aciertos_30d / evaluados_30d, 4) if evaluados_30d > 0 else None
+if evaluados_30d > 0:
+    print(f'[30d] Evaluados: {evaluados_30d} | Aciertos: {aciertos_30d} | Precision: {precision_30d:.1%}')
+
 # --- Calcular precision PONDERADA por tiempo ---
 for t in TICKERS:
     preds = hist[t]['predicciones']
@@ -129,7 +172,7 @@ for t in TICKERS:
     for p in preds:
         if p.get('acertada') is not None:
             try:
-                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d')).days
+                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)).days
             except:
                 dias = 30
             w = peso_temporal(dias)
@@ -159,7 +202,7 @@ for t in TICKERS:
     for p in hist[t]['predicciones']:
         if p.get('acertada') is not None:
             try:
-                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d')).days
+                dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)).days
             except:
                 dias = 30
             w = peso_temporal(dias)
@@ -329,6 +372,21 @@ for t in TICKERS:
 with open(CALIB_PATH, 'w') as f:
     json.dump(calibracion, f, indent=2, ensure_ascii=False)
 
+# --- Integrar Learning Engine (EWMA, Bandit, RL, feedback loop) ---
+try:
+    from learning_engine import get_engine
+    engine = get_engine()
+    le_result = engine.ejecutar_ciclo()
+    ewma_pesos = engine.get_ewma_weights()
+    if ewma_pesos:
+        print(f'[Learn] EWMA activos para {len(ewma_pesos)} modelos')
+        # Guardar EWMA weights para analisis_ia.py
+        EWMA_W_PATH = os.path.join(DATA_DIR, 'Datos', 'ewma_weights.json')
+        with open(EWMA_W_PATH, 'w') as f:
+            json.dump(ewma_pesos, f, indent=2)
+except Exception as e:
+    print(f'[!] Learning engine: {e}')
+
 # ============================================================
 # APLICAR CALIBRACION y generar retroalimentacion para el AI
 # ============================================================
@@ -371,8 +429,10 @@ if os.path.exists(IA_PATH):
         feedback_lines.append('')
         if precision_target_30d is not None:
             feedback_lines.append(f'[TARGETS 30d] Precision: {precision_target_30d:.0%} ({targets_acertados}/{targets_verificados} dentro del 10%) | Error prom: {error_promedio_target}%')
+        if precision_30d is not None:
+            feedback_lines.append(f'[DIRECCIONAL 30d] Precision: {precision_30d:.0%} ({aciertos_30d}/{evaluados_30d})')
         else:
-            feedback_lines.append('[TARGETS 30d] Aun sin datos suficientes para evaluar')
+            feedback_lines.append('[DIRECCIONAL 30d] Aun sin datos suficientes para evaluar')
         if prec_noticia_alcista is not None:
             feedback_lines.append(f'[NOTICIAS] Precision cuando noticia positiva + prediccion alcista: {prec_noticia_alcista:.0%} ({precision_noticia_alcista}/{total_noticia_alcista})')
         for k, nc in news_correlacion.items():

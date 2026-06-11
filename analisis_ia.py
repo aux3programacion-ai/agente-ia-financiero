@@ -413,32 +413,31 @@ if os.path.exists(CALIB_PATH):
     except:
         pass
 
-# --- EWMA weights online learning ---
-EWMA_ALPHA = 0.3  # decay factor for recent performance
-def compute_ewma_weights(hist_path, alpha=EWMA_ALPHA):
-    """Compute EWMA weights from historical model performance."""
-    ewma_weights = {}
-    if not os.path.exists(hist_path):
-        return ewma_weights
-    try:
-        hist = json.load(open(hist_path))
-        # For each ticker, track model predictions and outcomes
-        for ticker, data in hist.items():
-            preds = data.get('predicciones', [])
-            for p in preds:
-                model = p.get('modelo_usado', '')
-                if not model or 'ensemble' in model or 'fallback' in model or 'trend' in model:
-                    continue
-                # Extract base model name
-                base_model = model.split('-')[0] if '-' in model else model
-                # We can't compute EWMA without knowing outcomes
-                # This will be populated by aprendizaje.py
-    except:
-        pass
-    return ewma_weights
-
-# For now use static precision as base, EWMA will be added when aprendizaje.py tracks per-model outcomes
+# --- EWMA weights online learning (via Learning Engine) ---
 ewma_model_weights = {}
+EWMA_W_PATH = os.path.join(DATA_DIR, 'Datos', 'ewma_weights.json')
+if os.path.exists(EWMA_W_PATH):
+    try:
+        ewma_model_weights = json.load(open(EWMA_W_PATH))
+        print(f'[EWMA] Cargados pesos para {len(ewma_model_weights)} modelos')
+    except Exception as e:
+        print(f'[!] Error cargando EWMA: {e}')
+
+# If no EWMA weights from learning engine, compute from calibracion.json
+if not ewma_model_weights:
+    CALIB_PATH = os.path.join(DATA_DIR, 'Datos', 'calibracion.json')
+    if os.path.exists(CALIB_PATH):
+        try:
+            cal = json.load(open(CALIB_PATH))
+            modelos_stats = cal.get('modelos_ia', {})
+            for m, ms in modelos_stats.items():
+                if ms.get('total', 0) >= 2:
+                    score = ms['precision']
+                    ewma_model_weights[m] = score
+            if ewma_model_weights:
+                print(f'[EWMA] Fallback a precision historica para {len(ewma_model_weights)} modelos')
+        except:
+            pass
 
 SYSTEM_PROMPT = 'Eres un analista financiero experto con 20 anos de experiencia en mercados globales. Respondes SOLO con JSON valido, sin markdown, sin explicaciones.'
 
@@ -618,13 +617,14 @@ def generar_trend_fallback():
 # ============================================================
 # ENSEMBLE MULTI-MODELO
 # ============================================================
+respuestas_modelos = []
+modelos_exitosos = []
+
 if not API_KEY:
     print('[!] OPENROUTER_KEY no configurada, usando tendencia tecnica')
     resultado_final = generar_trend_fallback()
     resultado_final['modelo_usado'] = 'no-key'
 else:
-    respuestas_modelos = []
-    modelos_exitosos = []
     prompt_completo = USER_PROMPT_TEMPLATE
 
     # --- Specialized prompts for ensemble diversity ---
@@ -658,7 +658,27 @@ else:
                 best_spec = spec
         model_specialty[modelo] = best_spec if best_spec else specialties[i % len(specialties)]
     
-    for modelo in MODELOS:
+    # --- Thompson Sampling: reordenar modelos por bandit score ---
+    try:
+        from learning_engine import BanditThompson
+        bandit = BanditThompson()
+        modelos_ordenados = []
+        for m in MODELOS:
+            # Sample from Beta posterior
+            if m in bandit.params:
+                p = bandit.params[m]
+                muestra = np.random.beta(p['alpha'], p['beta'])
+            else:
+                muestra = np.random.beta(1, 1)  # prior uniforme
+            modelos_ordenados.append((m, muestra))
+        modelos_ordenados.sort(key=lambda x: x[1], reverse=True)
+        MODELOS_ORDERED = [m[0] for m in modelos_ordenados]
+        print(f'[Bandit] Modelos ordenados por Thompson Sampling')
+    except Exception as e:
+        MODELOS_ORDERED = list(MODELOS)
+        print(f'[!] Bandit fallo, orden original: {e}')
+
+    for modelo in MODELOS_ORDERED:
         if len(modelos_exitosos) >= 3:
             break
         try:
@@ -1173,6 +1193,37 @@ if os.path.exists(HIST_PATH):
 # Combine feature alerts with drift alerts
 if feature_alerts:
     resultado_final['feature_alerts'] = feature_alerts
+
+# --- Inyectar feedback de Learning Engine (30d outcomes, bandit, EWMA, skills) ---
+try:
+    from learning_engine import get_engine
+    engine = get_engine()
+    feedback_30d = engine.get_feedback_text()
+    if feedback_30d:
+        resultado_final['feedback_aprendizaje_30d'] = feedback_30d
+        print(f'[Learn] Feedback 30d inyectado en output')
+except Exception as e:
+    print(f'[!] Learning engine feedback: {e}')
+
+# --- RL Position Sizing Bridge: agregar recomendacion de tamano ---
+try:
+    from learning_engine import RLSizingBridge
+    rl_sizer = RLSizingBridge()
+    rl_sizer.cargar_o_entrenar(TICKERS)
+    senales = {}
+    precios_rl = {}
+    for t in TICKERS:
+        p = resultado_final.get('probabilidades', {}).get(t, {})
+        if p.get('probabilidad'):
+            senales[t] = p['probabilidad']
+            precios_rl[t] = precios.get(t, PROBS_BASE.get(t, 100))
+    capital = 100000.0
+    pesos_rl = rl_sizer.predecir_pesos(senales, precios_rl, capital)
+    if pesos_rl:
+        resultado_final['rl_position_sizing'] = pesos_rl
+        print(f'[RL Sizing] Pesos generados para {len(pesos_rl)} tickers')
+except Exception as e:
+    print(f'[!] RL Sizing: {e}')
 
 resultado_final['timestamp'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 resultado_final['total_tickers'] = len(TICKERS)
