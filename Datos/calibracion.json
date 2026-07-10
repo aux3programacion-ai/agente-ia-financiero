@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-07-10T21:59:24Z",
-  "precision_global": 0.4755,
-  "precision_ponderada": 0.4857,
-  "total_evaluado": 5152,
-  "aciertos_global": 2450,
+  "timestamp": "2026-07-10T23:05:36Z",
+  "precision_global": 0.4765,
+  "precision_ponderada": 0.4871,
+  "total_evaluado": 5182,
+  "aciertos_global": 2469,
   "evaluados_este_ciclo": 30,
   "precision_target_30d": null,
   "error_promedio_target_pct": null,
@@ -11,8 +11,8 @@
   "sectores": {
     "Semiconductores": {
       "total": 500,
-      "aciertos": 267,
-      "precision": 0.534
+      "aciertos": 270,
+      "precision": 0.54
     },
     "Servidores IA": {
       "total": 300,
@@ -26,18 +26,18 @@
     },
     "Ciberseguridad": {
       "total": 300,
-      "aciertos": 107,
-      "precision": 0.3567
+      "aciertos": 109,
+      "precision": 0.3633
     },
     "Almacenamiento": {
       "total": 200,
-      "aciertos": 118,
-      "precision": 0.59
+      "aciertos": 117,
+      "precision": 0.585
     },
     "Consumer Tech": {
       "total": 500,
-      "aciertos": 209,
-      "precision": 0.418
+      "aciertos": 207,
+      "precision": 0.414
     },
     "Farmaceutico": {
       "total": 100,
@@ -46,8 +46,8 @@
     },
     "Semicon Equip": {
       "total": 200,
-      "aciertos": 94,
-      "precision": 0.47
+      "aciertos": 95,
+      "precision": 0.475
     },
     "Cloud/Database": {
       "total": 100,
@@ -56,23 +56,23 @@
     },
     "Industrial": {
       "total": 200,
-      "aciertos": 75,
-      "precision": 0.375
+      "aciertos": 74,
+      "precision": 0.37
     },
     "Movilidad/Tech": {
       "total": 100,
-      "aciertos": 42,
-      "precision": 0.42
+      "aciertos": 41,
+      "precision": 0.41
     },
     "Consumo Defensivo": {
       "total": 100,
-      "aciertos": 59,
-      "precision": 0.59
+      "aciertos": 58,
+      "precision": 0.58
     },
     "Utilities/Energy": {
       "total": 100,
-      "aciertos": 39,
-      "precision": 0.39
+      "aciertos": 38,
+      "precision": 0.38
     }
   },
   "rangos_probabilidad": {
@@ -83,8 +83,8 @@
     },
     "40-50": {
       "total": 2970,
-      "aciertos": 1424,
-      "precision": 0.4795
+      "aciertos": 1423,
+      "precision": 0.4791
     },
     "50-55": {
       "total": 30,
@@ -118,11 +118,6 @@
     }
   },
   "modelos_ia": {
-    "trend-fallback": {
-      "total": 1740,
-      "aciertos": 852,
-      "precision": 0.4897
-    },
     "openai/gpt-oss-120b:free": {
       "total": 510,
       "aciertos": 245,
@@ -158,6 +153,11 @@
       "aciertos": 99,
       "precision": 0.4714
     },
+    "trend-fallback": {
+      "total": 1740,
+      "aciertos": 851,
+      "precision": 0.4891
+    },
     "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
       "total": 30,
       "aciertos": 17,
@@ -171,11 +171,6 @@
   },
   "modelo_por_ticker": {
     "NVDA": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 29,
-        "precision": 0.5
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 12,
@@ -211,6 +206,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 28,
+        "precision": 0.4828
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -223,11 +223,6 @@
       }
     },
     "MU": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 34,
-        "precision": 0.5862
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 9,
@@ -263,6 +258,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 35,
+        "precision": 0.6034
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -275,11 +275,6 @@
       }
     },
     "DELL": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 24,
-        "precision": 0.4138
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 8,
@@ -315,6 +310,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 25,
+        "precision": 0.431
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -327,11 +327,6 @@
       }
     },
     "AVGO": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 31,
-        "precision": 0.5345
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 10,
@@ -367,6 +362,11 @@
         "aciertos": 3,
         "precision": 0.4286
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 32,
+        "precision": 0.5517
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -379,11 +379,6 @@
       }
     },
     "DDOG": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 26,
-        "precision": 0.4483
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 9,
@@ -419,6 +414,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 26,
+        "precision": 0.4483
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -431,11 +431,6 @@
       }
     },
     "SMCI": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 36,
-        "precision": 0.6207
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 12,
@@ -471,6 +466,11 @@
         "aciertos": 5,
         "precision": 0.7143
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 35,
+        "precision": 0.6034
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -483,11 +483,6 @@
       }
     },
     "SNOW": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 25,
-        "precision": 0.431
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 8,
@@ -523,6 +518,11 @@
         "aciertos": 5,
         "precision": 0.7143
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 25,
+        "precision": 0.431
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -535,11 +535,6 @@
       }
     },
     "CRWD": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 26,
-        "precision": 0.4483
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 8,
@@ -575,6 +570,11 @@
         "aciertos": 1,
         "precision": 0.1429
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 27,
+        "precision": 0.4655
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -587,11 +587,6 @@
       }
     },
     "NOW": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 25,
-        "precision": 0.431
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 8,
@@ -627,6 +622,11 @@
         "aciertos": 5,
         "precision": 0.7143
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 25,
+        "precision": 0.431
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -639,11 +639,6 @@
       }
     },
     "TSM": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 30,
-        "precision": 0.5172
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 7,
@@ -679,6 +674,11 @@
         "aciertos": 3,
         "precision": 0.4286
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 31,
+        "precision": 0.5345
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -691,11 +691,6 @@
       }
     },
     "ARM": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 39,
-        "precision": 0.6724
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 12,
@@ -731,6 +726,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 40,
+        "precision": 0.6897
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -743,11 +743,6 @@
       }
     },
     "OKTA": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 20,
-        "precision": 0.3448
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 3,
@@ -783,6 +778,11 @@
         "aciertos": 0,
         "precision": 0.0
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 20,
+        "precision": 0.3448
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -795,11 +795,6 @@
       }
     },
     "HPE": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 24,
-        "precision": 0.4138
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 11,
@@ -835,6 +830,11 @@
         "aciertos": 6,
         "precision": 0.8571
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 24,
+        "precision": 0.4138
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -847,11 +847,6 @@
       }
     },
     "NTAP": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 32,
-        "precision": 0.5517
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 10,
@@ -887,6 +882,11 @@
         "aciertos": 5,
         "precision": 0.7143
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 32,
+        "precision": 0.5517
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -899,11 +899,6 @@
       }
     },
     "CLS": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 29,
-        "precision": 0.5
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 13,
@@ -939,6 +934,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 28,
+        "precision": 0.4828
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -951,11 +951,6 @@
       }
     },
     "AAPL": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 18,
-        "precision": 0.3103
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 5,
@@ -991,6 +986,11 @@
         "aciertos": 3,
         "precision": 0.4286
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 18,
+        "precision": 0.3103
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1003,11 +1003,6 @@
       }
     },
     "AMZN": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 22,
-        "precision": 0.3793
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 4,
@@ -1043,6 +1038,11 @@
         "aciertos": 2,
         "precision": 0.2857
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 22,
+        "precision": 0.3793
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1055,11 +1055,6 @@
       }
     },
     "GOOGL": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 33,
-        "precision": 0.569
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 10,
@@ -1095,6 +1090,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 33,
+        "precision": 0.569
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1107,11 +1107,6 @@
       }
     },
     "META": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 24,
-        "precision": 0.4138
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 6,
@@ -1147,6 +1142,11 @@
         "aciertos": 5,
         "precision": 0.7143
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 23,
+        "precision": 0.3966
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1159,11 +1159,6 @@
       }
     },
     "MSFT": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 24,
-        "precision": 0.4138
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 7,
@@ -1199,6 +1194,11 @@
         "aciertos": 3,
         "precision": 0.4286
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 23,
+        "precision": 0.3966
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1211,11 +1211,6 @@
       }
     },
     "LLY": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 28,
-        "precision": 0.4828
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 6,
@@ -1251,6 +1246,11 @@
         "aciertos": 2,
         "precision": 0.2857
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 28,
+        "precision": 0.4828
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1263,11 +1263,6 @@
       }
     },
     "AMAT": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 32,
-        "precision": 0.5517
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 7,
@@ -1303,6 +1298,11 @@
         "aciertos": 2,
         "precision": 0.2857
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 32,
+        "precision": 0.5517
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1315,11 +1315,6 @@
       }
     },
     "LRCX": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 35,
-        "precision": 0.6034
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 8,
@@ -1355,6 +1350,11 @@
         "aciertos": 2,
         "precision": 0.2857
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 36,
+        "precision": 0.6207
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1367,11 +1367,6 @@
       }
     },
     "PANW": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 32,
-        "precision": 0.5517
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 5,
@@ -1407,6 +1402,11 @@
         "aciertos": 3,
         "precision": 0.4286
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 33,
+        "precision": 0.569
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1419,11 +1419,6 @@
       }
     },
     "ORCL": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 46,
-        "precision": 0.7931
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 14,
@@ -1459,6 +1454,11 @@
         "aciertos": 6,
         "precision": 0.8571
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 46,
+        "precision": 0.7931
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1471,11 +1471,6 @@
       }
     },
     "HON": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 30,
-        "precision": 0.5172
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 8,
@@ -1511,6 +1506,11 @@
         "aciertos": 2,
         "precision": 0.2857
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 29,
+        "precision": 0.5
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1523,11 +1523,6 @@
       }
     },
     "UBER": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 23,
-        "precision": 0.3966
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 6,
@@ -1563,6 +1558,11 @@
         "aciertos": 3,
         "precision": 0.4286
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 22,
+        "precision": 0.3793
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
@@ -1575,11 +1575,6 @@
       }
     },
     "GE": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 17,
-        "precision": 0.2931
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 4,
@@ -1615,6 +1610,11 @@
         "aciertos": 0,
         "precision": 0.0
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 17,
+        "precision": 0.2931
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1627,11 +1627,6 @@
       }
     },
     "COST": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 31,
-        "precision": 0.5345
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 10,
@@ -1667,6 +1662,11 @@
         "aciertos": 4,
         "precision": 0.5714
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 30,
+        "precision": 0.5172
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1679,11 +1679,6 @@
       }
     },
     "NEE": {
-      "trend-fallback": {
-        "total": 58,
-        "aciertos": 27,
-        "precision": 0.4655
-      },
       "openai/gpt-oss-120b:free": {
         "total": 17,
         "aciertos": 5,
@@ -1719,6 +1714,11 @@
         "aciertos": 1,
         "precision": 0.1429
       },
+      "trend-fallback": {
+        "total": 58,
+        "aciertos": 26,
+        "precision": 0.4483
+      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 0,
@@ -1733,352 +1733,352 @@
   },
   "correlacion_noticias": {
     "positivo": {
-      "total": 492,
-      "acertadas": 216,
-      "precision": 0.439
+      "total": 487,
+      "acertadas": 215,
+      "precision": 0.4415
     },
     "negativo": {
-      "total": 171,
-      "acertadas": 107,
-      "precision": 0.6257
+      "total": 163,
+      "acertadas": 101,
+      "precision": 0.6196
     },
     "neutral": {
-      "total": 207,
-      "acertadas": 101,
-      "precision": 0.4879
+      "total": 203,
+      "acertadas": 97,
+      "precision": 0.4778
     }
   },
   "prec_noticia_alcista": 1.0,
   "factores": {
     "NVDA": {
-      "total": 171,
+      "total": 172,
       "aciertos": 81,
-      "precision": 0.4737,
-      "precision_ponderada": 0.5024,
-      "precision_final": 0.5054,
-      "factor": 1.0108,
+      "precision": 0.4709,
+      "precision_ponderada": 0.4919,
+      "precision_final": 0.5006,
+      "factor": 1.0011,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.534
+      "precision_sector": 0.54
     },
     "MU": {
-      "total": 171,
-      "aciertos": 90,
-      "precision": 0.5263,
-      "precision_ponderada": 0.5491,
-      "precision_final": 0.5334,
-      "factor": 1.0668,
+      "total": 172,
+      "aciertos": 91,
+      "precision": 0.5291,
+      "precision_ponderada": 0.559,
+      "precision_final": 0.5408,
+      "factor": 1.0816,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.534
+      "precision_sector": 0.54
     },
     "DELL": {
-      "total": 171,
-      "aciertos": 68,
-      "precision": 0.3977,
-      "precision_ponderada": 0.4466,
-      "precision_final": 0.4731,
-      "factor": 0.9462,
+      "total": 172,
+      "aciertos": 69,
+      "precision": 0.4012,
+      "precision_ponderada": 0.4576,
+      "precision_final": 0.48,
+      "factor": 0.96,
       "peso_local": 1.0,
       "sector": "Servidores IA",
       "precision_sector": 0.54
     },
     "AVGO": {
-      "total": 175,
-      "aciertos": 96,
-      "precision": 0.5486,
-      "precision_ponderada": 0.5249,
-      "precision_final": 0.5189,
-      "factor": 1.0378,
+      "total": 176,
+      "aciertos": 97,
+      "precision": 0.5511,
+      "precision_ponderada": 0.5351,
+      "precision_final": 0.5265,
+      "factor": 1.053,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.534
+      "precision_sector": 0.54
     },
     "DDOG": {
-      "total": 171,
-      "aciertos": 89,
-      "precision": 0.5205,
-      "precision_ponderada": 0.4955,
-      "precision_final": 0.4958,
-      "factor": 0.9916,
+      "total": 172,
+      "aciertos": 90,
+      "precision": 0.5233,
+      "precision_ponderada": 0.501,
+      "precision_final": 0.4994,
+      "factor": 0.9987,
       "peso_local": 1.0,
       "sector": "Software IA",
       "precision_sector": 0.5067
     },
     "SMCI": {
-      "total": 171,
+      "total": 172,
       "aciertos": 101,
-      "precision": 0.5906,
-      "precision_ponderada": 0.5917,
-      "precision_final": 0.5602,
-      "factor": 1.1203,
+      "precision": 0.5872,
+      "precision_ponderada": 0.5803,
+      "precision_final": 0.5536,
+      "factor": 1.1072,
       "peso_local": 1.0,
       "sector": "Servidores IA",
       "precision_sector": 0.54
     },
     "SNOW": {
-      "total": 171,
-      "aciertos": 82,
-      "precision": 0.4795,
-      "precision_ponderada": 0.4623,
-      "precision_final": 0.4759,
-      "factor": 0.9517,
+      "total": 172,
+      "aciertos": 83,
+      "precision": 0.4826,
+      "precision_ponderada": 0.4681,
+      "precision_final": 0.4796,
+      "factor": 0.9592,
       "peso_local": 1.0,
       "sector": "Software IA",
       "precision_sector": 0.5067
     },
     "CRWD": {
-      "total": 171,
-      "aciertos": 77,
-      "precision": 0.4503,
-      "precision_ponderada": 0.419,
-      "precision_final": 0.4199,
-      "factor": 0.8398,
+      "total": 172,
+      "aciertos": 78,
+      "precision": 0.4535,
+      "precision_ponderada": 0.4303,
+      "precision_final": 0.4283,
+      "factor": 0.8565,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
-      "precision_sector": 0.3567
+      "precision_sector": 0.3633
     },
     "NOW": {
-      "total": 171,
-      "aciertos": 93,
-      "precision": 0.5439,
-      "precision_ponderada": 0.4778,
-      "precision_final": 0.4852,
-      "factor": 0.9703,
+      "total": 172,
+      "aciertos": 94,
+      "precision": 0.5465,
+      "precision_ponderada": 0.4834,
+      "precision_final": 0.4888,
+      "factor": 0.9776,
       "peso_local": 1.0,
       "sector": "Software IA",
       "precision_sector": 0.5067
     },
     "TSM": {
-      "total": 172,
-      "aciertos": 78,
-      "precision": 0.4535,
-      "precision_ponderada": 0.5013,
-      "precision_final": 0.5047,
-      "factor": 1.0094,
+      "total": 173,
+      "aciertos": 79,
+      "precision": 0.4566,
+      "precision_ponderada": 0.5118,
+      "precision_final": 0.5125,
+      "factor": 1.025,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.534
+      "precision_sector": 0.54
     },
     "ARM": {
-      "total": 171,
-      "aciertos": 91,
-      "precision": 0.5322,
-      "precision_ponderada": 0.6548,
-      "precision_final": 0.5968,
-      "factor": 1.1936,
+      "total": 172,
+      "aciertos": 92,
+      "precision": 0.5349,
+      "precision_ponderada": 0.6636,
+      "precision_final": 0.6036,
+      "factor": 1.2072,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.534
+      "precision_sector": 0.54
     },
     "OKTA": {
-      "total": 171,
-      "aciertos": 66,
-      "precision": 0.386,
-      "precision_ponderada": 0.3105,
-      "precision_final": 0.3548,
-      "factor": 0.7096,
+      "total": 172,
+      "aciertos": 67,
+      "precision": 0.3895,
+      "precision_ponderada": 0.3179,
+      "precision_final": 0.3608,
+      "factor": 0.7216,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
-      "precision_sector": 0.3567
+      "precision_sector": 0.3633
     },
     "HPE": {
-      "total": 171,
-      "aciertos": 83,
-      "precision": 0.4854,
-      "precision_ponderada": 0.4853,
-      "precision_final": 0.4963,
-      "factor": 0.9926,
+      "total": 172,
+      "aciertos": 84,
+      "precision": 0.4884,
+      "precision_ponderada": 0.4909,
+      "precision_final": 0.5,
+      "factor": 0.9999,
       "peso_local": 1.0,
       "sector": "Servidores IA",
       "precision_sector": 0.54
     },
     "NTAP": {
-      "total": 171,
-      "aciertos": 92,
-      "precision": 0.538,
-      "precision_ponderada": 0.5505,
-      "precision_final": 0.5454,
-      "factor": 1.0909,
+      "total": 172,
+      "aciertos": 93,
+      "precision": 0.5407,
+      "precision_ponderada": 0.5553,
+      "precision_final": 0.5476,
+      "factor": 1.0952,
       "peso_local": 1.0,
       "sector": "Almacenamiento",
-      "precision_sector": 0.59
+      "precision_sector": 0.585
     },
     "CLS": {
-      "total": 171,
+      "total": 172,
       "aciertos": 89,
-      "precision": 0.5205,
-      "precision_ponderada": 0.5543,
-      "precision_final": 0.5477,
-      "factor": 1.0954,
+      "precision": 0.5174,
+      "precision_ponderada": 0.5432,
+      "precision_final": 0.5403,
+      "factor": 1.0807,
       "peso_local": 1.0,
       "sector": "Almacenamiento",
-      "precision_sector": 0.59
+      "precision_sector": 0.585
     },
     "AAPL": {
-      "total": 171,
-      "aciertos": 69,
-      "precision": 0.4035,
-      "precision_ponderada": 0.3362,
-      "precision_final": 0.3825,
-      "factor": 0.7649,
+      "total": 172,
+      "aciertos": 70,
+      "precision": 0.407,
+      "precision_ponderada": 0.3434,
+      "precision_final": 0.3863,
+      "factor": 0.7725,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.418
+      "precision_sector": 0.414
     },
     "AMZN": {
-      "total": 171,
-      "aciertos": 69,
-      "precision": 0.4035,
-      "precision_ponderada": 0.3713,
-      "precision_final": 0.4035,
-      "factor": 0.807,
+      "total": 172,
+      "aciertos": 70,
+      "precision": 0.407,
+      "precision_ponderada": 0.3781,
+      "precision_final": 0.4071,
+      "factor": 0.8142,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.418
+      "precision_sector": 0.414
     },
     "GOOGL": {
-      "total": 171,
-      "aciertos": 77,
-      "precision": 0.4503,
-      "precision_ponderada": 0.5724,
-      "precision_final": 0.5242,
-      "factor": 1.0484,
+      "total": 172,
+      "aciertos": 78,
+      "precision": 0.4535,
+      "precision_ponderada": 0.577,
+      "precision_final": 0.5264,
+      "factor": 1.0528,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.418
+      "precision_sector": 0.414
     },
     "META": {
-      "total": 176,
+      "total": 177,
       "aciertos": 83,
-      "precision": 0.4716,
-      "precision_ponderada": 0.4141,
-      "precision_final": 0.4292,
-      "factor": 0.8584,
+      "precision": 0.4689,
+      "precision_ponderada": 0.4046,
+      "precision_final": 0.423,
+      "factor": 0.846,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.418
+      "precision_sector": 0.414
     },
     "MSFT": {
-      "total": 176,
+      "total": 177,
       "aciertos": 85,
-      "precision": 0.483,
-      "precision_ponderada": 0.4012,
-      "precision_final": 0.4215,
-      "factor": 0.8429,
+      "precision": 0.4802,
+      "precision_ponderada": 0.3918,
+      "precision_final": 0.4153,
+      "factor": 0.8306,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.418
+      "precision_sector": 0.414
     },
     "LLY": {
-      "total": 171,
-      "aciertos": 74,
-      "precision": 0.4327,
-      "precision_ponderada": 0.4792,
-      "precision_final": 0.4767,
-      "factor": 0.9533,
+      "total": 172,
+      "aciertos": 75,
+      "precision": 0.436,
+      "precision_ponderada": 0.4848,
+      "precision_final": 0.4803,
+      "factor": 0.9606,
       "peso_local": 1.0,
       "sector": "Farmaceutico",
       "precision_sector": 0.46
     },
     "AMAT": {
-      "total": 173,
+      "total": 174,
       "aciertos": 83,
-      "precision": 0.4798,
-      "precision_ponderada": 0.4827,
-      "precision_final": 0.4808,
-      "factor": 0.9615,
+      "precision": 0.477,
+      "precision_ponderada": 0.4775,
+      "precision_final": 0.4789,
+      "factor": 0.9578,
       "peso_local": 1.0,
       "sector": "Semicon Equip",
-      "precision_sector": 0.47
+      "precision_sector": 0.475
     },
     "LRCX": {
-      "total": 171,
-      "aciertos": 73,
-      "precision": 0.4269,
-      "precision_ponderada": 0.5422,
-      "precision_final": 0.5165,
-      "factor": 1.0329,
+      "total": 172,
+      "aciertos": 74,
+      "precision": 0.4302,
+      "precision_ponderada": 0.5522,
+      "precision_final": 0.5237,
+      "factor": 1.0475,
       "peso_local": 1.0,
       "sector": "Semicon Equip",
-      "precision_sector": 0.47
+      "precision_sector": 0.475
     },
     "PANW": {
-      "total": 171,
-      "aciertos": 73,
-      "precision": 0.4269,
-      "precision_ponderada": 0.4891,
-      "precision_final": 0.4619,
-      "factor": 0.9239,
+      "total": 172,
+      "aciertos": 74,
+      "precision": 0.4302,
+      "precision_ponderada": 0.4997,
+      "precision_final": 0.4699,
+      "factor": 0.9398,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
-      "precision_sector": 0.3567
+      "precision_sector": 0.3633
     },
     "ORCL": {
-      "total": 171,
-      "aciertos": 116,
-      "precision": 0.6784,
-      "precision_ponderada": 0.7752,
-      "precision_final": 0.7163,
-      "factor": 1.4325,
+      "total": 172,
+      "aciertos": 117,
+      "precision": 0.6802,
+      "precision_ponderada": 0.7776,
+      "precision_final": 0.718,
+      "factor": 1.436,
       "peso_local": 1.0,
       "sector": "Cloud/Database",
       "precision_sector": 0.77
     },
     "HON": {
-      "total": 171,
+      "total": 172,
       "aciertos": 73,
-      "precision": 0.4269,
-      "precision_ponderada": 0.5031,
-      "precision_final": 0.474,
-      "factor": 0.948,
+      "precision": 0.4244,
+      "precision_ponderada": 0.4926,
+      "precision_final": 0.467,
+      "factor": 0.934,
       "peso_local": 1.0,
       "sector": "Industrial",
-      "precision_sector": 0.375
+      "precision_sector": 0.37
     },
     "UBER": {
-      "total": 171,
+      "total": 172,
       "aciertos": 72,
-      "precision": 0.4211,
-      "precision_ponderada": 0.4098,
-      "precision_final": 0.427,
-      "factor": 0.854,
+      "precision": 0.4186,
+      "precision_ponderada": 0.4003,
+      "precision_final": 0.4196,
+      "factor": 0.8392,
       "peso_local": 1.0,
       "sector": "Movilidad/Tech",
-      "precision_sector": 0.42
+      "precision_sector": 0.41
     },
     "GE": {
-      "total": 176,
+      "total": 177,
       "aciertos": 51,
-      "precision": 0.2898,
-      "precision_ponderada": 0.281,
-      "precision_final": 0.3407,
-      "factor": 0.6815,
+      "precision": 0.2881,
+      "precision_ponderada": 0.278,
+      "precision_final": 0.3382,
+      "factor": 0.6764,
       "peso_local": 1.0,
       "sector": "Industrial",
-      "precision_sector": 0.375
+      "precision_sector": 0.37
     },
     "COST": {
-      "total": 171,
+      "total": 172,
       "aciertos": 100,
-      "precision": 0.5848,
-      "precision_ponderada": 0.5626,
-      "precision_final": 0.5527,
-      "factor": 1.1054,
+      "precision": 0.5814,
+      "precision_ponderada": 0.5514,
+      "precision_final": 0.5443,
+      "factor": 1.0885,
       "peso_local": 1.0,
       "sector": "Consumo Defensivo",
-      "precision_sector": 0.59
+      "precision_sector": 0.58
     },
     "NEE": {
-      "total": 171,
+      "total": 172,
       "aciertos": 76,
-      "precision": 0.4444,
-      "precision_ponderada": 0.4249,
-      "precision_final": 0.4301,
-      "factor": 0.8602,
+      "precision": 0.4419,
+      "precision_ponderada": 0.4152,
+      "precision_final": 0.4225,
+      "factor": 0.8451,
       "peso_local": 1.0,
       "sector": "Utilities/Energy",
-      "precision_sector": 0.39
+      "precision_sector": 0.38
     }
   }
 }
