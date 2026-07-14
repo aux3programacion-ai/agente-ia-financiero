@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-07-14T18:16:41Z",
-  "precision_global": 0.4785,
-  "precision_ponderada": 0.4965,
-  "total_evaluado": 5452,
-  "aciertos_global": 2609,
+  "timestamp": "2026-07-14T20:30:57Z",
+  "precision_global": 0.4779,
+  "precision_ponderada": 0.4955,
+  "total_evaluado": 5482,
+  "aciertos_global": 2620,
   "evaluados_este_ciclo": 30,
   "precision_target_30d": null,
   "error_promedio_target_pct": null,
@@ -11,18 +11,18 @@
   "sectores": {
     "Semiconductores": {
       "total": 500,
-      "aciertos": 302,
-      "precision": 0.604
+      "aciertos": 304,
+      "precision": 0.608
     },
     "Servidores IA": {
       "total": 300,
-      "aciertos": 165,
-      "precision": 0.55
+      "aciertos": 164,
+      "precision": 0.5467
     },
     "Software IA": {
       "total": 300,
-      "aciertos": 129,
-      "precision": 0.43
+      "aciertos": 127,
+      "precision": 0.4233
     },
     "Ciberseguridad": {
       "total": 300,
@@ -36,8 +36,8 @@
     },
     "Consumer Tech": {
       "total": 500,
-      "aciertos": 216,
-      "precision": 0.432
+      "aciertos": 218,
+      "precision": 0.436
     },
     "Farmaceutico": {
       "total": 100,
@@ -51,8 +51,8 @@
     },
     "Cloud/Database": {
       "total": 100,
-      "aciertos": 84,
-      "precision": 0.84
+      "aciertos": 85,
+      "precision": 0.85
     },
     "Industrial": {
       "total": 200,
@@ -61,8 +61,8 @@
     },
     "Movilidad/Tech": {
       "total": 100,
-      "aciertos": 45,
-      "precision": 0.45
+      "aciertos": 46,
+      "precision": 0.46
     },
     "Consumo Defensivo": {
       "total": 100,
@@ -83,8 +83,8 @@
     },
     "40-50": {
       "total": 2970,
-      "aciertos": 1463,
-      "precision": 0.4926
+      "aciertos": 1466,
+      "precision": 0.4936
     },
     "50-55": {
       "total": 30,
@@ -118,11 +118,6 @@
     }
   },
   "modelos_ia": {
-    "openrouter/free": {
-      "total": 210,
-      "aciertos": 99,
-      "precision": 0.4714
-    },
     "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
       "total": 180,
       "aciertos": 86,
@@ -134,9 +129,9 @@
       "precision": 0.5244
     },
     "trend-fallback": {
-      "total": 1890,
-      "aciertos": 929,
-      "precision": 0.4915
+      "total": 1920,
+      "aciertos": 940,
+      "precision": 0.4896
     },
     "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
       "total": 90,
@@ -147,6 +142,11 @@
       "total": 30,
       "aciertos": 17,
       "precision": 0.5667
+    },
+    "openrouter/free": {
+      "total": 180,
+      "aciertos": 91,
+      "precision": 0.5056
     },
     "google/gemma-4-31b-it:free": {
       "total": 90,
@@ -161,11 +161,6 @@
   },
   "modelo_por_ticker": {
     "NVDA": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -177,9 +172,9 @@
         "precision": 0.8667
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 31,
-        "precision": 0.4921
+        "precision": 0.4844
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -190,6 +185,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 4,
+        "precision": 0.6667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -203,11 +203,6 @@
       }
     },
     "MU": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 0,
@@ -219,9 +214,9 @@
         "precision": 0.7333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 38,
-        "precision": 0.6032
+        "precision": 0.5938
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -232,6 +227,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 4,
+        "precision": 0.6667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -245,11 +245,6 @@
       }
     },
     "DELL": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 4,
@@ -261,9 +256,9 @@
         "precision": 0.5333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 28,
-        "precision": 0.4444
+        "precision": 0.4375
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -274,6 +269,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -287,11 +287,6 @@
       }
     },
     "AVGO": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 3,
-        "precision": 0.4286
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -303,9 +298,9 @@
         "precision": 0.8
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 35,
-        "precision": 0.5556
+        "precision": 0.5469
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -316,6 +311,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -329,11 +329,6 @@
       }
     },
     "DDOG": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 6,
@@ -345,9 +340,9 @@
         "precision": 0.3333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 26,
-        "precision": 0.4127
+        "precision": 0.4062
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -358,6 +353,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -371,11 +371,6 @@
       }
     },
     "SMCI": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 5,
-        "precision": 0.7143
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 1,
@@ -387,9 +382,9 @@
         "precision": 0.8667
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 38,
-        "precision": 0.6032
+        "total": 64,
+        "aciertos": 39,
+        "precision": 0.6094
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -400,6 +395,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 5,
+        "precision": 0.8333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -413,11 +413,6 @@
       }
     },
     "SNOW": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 5,
-        "precision": 0.7143
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 5,
@@ -429,9 +424,9 @@
         "precision": 0.2667
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 25,
-        "precision": 0.3968
+        "precision": 0.3906
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -442,6 +437,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 4,
+        "precision": 0.6667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -455,11 +455,6 @@
       }
     },
     "CRWD": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 1,
-        "precision": 0.1429
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 2,
@@ -471,9 +466,9 @@
         "precision": 0.4
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 27,
-        "precision": 0.4286
+        "precision": 0.4219
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -484,6 +479,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 1,
+        "precision": 0.1667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -497,11 +497,6 @@
       }
     },
     "NOW": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 5,
-        "precision": 0.7143
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 6,
@@ -513,9 +508,9 @@
         "precision": 0.3333
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 27,
-        "precision": 0.4286
+        "total": 64,
+        "aciertos": 28,
+        "precision": 0.4375
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -526,6 +521,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 4,
+        "precision": 0.6667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -539,11 +539,6 @@
       }
     },
     "TSM": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 3,
-        "precision": 0.4286
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 1,
@@ -555,9 +550,9 @@
         "precision": 0.6
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 35,
-        "precision": 0.5556
+        "total": 64,
+        "aciertos": 36,
+        "precision": 0.5625
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -568,6 +563,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -581,11 +581,6 @@
       }
     },
     "ARM": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -597,9 +592,9 @@
         "precision": 0.9333
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 45,
-        "precision": 0.7143
+        "total": 64,
+        "aciertos": 46,
+        "precision": 0.7188
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -610,6 +605,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 4,
+        "precision": 0.6667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -623,11 +623,6 @@
       }
     },
     "OKTA": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 0,
-        "precision": 0.0
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 2,
@@ -639,9 +634,9 @@
         "precision": 0.1333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 20,
-        "precision": 0.3175
+        "precision": 0.3125
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -650,6 +645,11 @@
       },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
+        "aciertos": 0,
+        "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
         "aciertos": 0,
         "precision": 0.0
       },
@@ -665,11 +665,6 @@
       }
     },
     "HPE": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 6,
-        "precision": 0.8571
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 4,
@@ -681,9 +676,9 @@
         "precision": 0.6
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 27,
-        "precision": 0.4286
+        "precision": 0.4219
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -694,6 +689,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 5,
+        "precision": 0.8333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -707,11 +707,6 @@
       }
     },
     "NTAP": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 5,
-        "precision": 0.7143
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 4,
@@ -723,9 +718,9 @@
         "precision": 0.7333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 35,
-        "precision": 0.5556
+        "precision": 0.5469
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -736,6 +731,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 5,
+        "precision": 0.8333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -749,11 +749,6 @@
       }
     },
     "CLS": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 4,
@@ -765,9 +760,9 @@
         "precision": 0.7333
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 33,
-        "precision": 0.5238
+        "total": 64,
+        "aciertos": 34,
+        "precision": 0.5312
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -778,6 +773,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -791,11 +791,6 @@
       }
     },
     "AAPL": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 3,
-        "precision": 0.4286
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -807,9 +802,9 @@
         "precision": 0.2667
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 20,
-        "precision": 0.3175
+        "total": 64,
+        "aciertos": 21,
+        "precision": 0.3281
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -820,6 +815,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -833,11 +833,6 @@
       }
     },
     "AMZN": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 2,
-        "precision": 0.2857
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -849,9 +844,9 @@
         "precision": 0.2
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 24,
-        "precision": 0.381
+        "precision": 0.375
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -862,6 +857,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 2,
+        "precision": 0.3333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -875,11 +875,6 @@
       }
     },
     "GOOGL": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -891,9 +886,9 @@
         "precision": 0.7333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 36,
-        "precision": 0.5714
+        "precision": 0.5625
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -904,6 +899,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 4,
+        "precision": 0.6667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -917,11 +917,6 @@
       }
     },
     "META": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 5,
-        "precision": 0.7143
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -933,9 +928,9 @@
         "precision": 0.4667
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 26,
-        "precision": 0.4127
+        "precision": 0.4062
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -946,6 +941,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 5,
+        "precision": 0.8333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -959,11 +959,6 @@
       }
     },
     "MSFT": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 3,
-        "precision": 0.4286
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -975,9 +970,9 @@
         "precision": 0.3333
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 25,
-        "precision": 0.3968
+        "total": 64,
+        "aciertos": 26,
+        "precision": 0.4062
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -988,6 +983,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1001,11 +1001,6 @@
       }
     },
     "LLY": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 2,
-        "precision": 0.2857
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -1017,9 +1012,9 @@
         "precision": 0.2
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 33,
-        "precision": 0.5238
+        "total": 64,
+        "aciertos": 34,
+        "precision": 0.5312
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1030,6 +1025,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 1,
+        "precision": 0.1667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1043,11 +1043,6 @@
       }
     },
     "AMAT": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 2,
-        "precision": 0.2857
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 0,
@@ -1059,9 +1054,9 @@
         "precision": 0.6
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 35,
-        "precision": 0.5556
+        "precision": 0.5469
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1072,6 +1067,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 2,
+        "precision": 0.3333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1085,11 +1085,6 @@
       }
     },
     "LRCX": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 2,
-        "precision": 0.2857
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 0,
@@ -1101,9 +1096,9 @@
         "precision": 0.6667
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 39,
-        "precision": 0.619
+        "precision": 0.6094
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1114,6 +1109,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 2,
+        "precision": 0.3333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1127,11 +1127,6 @@
       }
     },
     "PANW": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 3,
-        "precision": 0.4286
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 2,
@@ -1143,9 +1138,9 @@
         "precision": 0.3333
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 33,
-        "precision": 0.5238
+        "precision": 0.5156
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1156,6 +1151,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1169,11 +1169,6 @@
       }
     },
     "ORCL": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 6,
-        "precision": 0.8571
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -1185,9 +1180,9 @@
         "precision": 1.0
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 51,
-        "precision": 0.8095
+        "total": 64,
+        "aciertos": 52,
+        "precision": 0.8125
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1197,6 +1192,11 @@
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
         "aciertos": 1,
+        "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 6,
         "precision": 1.0
       },
       "google/gemma-4-31b-it:free": {
@@ -1211,11 +1211,6 @@
       }
     },
     "HON": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 2,
-        "precision": 0.2857
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 2,
@@ -1227,9 +1222,9 @@
         "precision": 0.6
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 32,
-        "precision": 0.5079
+        "precision": 0.5
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1240,6 +1235,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 2,
+        "precision": 0.3333
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1253,11 +1253,6 @@
       }
     },
     "UBER": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 3,
-        "precision": 0.4286
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 3,
@@ -1269,9 +1264,9 @@
         "precision": 0.4
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 26,
-        "precision": 0.4127
+        "total": 64,
+        "aciertos": 27,
+        "precision": 0.4219
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1282,6 +1277,11 @@
         "total": 1,
         "aciertos": 1,
         "precision": 1.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1295,11 +1295,6 @@
       }
     },
     "GE": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 0,
-        "precision": 0.0
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 2,
@@ -1311,9 +1306,9 @@
         "precision": 0.4
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 21,
-        "precision": 0.3333
+        "precision": 0.3281
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1322,6 +1317,11 @@
       },
       "ensemble-ewma-openai/gpt-oss-120b:free+openai/gpt-oss-20b:free": {
         "total": 1,
+        "aciertos": 0,
+        "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
         "aciertos": 0,
         "precision": 0.0
       },
@@ -1337,11 +1337,6 @@
       }
     },
     "COST": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 4,
-        "precision": 0.5714
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 6,
@@ -1353,9 +1348,9 @@
         "precision": 0.4
       },
       "trend-fallback": {
-        "total": 63,
-        "aciertos": 32,
-        "precision": 0.5079
+        "total": 64,
+        "aciertos": 33,
+        "precision": 0.5156
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1366,6 +1361,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 3,
+        "precision": 0.5
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1379,11 +1379,6 @@
       }
     },
     "NEE": {
-      "openrouter/free": {
-        "total": 7,
-        "aciertos": 1,
-        "precision": 0.1429
-      },
       "ensemble-ewma-openai/gpt-oss-120b:free+openrouter/free": {
         "total": 6,
         "aciertos": 2,
@@ -1395,9 +1390,9 @@
         "precision": 0.2667
       },
       "trend-fallback": {
-        "total": 63,
+        "total": 64,
         "aciertos": 26,
-        "precision": 0.4127
+        "precision": 0.4062
       },
       "ensemble-ewma-openrouter/free+openai/gpt-oss-120b:free": {
         "total": 3,
@@ -1408,6 +1403,11 @@
         "total": 1,
         "aciertos": 0,
         "precision": 0.0
+      },
+      "openrouter/free": {
+        "total": 6,
+        "aciertos": 1,
+        "precision": 0.1667
       },
       "google/gemma-4-31b-it:free": {
         "total": 3,
@@ -1423,349 +1423,349 @@
   },
   "correlacion_noticias": {
     "positivo": {
-      "total": 433,
-      "acertadas": 196,
-      "precision": 0.4527
+      "total": 421,
+      "acertadas": 191,
+      "precision": 0.4537
     },
     "negativo": {
-      "total": 147,
-      "acertadas": 103,
-      "precision": 0.7007
+      "total": 144,
+      "acertadas": 102,
+      "precision": 0.7083
     },
     "neutral": {
-      "total": 179,
+      "total": 173,
       "acertadas": 93,
-      "precision": 0.5196
+      "precision": 0.5376
     }
   },
   "prec_noticia_alcista": 1.0,
   "factores": {
     "NVDA": {
-      "total": 181,
+      "total": 182,
       "aciertos": 87,
-      "precision": 0.4807,
-      "precision_ponderada": 0.5284,
-      "precision_final": 0.5371,
-      "factor": 1.0743,
+      "precision": 0.478,
+      "precision_ponderada": 0.522,
+      "precision_final": 0.5339,
+      "factor": 1.0678,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.604
+      "precision_sector": 0.608
     },
     "MU": {
-      "total": 181,
+      "total": 182,
       "aciertos": 97,
-      "precision": 0.5359,
-      "precision_ponderada": 0.5973,
-      "precision_final": 0.5785,
-      "factor": 1.157,
+      "precision": 0.533,
+      "precision_ponderada": 0.5901,
+      "precision_final": 0.5748,
+      "factor": 1.1495,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.604
+      "precision_sector": 0.608
     },
     "DELL": {
-      "total": 181,
+      "total": 182,
       "aciertos": 75,
-      "precision": 0.4144,
-      "precision_ponderada": 0.4828,
-      "precision_final": 0.499,
-      "factor": 0.998,
+      "precision": 0.4121,
+      "precision_ponderada": 0.472,
+      "precision_final": 0.4916,
+      "factor": 0.9833,
       "peso_local": 1.0,
       "sector": "Servidores IA",
-      "precision_sector": 0.55
+      "precision_sector": 0.5467
     },
     "AVGO": {
-      "total": 185,
+      "total": 186,
       "aciertos": 103,
-      "precision": 0.5568,
-      "precision_ponderada": 0.5759,
-      "precision_final": 0.5656,
-      "factor": 1.1313,
+      "precision": 0.5538,
+      "precision_ponderada": 0.569,
+      "precision_final": 0.5621,
+      "factor": 1.1242,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.604
+      "precision_sector": 0.608
     },
     "DDOG": {
-      "total": 181,
+      "total": 182,
       "aciertos": 90,
-      "precision": 0.4972,
-      "precision_ponderada": 0.4046,
-      "precision_final": 0.4281,
-      "factor": 0.8561,
+      "precision": 0.4945,
+      "precision_ponderada": 0.3947,
+      "precision_final": 0.4206,
+      "factor": 0.8412,
       "peso_local": 1.0,
       "sector": "Software IA",
-      "precision_sector": 0.43
+      "precision_sector": 0.4233
     },
     "SMCI": {
-      "total": 181,
-      "aciertos": 108,
-      "precision": 0.5967,
-      "precision_ponderada": 0.6245,
-      "precision_final": 0.584,
-      "factor": 1.168,
+      "total": 182,
+      "aciertos": 109,
+      "precision": 0.5989,
+      "precision_ponderada": 0.634,
+      "precision_final": 0.5888,
+      "factor": 1.1777,
       "peso_local": 1.0,
       "sector": "Servidores IA",
-      "precision_sector": 0.55
+      "precision_sector": 0.5467
     },
     "SNOW": {
-      "total": 181,
+      "total": 182,
       "aciertos": 83,
-      "precision": 0.4586,
-      "precision_ponderada": 0.3752,
-      "precision_final": 0.4104,
-      "factor": 0.8208,
+      "precision": 0.456,
+      "precision_ponderada": 0.3658,
+      "precision_final": 0.4032,
+      "factor": 0.8065,
       "peso_local": 1.0,
       "sector": "Software IA",
-      "precision_sector": 0.43
+      "precision_sector": 0.4233
     },
     "CRWD": {
-      "total": 181,
+      "total": 182,
       "aciertos": 78,
-      "precision": 0.4309,
-      "precision_ponderada": 0.3698,
-      "precision_final": 0.3898,
-      "factor": 0.7797,
+      "precision": 0.4286,
+      "precision_ponderada": 0.3653,
+      "precision_final": 0.3869,
+      "factor": 0.7739,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
       "precision_sector": 0.3433
     },
     "NOW": {
-      "total": 181,
-      "aciertos": 97,
-      "precision": 0.5359,
-      "precision_ponderada": 0.4453,
-      "precision_final": 0.4525,
-      "factor": 0.905,
+      "total": 182,
+      "aciertos": 98,
+      "precision": 0.5385,
+      "precision_ponderada": 0.452,
+      "precision_final": 0.455,
+      "factor": 0.9099,
       "peso_local": 1.0,
       "sector": "Software IA",
-      "precision_sector": 0.43
+      "precision_sector": 0.4233
     },
     "TSM": {
-      "total": 182,
-      "aciertos": 86,
-      "precision": 0.4725,
-      "precision_ponderada": 0.5724,
-      "precision_final": 0.5635,
-      "factor": 1.1271,
+      "total": 183,
+      "aciertos": 87,
+      "precision": 0.4754,
+      "precision_ponderada": 0.5825,
+      "precision_final": 0.5702,
+      "factor": 1.1404,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.604
+      "precision_sector": 0.608
     },
     "ARM": {
-      "total": 181,
-      "aciertos": 101,
-      "precision": 0.558,
-      "precision_ponderada": 0.7424,
-      "precision_final": 0.6655,
-      "factor": 1.3311,
+      "total": 182,
+      "aciertos": 102,
+      "precision": 0.5604,
+      "precision_ponderada": 0.7504,
+      "precision_final": 0.6709,
+      "factor": 1.3419,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.604
+      "precision_sector": 0.608
     },
     "OKTA": {
-      "total": 181,
+      "total": 182,
       "aciertos": 67,
-      "precision": 0.3702,
-      "precision_ponderada": 0.2699,
-      "precision_final": 0.3299,
-      "factor": 0.6598,
+      "precision": 0.3681,
+      "precision_ponderada": 0.2667,
+      "precision_final": 0.3278,
+      "factor": 0.6556,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
       "precision_sector": 0.3433
     },
     "HPE": {
-      "total": 181,
+      "total": 182,
       "aciertos": 90,
-      "precision": 0.4972,
-      "precision_ponderada": 0.4939,
-      "precision_final": 0.5056,
-      "factor": 1.0113,
+      "precision": 0.4945,
+      "precision_ponderada": 0.483,
+      "precision_final": 0.4982,
+      "factor": 0.9965,
       "peso_local": 1.0,
       "sector": "Servidores IA",
-      "precision_sector": 0.55
+      "precision_sector": 0.5467
     },
     "NTAP": {
-      "total": 181,
+      "total": 182,
       "aciertos": 99,
-      "precision": 0.547,
-      "precision_ponderada": 0.585,
-      "precision_final": 0.5703,
-      "factor": 1.1406,
+      "precision": 0.544,
+      "precision_ponderada": 0.5779,
+      "precision_final": 0.5658,
+      "factor": 1.1317,
       "peso_local": 1.0,
       "sector": "Almacenamiento",
       "precision_sector": 0.6
     },
     "CLS": {
-      "total": 181,
-      "aciertos": 97,
-      "precision": 0.5359,
-      "precision_ponderada": 0.5751,
-      "precision_final": 0.5644,
-      "factor": 1.1287,
+      "total": 182,
+      "aciertos": 98,
+      "precision": 0.5385,
+      "precision_ponderada": 0.5802,
+      "precision_final": 0.5672,
+      "factor": 1.1344,
       "peso_local": 1.0,
       "sector": "Almacenamiento",
       "precision_sector": 0.6
     },
     "AAPL": {
-      "total": 181,
-      "aciertos": 73,
-      "precision": 0.4033,
-      "precision_ponderada": 0.3491,
-      "precision_final": 0.3952,
-      "factor": 0.7903,
+      "total": 182,
+      "aciertos": 74,
+      "precision": 0.4066,
+      "precision_ponderada": 0.3619,
+      "precision_final": 0.4034,
+      "factor": 0.8069,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.432
+      "precision_sector": 0.436
     },
     "AMZN": {
-      "total": 181,
+      "total": 182,
       "aciertos": 73,
-      "precision": 0.4033,
-      "precision_ponderada": 0.3801,
-      "precision_final": 0.4138,
-      "factor": 0.8275,
+      "precision": 0.4011,
+      "precision_ponderada": 0.3755,
+      "precision_final": 0.4116,
+      "factor": 0.8232,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.432
+      "precision_sector": 0.436
     },
     "GOOGL": {
-      "total": 181,
+      "total": 182,
       "aciertos": 84,
-      "precision": 0.4641,
-      "precision_ponderada": 0.6043,
-      "precision_final": 0.5483,
-      "factor": 1.0966,
+      "precision": 0.4615,
+      "precision_ponderada": 0.597,
+      "precision_final": 0.5445,
+      "factor": 1.089,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.432
+      "precision_sector": 0.436
     },
     "META": {
-      "total": 186,
+      "total": 187,
       "aciertos": 89,
-      "precision": 0.4785,
-      "precision_ponderada": 0.4504,
-      "precision_final": 0.4559,
-      "factor": 0.9119,
+      "precision": 0.4759,
+      "precision_ponderada": 0.445,
+      "precision_final": 0.4533,
+      "factor": 0.9066,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.432
+      "precision_sector": 0.436
     },
     "MSFT": {
-      "total": 186,
-      "aciertos": 88,
-      "precision": 0.4731,
-      "precision_ponderada": 0.3828,
-      "precision_final": 0.4154,
-      "factor": 0.8308,
+      "total": 187,
+      "aciertos": 89,
+      "precision": 0.4759,
+      "precision_ponderada": 0.3952,
+      "precision_final": 0.4234,
+      "factor": 0.8468,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.432
+      "precision_sector": 0.436
     },
     "LLY": {
-      "total": 181,
-      "aciertos": 82,
-      "precision": 0.453,
-      "precision_ponderada": 0.5074,
-      "precision_final": 0.4917,
-      "factor": 0.9835,
+      "total": 182,
+      "aciertos": 83,
+      "precision": 0.456,
+      "precision_ponderada": 0.5133,
+      "precision_final": 0.4951,
+      "factor": 0.9902,
       "peso_local": 1.0,
       "sector": "Farmaceutico",
       "precision_sector": 0.44
     },
     "AMAT": {
-      "total": 183,
+      "total": 184,
       "aciertos": 89,
-      "precision": 0.4863,
-      "precision_ponderada": 0.5246,
-      "precision_final": 0.5211,
-      "factor": 1.0421,
+      "precision": 0.4837,
+      "precision_ponderada": 0.5182,
+      "precision_final": 0.517,
+      "factor": 1.034,
       "peso_local": 1.0,
       "sector": "Semicon Equip",
       "precision_sector": 0.535
     },
     "LRCX": {
-      "total": 181,
+      "total": 182,
       "aciertos": 80,
-      "precision": 0.442,
-      "precision_ponderada": 0.5912,
-      "precision_final": 0.561,
-      "factor": 1.122,
+      "precision": 0.4396,
+      "precision_ponderada": 0.5841,
+      "precision_final": 0.5566,
+      "factor": 1.1131,
       "peso_local": 1.0,
       "sector": "Semicon Equip",
       "precision_sector": 0.535
     },
     "PANW": {
-      "total": 181,
+      "total": 182,
       "aciertos": 74,
-      "precision": 0.4088,
-      "precision_ponderada": 0.446,
-      "precision_final": 0.4356,
-      "factor": 0.8711,
+      "precision": 0.4066,
+      "precision_ponderada": 0.4406,
+      "precision_final": 0.4321,
+      "factor": 0.8642,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
       "precision_sector": 0.3433
     },
     "ORCL": {
-      "total": 181,
-      "aciertos": 126,
-      "precision": 0.6961,
-      "precision_ponderada": 0.835,
-      "precision_final": 0.7683,
-      "factor": 1.5366,
+      "total": 182,
+      "aciertos": 127,
+      "precision": 0.6978,
+      "precision_ponderada": 0.8419,
+      "precision_final": 0.7742,
+      "factor": 1.5485,
       "peso_local": 1.0,
       "sector": "Cloud/Database",
-      "precision_sector": 0.84
+      "precision_sector": 0.85
     },
     "HON": {
-      "total": 181,
+      "total": 182,
       "aciertos": 79,
-      "precision": 0.4365,
-      "precision_ponderada": 0.5242,
-      "precision_final": 0.4978,
-      "factor": 0.9956,
+      "precision": 0.4341,
+      "precision_ponderada": 0.5179,
+      "precision_final": 0.4938,
+      "factor": 0.9877,
       "peso_local": 1.0,
       "sector": "Industrial",
       "precision_sector": 0.42
     },
     "UBER": {
-      "total": 181,
-      "aciertos": 78,
-      "precision": 0.4309,
-      "precision_ponderada": 0.4491,
-      "precision_final": 0.4588,
-      "factor": 0.9175,
+      "total": 182,
+      "aciertos": 79,
+      "precision": 0.4341,
+      "precision_ponderada": 0.4607,
+      "precision_final": 0.4675,
+      "factor": 0.935,
       "peso_local": 1.0,
       "sector": "Movilidad/Tech",
-      "precision_sector": 0.45
+      "precision_sector": 0.46
     },
     "GE": {
-      "total": 186,
+      "total": 187,
       "aciertos": 58,
-      "precision": 0.3118,
-      "precision_ponderada": 0.3637,
-      "precision_final": 0.4015,
-      "factor": 0.803,
+      "precision": 0.3102,
+      "precision_ponderada": 0.3593,
+      "precision_final": 0.3987,
+      "factor": 0.7974,
       "peso_local": 1.0,
       "sector": "Industrial",
       "precision_sector": 0.42
     },
     "COST": {
-      "total": 181,
-      "aciertos": 102,
-      "precision": 0.5635,
-      "precision_ponderada": 0.484,
-      "precision_final": 0.4917,
-      "factor": 0.9834,
+      "total": 182,
+      "aciertos": 103,
+      "precision": 0.5659,
+      "precision_ponderada": 0.4903,
+      "precision_final": 0.4953,
+      "factor": 0.9906,
       "peso_local": 1.0,
       "sector": "Consumo Defensivo",
       "precision_sector": 0.51
     },
     "NEE": {
-      "total": 181,
+      "total": 182,
       "aciertos": 76,
-      "precision": 0.4199,
-      "precision_ponderada": 0.3616,
-      "precision_final": 0.3883,
-      "factor": 0.7765,
+      "precision": 0.4176,
+      "precision_ponderada": 0.3572,
+      "precision_final": 0.3854,
+      "factor": 0.7708,
       "peso_local": 1.0,
       "sector": "Utilities/Energy",
       "precision_sector": 0.36
