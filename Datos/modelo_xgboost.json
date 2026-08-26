@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-26T14:01:06Z",
+  "timestamp": "2026-08-26T16:30:48Z",
   "wf_accuracy_mean": 0.5,
-  "wf_accuracy_std": 0.1338,
+  "wf_accuracy_std": 0.1355,
   "train_accuracy": 1.0,
   "tickers": {
     "NVDA": {
-      "prob_up_20d": 14.0,
-      "prob_up_20d_regime": 14.0,
+      "prob_up_20d": 10.9,
+      "prob_up_20d_regime": 10.9,
       "features_top": [
         "volatility_20d",
-        "autocorr_5",
-        "sma200_dist_pct"
+        "sma200_dist_pct",
+        "autocorr_5"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.5016,
-      "wf_std": 0.1443,
+      "wf_accuracy": 0.5111,
+      "wf_std": 0.1477,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -27,7 +27,7 @@
         {
           "fold": 1,
           "train_acc": 1.0,
-          "test_acc": 0.5079365079365079,
+          "test_acc": 0.5396825396825397,
           "train_size": 196,
           "test_size": 63
         },
@@ -41,7 +41,7 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.6190476190476191,
+          "test_acc": 0.6349206349206349,
           "train_size": 322,
           "test_size": 63
         },
@@ -55,8 +55,8 @@
       ]
     },
     "MU": {
-      "prob_up_20d": 3.3,
-      "prob_up_20d_regime": 3.3,
+      "prob_up_20d": 4.1,
+      "prob_up_20d_regime": 4.1,
       "features_top": [
         "sma200_dist_pct",
         "volatility_20d",
@@ -105,16 +105,16 @@
       ]
     },
     "DELL": {
-      "prob_up_20d": 1.2,
-      "prob_up_20d_regime": 1.2,
+      "prob_up_20d": 1.1,
+      "prob_up_20d_regime": 1.1,
       "features_top": [
-        "volatility_20d",
         "autocorr_1",
+        "volatility_20d",
         "entropy_20"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4444,
-      "wf_std": 0.0817,
+      "wf_accuracy": 0.4484,
+      "wf_std": 0.0901,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -127,33 +127,33 @@
         {
           "fold": 1,
           "train_acc": 1.0,
-          "test_acc": 0.5238095238095238,
+          "test_acc": 0.5396825396825397,
           "train_size": 196,
           "test_size": 63
         },
         {
           "fold": 2,
           "train_acc": 1.0,
-          "test_acc": 0.5079365079365079,
+          "test_acc": 0.5238095238095238,
           "train_size": 259,
           "test_size": 63
         },
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.42857142857142855,
+          "test_acc": 0.4126984126984127,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "AVGO": {
-      "prob_up_20d": 6.0,
-      "prob_up_20d_regime": 6.0,
+      "prob_up_20d": 5.5,
+      "prob_up_20d_regime": 5.5,
       "features_top": [
         "entropy_20",
-        "sma200_dist_pct",
-        "volatility_20d"
+        "volatility_20d",
+        "autocorr_1"
       ],
       "prediccion": "bajista",
       "wf_accuracy": 0.4508,
@@ -198,16 +198,16 @@
       ]
     },
     "DDOG": {
-      "prob_up_20d": 0.4,
-      "prob_up_20d_regime": 0.4,
+      "prob_up_20d": 1.0,
+      "prob_up_20d_regime": 1.0,
       "features_top": [
         "autocorr_1",
         "autocorr_5",
         "sma50_dist_pct"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.5524,
-      "wf_std": 0.0939,
+      "wf_accuracy": 0.5429,
+      "wf_std": 0.0954,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -227,7 +227,7 @@
         {
           "fold": 2,
           "train_acc": 1.0,
-          "test_acc": 0.6825396825396826,
+          "test_acc": 0.6666666666666666,
           "train_size": 259,
           "test_size": 63
         },
@@ -241,23 +241,23 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.47619047619047616,
+          "test_acc": 0.4444444444444444,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "SMCI": {
-      "prob_up_20d": 3.8,
-      "prob_up_20d_regime": 3.8,
+      "prob_up_20d": 4.6,
+      "prob_up_20d_regime": 4.6,
       "features_top": [
         "autocorr_5",
         "sma200_dist_pct",
         "autocorr_1"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.5175,
-      "wf_std": 0.0918,
+      "wf_accuracy": 0.5206,
+      "wf_std": 0.096,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -270,7 +270,7 @@
         {
           "fold": 1,
           "train_acc": 1.0,
-          "test_acc": 0.6349206349206349,
+          "test_acc": 0.6507936507936508,
           "train_size": 196,
           "test_size": 63
         },
@@ -298,16 +298,16 @@
       ]
     },
     "SNOW": {
-      "prob_up_20d": 1.4,
-      "prob_up_20d_regime": 1.4,
+      "prob_up_20d": 1.8,
+      "prob_up_20d_regime": 1.8,
       "features_top": [
         "sma200_dist_pct",
         "sma50_dist_pct",
         "volatility_20d"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.6,
-      "wf_std": 0.2024,
+      "wf_accuracy": 0.6063,
+      "wf_std": 0.2116,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -334,7 +334,7 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.8888888888888888,
+          "test_acc": 0.9206349206349206,
           "train_size": 322,
           "test_size": 63
         },
@@ -348,15 +348,15 @@
       ]
     },
     "CRWD": {
-      "prob_up_20d": 6.5,
-      "prob_up_20d_regime": 6.5,
+      "prob_up_20d": 6.1,
+      "prob_up_20d_regime": 6.1,
       "features_top": [
         "sma200_dist_pct",
         "volatility_20d",
         "entropy_20"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4698,
+      "wf_accuracy": 0.4667,
       "wf_std": 0.128,
       "train_acc": 1.0,
       "wf_folds": [
@@ -391,15 +391,15 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.47619047619047616,
+          "test_acc": 0.4603174603174603,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "NOW": {
-      "prob_up_20d": 4.3,
-      "prob_up_20d_regime": 4.3,
+      "prob_up_20d": 4.2,
+      "prob_up_20d_regime": 4.2,
       "features_top": [
         "volatility_20d",
         "autocorr_1",
@@ -448,16 +448,16 @@
       ]
     },
     "TSM": {
-      "prob_up_20d": 15.6,
-      "prob_up_20d_regime": 15.6,
+      "prob_up_20d": 12.7,
+      "prob_up_20d_regime": 12.7,
       "features_top": [
         "sma200_dist_pct",
         "atr_pct",
         "autocorr_5"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.527,
-      "wf_std": 0.214,
+      "wf_accuracy": 0.5302,
+      "wf_std": 0.2064,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -470,7 +470,7 @@
         {
           "fold": 1,
           "train_acc": 1.0,
-          "test_acc": 0.5714285714285714,
+          "test_acc": 0.5555555555555556,
           "train_size": 196,
           "test_size": 63
         },
@@ -484,22 +484,22 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.20634920634920634,
+          "test_acc": 0.2222222222222222,
           "train_size": 322,
           "test_size": 63
         },
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.36507936507936506,
+          "test_acc": 0.38095238095238093,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "ARM": {
-      "prob_up_20d": 0.7,
-      "prob_up_20d_regime": 0.7,
+      "prob_up_20d": 0.9,
+      "prob_up_20d_regime": 0.9,
       "features_top": [
         "sma200_dist_pct",
         "autocorr_1",
@@ -541,16 +541,16 @@
       ]
     },
     "OKTA": {
-      "prob_up_20d": 0.3,
-      "prob_up_20d_regime": 0.3,
+      "prob_up_20d": 0.2,
+      "prob_up_20d_regime": 0.2,
       "features_top": [
         "sma200_dist_pct",
         "autocorr_1",
         "autocorr_5"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.346,
-      "wf_std": 0.097,
+      "wf_accuracy": 0.3429,
+      "wf_std": 0.0976,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -577,7 +577,7 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.3333333333333333,
+          "test_acc": 0.31746031746031744,
           "train_size": 322,
           "test_size": 63
         },
@@ -596,11 +596,11 @@
       "features_top": [
         "sma200_dist_pct",
         "autocorr_1",
-        "macd_hist"
+        "autocorr_5"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.5952,
-      "wf_std": 0.1525,
+      "wf_accuracy": 0.5833,
+      "wf_std": 0.1532,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -613,29 +613,29 @@
         {
           "fold": 1,
           "train_acc": 1.0,
-          "test_acc": 0.47619047619047616,
+          "test_acc": 0.4603174603174603,
           "train_size": 196,
           "test_size": 63
         },
         {
           "fold": 2,
           "train_acc": 1.0,
-          "test_acc": 0.6031746031746031,
+          "test_acc": 0.5555555555555556,
           "train_size": 259,
           "test_size": 63
         },
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.4603174603174603,
+          "test_acc": 0.47619047619047616,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "NTAP": {
-      "prob_up_20d": 0.4,
-      "prob_up_20d_regime": 0.4,
+      "prob_up_20d": 0.5,
+      "prob_up_20d_regime": 0.5,
       "features_top": [
         "sma200_dist_pct",
         "autocorr_1",
@@ -684,16 +684,16 @@
       ]
     },
     "CLS": {
-      "prob_up_20d": 7.6,
-      "prob_up_20d_regime": 7.6,
+      "prob_up_20d": 4.4,
+      "prob_up_20d_regime": 4.4,
       "features_top": [
         "volatility_20d",
         "atr_pct",
         "entropy_20"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.5937,
-      "wf_std": 0.1834,
+      "wf_accuracy": 0.6063,
+      "wf_std": 0.1757,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -720,7 +720,7 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.4603174603174603,
+          "test_acc": 0.5238095238095238,
           "train_size": 322,
           "test_size": 63
         },
@@ -734,16 +734,16 @@
       ]
     },
     "AAPL": {
-      "prob_up_20d": 0.7,
-      "prob_up_20d_regime": 0.7,
+      "prob_up_20d": 1.0,
+      "prob_up_20d_regime": 1.0,
       "features_top": [
         "entropy_20",
         "sma200_dist_pct",
         "autocorr_1"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4444,
-      "wf_std": 0.0999,
+      "wf_accuracy": 0.4413,
+      "wf_std": 0.096,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -777,15 +777,15 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.5714285714285714,
+          "test_acc": 0.5555555555555556,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "AMZN": {
-      "prob_up_20d": 1.6,
-      "prob_up_20d_regime": 1.6,
+      "prob_up_20d": 0.9,
+      "prob_up_20d_regime": 0.9,
       "features_top": [
         "sma200_dist_pct",
         "entropy_20",
@@ -834,16 +834,16 @@
       ]
     },
     "GOOGL": {
-      "prob_up_20d": 3.8,
-      "prob_up_20d_regime": 3.8,
+      "prob_up_20d": 6.1,
+      "prob_up_20d_regime": 6.1,
       "features_top": [
         "sma200_dist_pct",
         "autocorr_5",
-        "autocorr_1"
+        "atr_pct"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4698,
-      "wf_std": 0.1248,
+      "wf_accuracy": 0.4667,
+      "wf_std": 0.1284,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -870,7 +870,7 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.3333333333333333,
+          "test_acc": 0.31746031746031744,
           "train_size": 322,
           "test_size": 63
         },
@@ -884,29 +884,29 @@
       ]
     },
     "META": {
-      "prob_up_20d": 4.7,
-      "prob_up_20d_regime": 4.7,
+      "prob_up_20d": 6.5,
+      "prob_up_20d_regime": 6.5,
       "features_top": [
-        "volatility_20d",
         "sma200_dist_pct",
-        "entropy_20"
+        "entropy_20",
+        "volatility_20d"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4794,
-      "wf_std": 0.176,
+      "wf_accuracy": 0.4825,
+      "wf_std": 0.18,
       "train_acc": 1.0,
       "wf_folds": [
         {
           "fold": 0,
           "train_acc": 1.0,
-          "test_acc": 0.30158730158730157,
+          "test_acc": 0.2857142857142857,
           "train_size": 126,
           "test_size": 63
         },
         {
           "fold": 1,
           "train_acc": 1.0,
-          "test_acc": 0.31746031746031744,
+          "test_acc": 0.3333333333333333,
           "train_size": 189,
           "test_size": 63
         },
@@ -920,7 +920,7 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.6666666666666666,
+          "test_acc": 0.6825396825396826,
           "train_size": 315,
           "test_size": 63
         },
@@ -934,16 +934,16 @@
       ]
     },
     "MSFT": {
-      "prob_up_20d": 1.5,
-      "prob_up_20d_regime": 1.5,
+      "prob_up_20d": 1.4,
+      "prob_up_20d_regime": 1.4,
       "features_top": [
         "autocorr_1",
-        "sma50_dist_pct",
-        "autocorr_5"
+        "autocorr_5",
+        "sma50_dist_pct"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4571,
-      "wf_std": 0.1279,
+      "wf_accuracy": 0.4508,
+      "wf_std": 0.1368,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -977,23 +977,23 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.2857142857142857,
+          "test_acc": 0.25396825396825395,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "LLY": {
-      "prob_up_20d": 3.3,
-      "prob_up_20d_regime": 3.3,
+      "prob_up_20d": 2.1,
+      "prob_up_20d_regime": 2.1,
       "features_top": [
         "autocorr_1",
         "autocorr_5",
         "sma200_dist_pct"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.3397,
-      "wf_std": 0.1276,
+      "wf_accuracy": 0.3492,
+      "wf_std": 0.1305,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -1020,22 +1020,22 @@
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.4126984126984127,
+          "test_acc": 0.42857142857142855,
           "train_size": 322,
           "test_size": 63
         },
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.3492063492063492,
+          "test_acc": 0.38095238095238093,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "AMAT": {
-      "prob_up_20d": 2.5,
-      "prob_up_20d_regime": 2.5,
+      "prob_up_20d": 2.6,
+      "prob_up_20d_regime": 2.6,
       "features_top": [
         "entropy_20",
         "autocorr_5",
@@ -1084,12 +1084,12 @@
       ]
     },
     "LRCX": {
-      "prob_up_20d": 2.3,
-      "prob_up_20d_regime": 2.3,
+      "prob_up_20d": 2.1,
+      "prob_up_20d_regime": 2.1,
       "features_top": [
         "sma200_dist_pct",
         "autocorr_5",
-        "volatility_20d"
+        "entropy_20"
       ],
       "prediccion": "bajista",
       "wf_accuracy": 0.5492,
@@ -1134,12 +1134,12 @@
       ]
     },
     "PANW": {
-      "prob_up_20d": 3.3,
-      "prob_up_20d_regime": 3.3,
+      "prob_up_20d": 4.4,
+      "prob_up_20d_regime": 4.4,
       "features_top": [
         "entropy_20",
-        "sma200_dist_pct",
-        "atr_pct"
+        "atr_pct",
+        "sma200_dist_pct"
       ],
       "prediccion": "bajista",
       "wf_accuracy": 0.6571,
@@ -1184,16 +1184,16 @@
       ]
     },
     "ORCL": {
-      "prob_up_20d": 2.4,
-      "prob_up_20d_regime": 2.4,
+      "prob_up_20d": 2.0,
+      "prob_up_20d_regime": 2.0,
       "features_top": [
         "sma200_dist_pct",
-        "autocorr_1",
-        "autocorr_5"
+        "atr_pct",
+        "sma50_dist_pct"
       ],
       "prediccion": "bajista",
       "wf_accuracy": 0.4032,
-      "wf_std": 0.1272,
+      "wf_std": 0.133,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -1213,7 +1213,7 @@
         {
           "fold": 2,
           "train_acc": 1.0,
-          "test_acc": 0.3968253968253968,
+          "test_acc": 0.4126984126984127,
           "train_size": 259,
           "test_size": 63
         },
@@ -1227,23 +1227,23 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.1746031746031746,
+          "test_acc": 0.15873015873015872,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "HON": {
-      "prob_up_20d": 3.3,
-      "prob_up_20d_regime": 3.3,
+      "prob_up_20d": 3.1,
+      "prob_up_20d_regime": 3.1,
       "features_top": [
         "sma200_dist_pct",
-        "entropy_20",
-        "autocorr_5"
+        "autocorr_5",
+        "entropy_20"
       ],
       "prediccion": "bajista",
       "wf_accuracy": 0.4698,
-      "wf_std": 0.0884,
+      "wf_std": 0.0929,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -1263,7 +1263,7 @@
         {
           "fold": 2,
           "train_acc": 1.0,
-          "test_acc": 0.36507936507936506,
+          "test_acc": 0.3492063492063492,
           "train_size": 259,
           "test_size": 63
         },
@@ -1277,23 +1277,23 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.47619047619047616,
+          "test_acc": 0.49206349206349204,
           "train_size": 385,
           "test_size": 63
         }
       ]
     },
     "UBER": {
-      "prob_up_20d": 1.0,
-      "prob_up_20d_regime": 1.0,
+      "prob_up_20d": 0.9,
+      "prob_up_20d_regime": 0.9,
       "features_top": [
         "sma200_dist_pct",
         "entropy_20",
         "autocorr_1"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.4762,
-      "wf_std": 0.1158,
+      "wf_accuracy": 0.4667,
+      "wf_std": 0.1186,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -1313,14 +1313,14 @@
         {
           "fold": 2,
           "train_acc": 1.0,
-          "test_acc": 0.5238095238095238,
+          "test_acc": 0.5079365079365079,
           "train_size": 259,
           "test_size": 63
         },
         {
           "fold": 3,
           "train_acc": 1.0,
-          "test_acc": 0.4126984126984127,
+          "test_acc": 0.38095238095238093,
           "train_size": 322,
           "test_size": 63
         },
@@ -1334,16 +1334,16 @@
       ]
     },
     "GE": {
-      "prob_up_20d": 1.8,
-      "prob_up_20d_regime": 1.8,
+      "prob_up_20d": 2.0,
+      "prob_up_20d_regime": 2.0,
       "features_top": [
         "sma200_dist_pct",
         "autocorr_1",
         "autocorr_5"
       ],
       "prediccion": "bajista",
-      "wf_accuracy": 0.5429,
-      "wf_std": 0.1507,
+      "wf_accuracy": 0.5333,
+      "wf_std": 0.158,
       "train_acc": 1.0,
       "wf_folds": [
         {
@@ -1377,7 +1377,7 @@
         {
           "fold": 4,
           "train_acc": 1.0,
-          "test_acc": 0.4444444444444444,
+          "test_acc": 0.3968253968253968,
           "train_size": 385,
           "test_size": 63
         }
@@ -1434,8 +1434,8 @@
       ]
     },
     "NEE": {
-      "prob_up_20d": 1.3,
-      "prob_up_20d_regime": 1.3,
+      "prob_up_20d": 2.6,
+      "prob_up_20d_regime": 2.6,
       "features_top": [
         "volatility_20d",
         "entropy_20",
@@ -1485,33 +1485,33 @@
     }
   },
   "feature_importance_global": {
-    "volatility_20d": 0.0571,
-    "sma200_dist_pct": 0.0527,
-    "opt_oi_ratio": 0.0505,
-    "opt_avg_iv": 0.0491,
-    "opt_oi_weighted_iv": 0.049,
-    "opt_iv_skew": 0.0474,
-    "hurst_approx": 0.0472,
-    "opt_vol": 0.047,
-    "opt_put_call_ratio": 0.0453,
-    "sma50_dist_pct": 0.0451,
-    "autocorr_5": 0.0442,
-    "atr_pct": 0.0429,
-    "entropy_20": 0.0426,
-    "autocorr_1": 0.0424,
-    "return_20d": 0.0396,
-    "macd_hist_slope": 0.0326,
-    "macd_hist": 0.0306,
-    "rsi_div": 0.0306,
-    "arima_resid": 0.028,
-    "rsi_14": 0.0257,
-    "return_1d": 0.0253,
-    "bb_position": 0.0245,
-    "vol_20d_profile": 0.0215,
-    "return_5d": 0.0214,
-    "roc_10d": 0.0213,
-    "vol_ratio": 0.019,
-    "arima_resid_abs": 0.0175,
+    "opt_oi_ratio": 0.0619,
+    "opt_vol": 0.0588,
+    "sma200_dist_pct": 0.0556,
+    "opt_avg_iv": 0.0535,
+    "volatility_20d": 0.0521,
+    "opt_iv_skew": 0.0516,
+    "sma50_dist_pct": 0.0483,
+    "atr_pct": 0.0465,
+    "opt_put_call_ratio": 0.0459,
+    "autocorr_1": 0.0427,
+    "opt_oi_weighted_iv": 0.0427,
+    "hurst_approx": 0.0418,
+    "entropy_20": 0.0409,
+    "return_20d": 0.04,
+    "autocorr_5": 0.0379,
+    "rsi_div": 0.0357,
+    "macd_hist": 0.0297,
+    "macd_hist_slope": 0.0278,
+    "rsi_14": 0.0269,
+    "bb_position": 0.0246,
+    "return_5d": 0.024,
+    "arima_resid": 0.0211,
+    "return_1d": 0.0202,
+    "roc_10d": 0.0186,
+    "vol_ratio": 0.0183,
+    "vol_20d_profile": 0.0174,
+    "arima_resid_abs": 0.0156,
     "macro_yield_curve_10y_2y": 0.0,
     "macro_yield_curve_10y_3m": 0.0,
     "macro_fed_funds": 0.0,
@@ -1524,33 +1524,33 @@
   },
   "feature_importance_by_regime": {
     "ALCISTA": {
-      "opt_oi_weighted_iv": 0.0665,
-      "opt_iv_skew": 0.0581,
-      "opt_put_call_ratio": 0.0568,
-      "opt_vol": 0.0533,
-      "opt_avg_iv": 0.0516,
-      "sma50_dist_pct": 0.0503,
-      "autocorr_1": 0.0495,
-      "autocorr_5": 0.0447,
-      "volatility_20d": 0.0422,
-      "opt_oi_ratio": 0.0421,
-      "atr_pct": 0.0411,
-      "hurst_approx": 0.0408,
-      "entropy_20": 0.0398,
-      "sma200_dist_pct": 0.0367,
-      "macd_hist": 0.0362,
-      "macd_hist_slope": 0.0343,
-      "rsi_div": 0.0318,
-      "bb_position": 0.0308,
-      "roc_10d": 0.0299,
-      "return_20d": 0.0266,
-      "rsi_14": 0.0251,
-      "arima_resid": 0.0233,
-      "arima_resid_abs": 0.0213,
-      "return_5d": 0.021,
-      "vol_ratio": 0.0168,
-      "vol_20d_profile": 0.0162,
-      "return_1d": 0.0133,
+      "opt_iv_skew": 0.0747,
+      "opt_avg_iv": 0.0739,
+      "opt_vol": 0.0553,
+      "opt_oi_ratio": 0.0504,
+      "sma50_dist_pct": 0.0486,
+      "autocorr_5": 0.0486,
+      "hurst_approx": 0.0468,
+      "volatility_20d": 0.0464,
+      "opt_put_call_ratio": 0.043,
+      "autocorr_1": 0.0424,
+      "opt_oi_weighted_iv": 0.0415,
+      "macd_hist": 0.0409,
+      "sma200_dist_pct": 0.0408,
+      "entropy_20": 0.0367,
+      "atr_pct": 0.0363,
+      "return_20d": 0.0298,
+      "macd_hist_slope": 0.0285,
+      "roc_10d": 0.0282,
+      "rsi_14": 0.0281,
+      "rsi_div": 0.0255,
+      "arima_resid_abs": 0.0239,
+      "bb_position": 0.0213,
+      "return_5d": 0.0211,
+      "arima_resid": 0.0204,
+      "vol_20d_profile": 0.0181,
+      "vol_ratio": 0.015,
+      "return_1d": 0.0138,
       "macro_yield_curve_10y_2y": 0.0,
       "macro_yield_curve_10y_3m": 0.0,
       "macro_fed_funds": 0.0,
@@ -1562,33 +1562,33 @@
       "macro_risk_on": 0.0
     },
     "LATERAL": {
-      "rsi_14": 0.0624,
-      "opt_iv_skew": 0.0499,
-      "opt_avg_iv": 0.0495,
-      "sma50_dist_pct": 0.0489,
-      "opt_oi_weighted_iv": 0.0466,
-      "roc_10d": 0.0426,
-      "opt_oi_ratio": 0.0417,
-      "macd_hist_slope": 0.0415,
-      "sma200_dist_pct": 0.0406,
-      "return_20d": 0.0398,
-      "hurst_approx": 0.0392,
-      "autocorr_5": 0.0386,
-      "opt_vol": 0.0385,
-      "autocorr_1": 0.0384,
-      "atr_pct": 0.0377,
-      "bb_position": 0.0371,
-      "opt_put_call_ratio": 0.036,
-      "entropy_20": 0.035,
-      "volatility_20d": 0.034,
-      "macd_hist": 0.0328,
-      "return_5d": 0.0286,
-      "arima_resid_abs": 0.0275,
-      "vol_ratio": 0.0267,
-      "arima_resid": 0.0251,
-      "vol_20d_profile": 0.0247,
-      "rsi_div": 0.0184,
-      "return_1d": 0.0182,
+      "opt_oi_weighted_iv": 0.0665,
+      "rsi_14": 0.0598,
+      "opt_iv_skew": 0.0534,
+      "opt_vol": 0.053,
+      "autocorr_1": 0.0483,
+      "opt_avg_iv": 0.0451,
+      "volatility_20d": 0.0444,
+      "opt_oi_ratio": 0.0438,
+      "entropy_20": 0.0426,
+      "atr_pct": 0.0391,
+      "bb_position": 0.036,
+      "hurst_approx": 0.0353,
+      "sma200_dist_pct": 0.0343,
+      "autocorr_5": 0.0334,
+      "return_20d": 0.0324,
+      "roc_10d": 0.032,
+      "sma50_dist_pct": 0.0317,
+      "opt_put_call_ratio": 0.0314,
+      "return_5d": 0.031,
+      "macd_hist": 0.0309,
+      "macd_hist_slope": 0.0285,
+      "rsi_div": 0.0283,
+      "vol_20d_profile": 0.028,
+      "arima_resid": 0.0261,
+      "vol_ratio": 0.0226,
+      "return_1d": 0.0211,
+      "arima_resid_abs": 0.021,
       "macro_yield_curve_10y_2y": 0.0,
       "macro_yield_curve_10y_3m": 0.0,
       "macro_fed_funds": 0.0,
