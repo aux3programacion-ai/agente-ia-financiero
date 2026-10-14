@@ -8,6 +8,7 @@ import json, os, urllib.request, time, re
 from datetime import datetime, timezone
 from xml.etree import ElementTree
 from portafolio_utils import cargar_portafolio
+from noticias_es import enriquecer
 
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
            'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
@@ -201,10 +202,18 @@ def main():
 
         # Analisis de sentimiento IA para este ticker (si hay noticias nuevas)
         sent = extraer_sentimiento_ia(t, noticias_por_ticker[t])
+        # Titulares YA en espanol (Yahoo Finanzas ES + Google Noticias ES) y su
+        # tono medido con un lexico financiero local, para que la pagina publicada
+        # muestre las noticias en espanol sin depender de traducir con IA.
+        # Campos aditivos: el resto del pipeline sigue leyendo 'noticias'/'sentimiento'.
+        es = enriquecer(t)
         noticias_por_ticker[t] = {
             'noticias': noticias_por_ticker[t],
-            'sentimiento': sent
+            'sentimiento': sent,
+            'titulares_es': es['titulares_es'],
+            'sentimiento_es': es['sentimiento_es']
         }
+        print(f'  [Noticias ES] {t}: {len(es["titulares_es"])} titulares en espanol')
         time.sleep(0.2)
 
     # Construir estructura de salida por sector

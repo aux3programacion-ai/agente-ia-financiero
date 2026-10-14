@@ -213,6 +213,11 @@ jobs:
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
 
+      - name: Panel de consulta (noticias en espanol + calibracion real)
+        shell: bash
+        continue-on-error: true
+        run: python consulta_accion.py
+
       - name: Commit y push de cambios
         shell: bash
         run: |
@@ -226,7 +231,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -r Reportes/* _site/
-          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=./dashboard_top15.html"></head><body><a href="./dashboard_top15.html">Dashboard</a></body></html>' > _site/index.html
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=./dashboard_top15.html"></head><body><a href="./dashboard_top15.html">Dashboard</a> &middot; <a href="./consulta.html">&iquest;Sube o baja? (noticias en espa&ntilde;ol)</a></body></html>' > _site/index.html
 
       - name: Subir artefacto
         uses: actions/upload-pages-artifact@v3

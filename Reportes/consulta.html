@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta · ¿Sube o baja? — Agente IA Financiero</title>
+<style>
+  :root{
+    --bg:#050510; --panel:#0d0d1acc; --cyan:#00f0ff; --gold:#ffd700;
+    --red:#ff3b5c; --green:#22e06a; --text:#dddddd; --muted:#8a8aa0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+    min-height:100vh;padding:24px 16px}
+  .cont{max-width:760px;margin:0 auto}
+  h1{color:var(--cyan);font-size:22px;letter-spacing:.06em;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:18px}
+  .buscador{display:flex;gap:8px;margin-bottom:18px}
+  .buscador input{flex:1;background:#0d0d1a;border:1px solid #00f0ff44;border-radius:8px;
+    color:var(--text);padding:12px 14px;font-size:16px;text-transform:uppercase}
+  .buscador input:focus{outline:none;border-color:var(--cyan)}
+  .buscador button{background:#00f0ff22;border:1px solid var(--cyan);border-radius:8px;
+    color:var(--cyan);padding:12px 22px;font-weight:700;cursor:pointer;font-size:14px}
+  .veredicto{border-radius:12px;padding:20px;margin-bottom:14px;border:1px solid #ffffff18}
+  .veredicto .pct{font-size:44px;font-weight:800;line-height:1}
+  .veredicto .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .b-sub{color:var(--green)} .b-baj{color:var(--red)}
+  .barras{display:flex;height:26px;border-radius:6px;overflow:hidden;margin:14px 0 6px}
+  .barras .s{background:linear-gradient(90deg,#22e06a,#22e06abb)}
+  .barras .b{background:linear-gradient(90deg,#ff3b5cbb,#ff3b5c)}
+  .barras span{display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:700;color:#050510}
+  .panel{background:var(--panel);border:1px solid #00f0ff22;border-radius:10px;padding:14px;margin-bottom:12px}
+  .panel h3{font-size:11px;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase;margin-bottom:8px}
+  .senal{padding:7px 10px;border-left:3px solid var(--muted);margin-bottom:8px;background:#ffffff06;border-radius:0 6px 6px 0;font-size:13px}
+  .senal.alza{border-color:var(--green)} .senal.baja{border-color:var(--red)}
+  .senal .fuente{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .titular{padding:6px 0;border-bottom:1px solid #ffffff0d;font-size:13px}
+  .kv{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+  .kv span{color:var(--muted)} .kv b{font-weight:600}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  .regimen{background:#ffd70011;border:1px solid #ffd70055;border-radius:8px;padding:8px 12px;
+    font-size:12px;color:var(--gold);margin-bottom:14px;display:inline-block}
+  .aviso{font-size:11px;color:var(--muted);border-left:3px solid var(--gold);padding:6px 10px;
+    background:#ffd70008;margin-top:6px}
+  .sugerencias{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .sugerencias button{background:#0d0d1a;border:1px solid #00f0ff33;border-radius:20px;
+    color:var(--muted);padding:4px 12px;font-size:11px;cursor:pointer}
+  .sugerencias button:hover{border-color:var(--cyan);color:var(--cyan)}
+  button.link{background:#0d0d1a;border:1px solid var(--cyan);border-radius:6px;color:var(--cyan);padding:3px 10px;font-size:12px;cursor:pointer;margin:2px}
+  #cargando{text-align:center;color:var(--cyan);padding:40px;letter-spacing:.2em}
+  .error{color:var(--red);text-align:center;padding:30px}
+</style>
+</head>
+<body>
+<div class="cont">
+  <h1>¿Sube o baja?</h1>
+  <div class="sub">Probabilidad basada en análisis IA + sentimiento de noticias + técnicos · aprende de cada ciclo (aprendizaje.py evalúa y calibra)</div>
+  <div class="buscador">
+    <input id="inT" placeholder="AAPL" maxlength="6">
+    <button id="go">ANALIZAR</button>
+  </div>
+  <div class="sugerencias" id="sugerencias"></div>
+  <div id="cargando" style="display:none">CALCULANDO…</div>
+  <div id="resultado"></div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const API_URL = 'http://127.0.0.1:8010/api/analisis?ticker=';
+let DATA = null;
+
+// Nombres comunes -> ticker
+const ALIASES = {
+  AMAZON:'AMZN', AMERICA:'AMZN', APPLE:'AAPL', MICROSOFT:'MSFT', GOOGLE:'GOOGL',
+  ALPHABET:'GOOGL', TESLA:'TSLA', META:'META', FACEBOOK:'META', NVIDIA:'NVDA',
+  NETFLIX:'NFLX', INTEL:'INTC', AMD:'AMD', ORACLE:'ORCL', DISNEY:'DIS',
+  COCA:'KO', COCACOLA:'KO', MCDONALDS:'MCD', NIKE:'NKE', BOEING:'BA',
+  JPMORGAN:'JPM', VISA:'V', MASTERCARD:'MA', WALMART:'WMT', TARGET:'TGT',
+  PFIZER:'PFE', MODERNA:'MRNA', JOHNSON:'JNJ', GIT:'GME', GAMESTOP:'GME'
+};
+function resolverTicket(txt){
+  const t = txt.replace(/\s+/g,'').toUpperCase();
+  return ALIASES[t] || t;
+}
+
+function clasificar(p){
+  if(p >= 60) return {txt:'MAYOR PROBABILIDAD DE SUBIR', cls:'b-sub'};
+  if(p <= 40) return {txt:'MAYOR PROBABILIDAD DE BAJAR', cls:'b-baj'};
+  return {txt:'RANGO / SIN SESGO CLARO', cls:''};
+}
+
+function render(txt){
+  const t = resolverTicket(txt);
+  const T = DATA.tickers.find(x=>x.ticker===t);
+  if(T){
+    $('inT').value = t;
+    renderCiclo(T);
+    return;
+  }
+  // No está en el ciclo -> análisis en vivo bajo demanda
+  renderEnVivo(t);
+}
+
+async function renderEnVivo(t){
+  const R = $('resultado');
+  R.innerHTML = '<div id="cargando" style="display:block">ANALIZANDO '+t+' EN VIVO… (descarga precios, noticias y sentimiento)</div>';
+  try{
+    const r = await fetch(API_URL + encodeURIComponent(t), {cache:'no-store'});
+    if(!r.ok){
+      const e = await r.json().catch(()=>({}));
+      throw new Error(e.detail || ('error '+r.status));
+    }
+    const T = await r.json();
+    $('inT').value = t;
+    renderFichas(T, true);
+  }catch(err){
+    // servidor no disponible -> sugerencias de ciclo
+    const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    const pref = t.slice(0,3);
+    const parecidos = (DATA.tickers||[]).map(x=>x.ticker).filter(x=>x.startsWith(pref)).slice(0,5);
+    R.innerHTML = '<div class="error">No se pudo analizar <b>'+t+'</b>: '+err.message
+      + '<br><small>'+(LOCAL
+        ? 'El servidor de análisis en vivo no está corriendo. Arráncalo con: <code>python servidor_consulta.py</code>'
+        : 'El análisis en vivo solo existe con el servidor local. En esta versión publicada hay '
+          +((DATA.tickers||[]).length)+' tickers del ciclo: usa el buscador o las sugerencias de abajo.')+'</small>'
+      + (parecidos.length ? '<br><br>Tickers del ciclo similares: ' + parecidos.map(x=>'<button class="link" data-t="'+x+'">'+x+'</button>').join(' ') : '')
+      + '</div>';
+    R.querySelectorAll('button.link').forEach(b=>b.onclick=()=>{ $('inT').value=b.dataset.t; render(b.dataset.t); });
+  }
+}
+
+function renderCiclo(T){
+  renderFichas(T, false);
+}
+
+function renderFichas(T, enVivo){
+  const R = $('resultado');
+  const p = T.prob_subir, q = T.prob_bajar;
+  const v = clasificar(p);
+  const prec = T.precision_historica || {};
+  const sent = T.sentimiento_noticias;
+  const calib = T.calibracion_real || (DATA && DATA.calibracion_real) || null;
+  const dirCls = s => s>0?' alza':(s<0?' baja':'');
+  let senales = '';
+  (T.senales_explicacion||[]).forEach(s=>{
+    senales += '<div class="senal'+dirCls(s.direccion)+'"><div class="fuente">'+s.fuente+'</div>'+s.texto+'</div>';
+  });
+
+  let targets = '';
+  if(T.targets && Object.values(T.targets).some(v=>v))
+    targets = '<div class="panel"><h3>Precios objetivo (IA)</h3>'
+      + [['30d','30 días'],['3m','3 meses'],['6m','6 meses'],['1y','1 año']].map(([k,l])=>
+        '<div class="kv"><span>'+l+'</span><b>'+(T.targets[k]?'$'+T.targets[k].toFixed(2):'—')+'</b></div>').join('')
+      + '</div>';
+
+  const badgeModo = enVivo
+      ? '<div class="regimen" style="border-color:#22e06a55;background:#22e06a11;color:#22e06a">⚡ Análisis EN VIVO bajo demanda · fuente: '+(T.fuente||'API')+'</div>'
+      : '<div class="regimen">🌦️ Régimen de mercado: '+T.regimen_mercado+'</div>';
+  R.innerHTML =
+    badgeModo
+    +'<div class="veredicto">'
+      +'<div class="lbl">'+T.ticker+' · '+v.txt+'</div>'
+      +'<div class="pct b-sub">'+p+'%</div>'
+      +'<div class="barras"><div class="s" style="flex:'+p+'"><span>'+p+'% sube</span></div>'
+        +'<div class="b" style="flex:'+q+'"><span>'+q+'% baja</span></div></div>'
+      +'<div class="kv"><span>Confianza del modelo IA</span><b>'+T.confianza_ia+'/100</b></div>'
+    +'</div>'
+    +'<div class="panel"><h3>Precisión histórica del sistema</h3>'
+      +'<div class="kv"><span>Aciertos de dirección (evaluados: '+(prec.evaluados||0).toLocaleString()+')</span>'
+        +'<b>'+(prec.precision_direccion!=null?prec.precision_direccion+'%':'—')+'</b></div>'
+      +'<div class="kv"><span>Precisión ponderada por convicción</span>'
+        +'<b>'+(prec.precision_ponderada!=null?prec.precision_ponderada+'%':'—')+'</b></div>'
+      +'<div class="kv"><span>Backtest walk-forward</span><b>'+(prec.backtest_wf_accuracy!=null?prec.backtest_wf_accuracy+'%':'—')+'</b></div>'
+    +'</div>'
+    +'<div class="panel"><h3>¿Por qué? — señales combinadas</h3>'+ (senales||'<div class="senal">Sin señales registradas este ciclo.</div>') +'</div>'
+    +(sent && sent.num_noticias ? '<div class="panel"><h3>Noticias en español ('+sent.num_noticias+' · '+sent.sentimiento+')<span style="color:var(--muted);text-transform:none;letter-spacing:0"> · '+((sent.idioma_titulares==='es')?'titulares en español':'solo inglés: faltó fuente en español')+(sent.fuente_analisis?' · analizado con '+sent.fuente_analisis:'')+'</span></h3>'
+      + (sent.resumen ? '<div style="font-size:13px;margin-bottom:8px;color:var(--text)">💬 '+sent.resumen+'</div>' : '')
+      + ((sent.titulares_es && sent.titulares_es.length) ? sent.titulares_es.map(x=>'<div class="titular">'+x+'</div>').join('')
+         : (sent.titulares||[]).map(x=>'<div class="titular">'+x+'</div>').join(''))
+      +'</div>' : '')
+    + targets
+    +'<div class="aviso">⚠️ Probabilidad estimada, no garantía. El sistema aprende de sus aciertos y errores en cada ciclo diario; la precisión histórica mostrada es la del propio modelo sobre sus señales emitidas.</div>'
+    +'<div class="panel" style="margin-top:10px"><h3>¿Qué tan real es la confianza del modelo?</h3>'
+      +'<div style="font-size:12.5px;line-height:1.55;color:var(--text)">'
+      +'<b style="color:var(--gold)">1) La "confianza X/100" no está validada.</b> '
+      +(enVivo
+        ? 'En el análisis en vivo se calcula como 55 + |probabilidad − 50|: repite la probabilidad en otra escala, no es un juicio aparte del modelo. '
+        : 'En el ciclo diario es la autoevaluación del LLM sobre su propio análisis, y suele estar sobreestimada. ')
+      +'Úsala para ordenar tickers entre sí, nunca como garantía.'
+      +'<br><b style="color:var(--gold)">2) Lo que sí está medido con datos del propio sistema:</b> '
+      +(calib && calib.tramos && calib.tramos.length
+        ? 'de <b>'+calib.evaluadas.toLocaleString()+'</b> predicciones ya resueltas ('+(calib.tickers||0)+' tickers, '+(calib.desde||'?')+' → '+(calib.hasta||'?')+') acertó la dirección el <b>'+calib.aciertos_pct+'%</b> de las veces, con Brier <b>'+calib.brier+'</b> (0.25 = moneda al aire) → '
+          +((calib.skill_brier_pct>=0)?'mejor que el azar (':'<b>peor que el azar</b> (')+calib.skill_brier_pct+'%). Ver la curva completa: '
+          +'<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12px">'
+          +'<tr style="color:var(--muted);text-align:left"><th style="padding:2px 4px">El sistema decía</th><th style="padding:2px 4px">Subió de verdad</th><th style="padding:2px 4px">n</th></tr>'
+          +calib.tramos.map(t=>'<tr><td style="padding:2px 4px">'+t.decia+'%</td><td style="padding:2px 4px;color:'+((Math.abs(t.real-t.decia)<=8)?'#22e06a':'#ff6b6b')+'">'+t.real+'%</td><td style="padding:2px 4px">'+t.n+'</td></tr>').join('')
+          +'</table>'
+          +(calib.por_confianza && calib.por_confianza.length
+            ? 'Por confianza declarada: '+calib.por_confianza.map(c=>c.rango+' → '+c.aciertos+'% (n='+c.n+')').join(' · ')+'.<br>'
+            : '')
+          +'<b style="color:var(--gold)">3) Muestra frágil:</b> esas '+calib.evaluadas.toLocaleString()+' evaluaciones cubren '+(calib.desde||'?')+' → '+(calib.hasta||'?')+' y los tickers se mueven juntos, así que equivalen a unos pocos días de mercado, no a miles de eventos independientes. Con esa base no se puede afirmar una ventaja estadística.'
+        : 'todavía no hay suficientes predicciones resueltas en Datos/predicciones_hist.json para medir la calibración.')
+      +'<br><b style="color:var(--gold)">4) Para operar con criterio:</b> haría falta que el acierto suba de 55%, que el Brier baje de 0.25 y que los tramos de alta confianza acierten más que los de baja. Mientras no pase, esto es contexto para decidir, no una señal de compra.'
+      +'</div></div>';
+}
+
+async function main(){
+  try{
+    const r = await fetch('consulta_data.json', {cache:'no-store'});
+    if(!r.ok) throw new Error('datos no disponibles ('+r.status+')');
+    DATA = await r.json();
+    const uT = new URLSearchParams(location.search).get('ticker');
+    const nombres = DATA.tickers.slice(0, 12).map(x=>x.ticker);
+    $('sugerencias').innerHTML = nombres.map(t=>'<button data-t="'+t+'">'+t+'</button>').join('');
+    $('sugerencias').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      $('inT').value = b.dataset.t; render(b.dataset.t);
+      history.replaceState(null,'','?ticker='+b.dataset.t);
+    });
+    $('go').onclick = ()=>{ const v=$('inT').value.trim(); if(v){ render(v); history.replaceState(null,'','?ticker='+resolverTicket(v)); } };
+    $('inT').addEventListener('keydown', e=>{ if(e.key==='Enter') $('go').click(); });
+    if(uT){ const r = resolverTicket(uT); $('inT').value = r; render(r); }
+  }catch(e){
+    $('resultado').innerHTML = '<div class="error">❌ '+e.message+' — ejecuta primero <code>python consulta_accion.py</code></div>';
+  }
+}
+main();
+</script>
+</body>
+</html>
