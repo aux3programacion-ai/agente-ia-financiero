@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-10-26T20:32:56Z",
-  "precision_global": 0.4977,
-  "precision_ponderada": 0.5519,
-  "total_evaluado": 18502,
-  "aciertos_global": 9209,
+  "timestamp": "2026-10-26T21:33:34Z",
+  "precision_global": 0.4976,
+  "precision_ponderada": 0.5482,
+  "total_evaluado": 18532,
+  "aciertos_global": 9222,
   "evaluados_este_ciclo": 30,
   "precision_target_30d": null,
   "error_promedio_target_pct": null,
@@ -11,23 +11,23 @@
   "sectores": {
     "Semiconductores": {
       "total": 500,
-      "aciertos": 268,
-      "precision": 0.536
+      "aciertos": 264,
+      "precision": 0.528
     },
     "Servidores IA": {
+      "total": 300,
+      "aciertos": 163,
+      "precision": 0.5433
+    },
+    "Software IA": {
       "total": 300,
       "aciertos": 165,
       "precision": 0.55
     },
-    "Software IA": {
-      "total": 300,
-      "aciertos": 166,
-      "precision": 0.5533
-    },
     "Ciberseguridad": {
       "total": 300,
-      "aciertos": 140,
-      "precision": 0.4667
+      "aciertos": 139,
+      "precision": 0.4633
     },
     "Almacenamiento": {
       "total": 200,
@@ -36,38 +36,38 @@
     },
     "Consumer Tech": {
       "total": 500,
-      "aciertos": 275,
-      "precision": 0.55
+      "aciertos": 273,
+      "precision": 0.546
     },
     "Farmaceutico": {
       "total": 100,
-      "aciertos": 55,
-      "precision": 0.55
+      "aciertos": 54,
+      "precision": 0.54
     },
     "Semicon Equip": {
       "total": 200,
-      "aciertos": 143,
-      "precision": 0.715
+      "aciertos": 141,
+      "precision": 0.705
     },
     "Cloud/Database": {
       "total": 100,
-      "aciertos": 55,
-      "precision": 0.55
+      "aciertos": 56,
+      "precision": 0.56
     },
     "Industrial": {
       "total": 200,
-      "aciertos": 120,
-      "precision": 0.6
+      "aciertos": 119,
+      "precision": 0.595
     },
     "Movilidad/Tech": {
       "total": 100,
-      "aciertos": 66,
-      "precision": 0.66
+      "aciertos": 67,
+      "precision": 0.67
     },
     "Consumo Defensivo": {
       "total": 100,
-      "aciertos": 44,
-      "precision": 0.44
+      "aciertos": 43,
+      "precision": 0.43
     },
     "Utilities/Energy": {
       "total": 100,
@@ -77,24 +77,24 @@
   },
   "rangos_probabilidad": {
     "0-40": {
-      "total": 502,
+      "total": 504,
       "aciertos": 293,
-      "precision": 0.5837
+      "precision": 0.5813
     },
     "40-50": {
-      "total": 1899,
-      "aciertos": 1192,
-      "precision": 0.6277
+      "total": 1898,
+      "aciertos": 1176,
+      "precision": 0.6196
     },
     "50-55": {
-      "total": 240,
-      "aciertos": 85,
-      "precision": 0.3542
+      "total": 242,
+      "aciertos": 87,
+      "precision": 0.3595
     },
     "55-60": {
-      "total": 359,
-      "aciertos": 94,
-      "precision": 0.2618
+      "total": 356,
+      "aciertos": 95,
+      "precision": 0.2669
     },
     "60-65": {
       "total": 0,
@@ -118,15 +118,15 @@
     }
   },
   "modelos_ia": {
-    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-      "total": 240,
-      "aciertos": 179,
-      "precision": 0.7458
-    },
     "trend-fallback": {
-      "total": 2670,
-      "aciertos": 1428,
-      "precision": 0.5348
+      "total": 2700,
+      "aciertos": 1441,
+      "precision": 0.5337
+    },
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+      "total": 210,
+      "aciertos": 153,
+      "precision": 0.7286
     },
     "openrouter/free": {
       "total": 60,
@@ -141,15 +141,15 @@
   },
   "modelo_por_ticker": {
     "NVDA": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 5,
-        "precision": 0.625
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 45,
-        "precision": 0.5056
+        "precision": 0.5
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -163,15 +163,15 @@
       }
     },
     "MU": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 4,
-        "precision": 0.5
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 53,
-        "precision": 0.5955
+        "precision": 0.5889
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 3,
+        "precision": 0.4286
       },
       "openrouter/free": {
         "total": 2,
@@ -185,15 +185,15 @@
       }
     },
     "DELL": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 8,
-        "precision": 1.0
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 44,
-        "precision": 0.4944
+        "precision": 0.4889
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 7,
+        "precision": 1.0
       },
       "openrouter/free": {
         "total": 2,
@@ -207,15 +207,15 @@
       }
     },
     "AVGO": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 38,
-        "precision": 0.427
+        "precision": 0.4222
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -229,15 +229,15 @@
       }
     },
     "DDOG": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 54,
-        "precision": 0.6067
+        "total": 90,
+        "aciertos": 55,
+        "precision": 0.6111
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -251,15 +251,15 @@
       }
     },
     "SMCI": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 52,
-        "precision": 0.5843
+        "total": 90,
+        "aciertos": 53,
+        "precision": 0.5889
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -273,15 +273,15 @@
       }
     },
     "SNOW": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 5,
-        "precision": 0.625
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 52,
-        "precision": 0.5843
+        "precision": 0.5778
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 4,
+        "precision": 0.5714
       },
       "openrouter/free": {
         "total": 2,
@@ -295,15 +295,15 @@
       }
     },
     "CRWD": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 31,
-        "precision": 0.3483
+        "precision": 0.3444
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -317,15 +317,15 @@
       }
     },
     "NOW": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 35,
-        "precision": 0.3933
+        "total": 90,
+        "aciertos": 36,
+        "precision": 0.4
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -339,15 +339,15 @@
       }
     },
     "TSM": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 47,
-        "precision": 0.5281
+        "precision": 0.5222
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -361,15 +361,15 @@
       }
     },
     "ARM": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 51,
-        "precision": 0.573
+        "precision": 0.5667
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -383,15 +383,15 @@
       }
     },
     "OKTA": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 46,
-        "precision": 0.5169
+        "total": 90,
+        "aciertos": 47,
+        "precision": 0.5222
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -405,15 +405,15 @@
       }
     },
     "HPE": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 43,
-        "precision": 0.4831
+        "precision": 0.4778
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -427,15 +427,15 @@
       }
     },
     "NTAP": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 53,
-        "precision": 0.5955
+        "total": 90,
+        "aciertos": 54,
+        "precision": 0.6
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -449,15 +449,15 @@
       }
     },
     "CLS": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 46,
-        "precision": 0.5169
+        "total": 90,
+        "aciertos": 47,
+        "precision": 0.5222
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -471,15 +471,15 @@
       }
     },
     "AAPL": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 48,
-        "precision": 0.5393
+        "total": 90,
+        "aciertos": 49,
+        "precision": 0.5444
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -493,15 +493,15 @@
       }
     },
     "AMZN": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 50,
-        "precision": 0.5618
+        "precision": 0.5556
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -515,15 +515,15 @@
       }
     },
     "GOOGL": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 4,
-        "precision": 0.5
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 55,
-        "precision": 0.618
+        "total": 90,
+        "aciertos": 56,
+        "precision": 0.6222
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 3,
+        "precision": 0.4286
       },
       "openrouter/free": {
         "total": 2,
@@ -537,15 +537,15 @@
       }
     },
     "META": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 8,
-        "precision": 1.0
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 40,
-        "precision": 0.4494
+        "total": 90,
+        "aciertos": 41,
+        "precision": 0.4556
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 7,
+        "precision": 1.0
       },
       "openrouter/free": {
         "total": 2,
@@ -559,15 +559,15 @@
       }
     },
     "MSFT": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 40,
-        "precision": 0.4494
+        "precision": 0.4444
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -581,15 +581,15 @@
       }
     },
     "LLY": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 46,
-        "precision": 0.5169
+        "precision": 0.5111
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -603,15 +603,15 @@
       }
     },
     "AMAT": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 59,
-        "precision": 0.6629
+        "precision": 0.6556
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -625,15 +625,15 @@
       }
     },
     "LRCX": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 4,
-        "precision": 0.5
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 70,
-        "precision": 0.7865
+        "precision": 0.7778
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 3,
+        "precision": 0.4286
       },
       "openrouter/free": {
         "total": 2,
@@ -647,15 +647,15 @@
       }
     },
     "PANW": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 37,
-        "precision": 0.4157
+        "precision": 0.4111
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -669,15 +669,15 @@
       }
     },
     "ORCL": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 5,
-        "precision": 0.625
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 48,
-        "precision": 0.5393
+        "total": 90,
+        "aciertos": 49,
+        "precision": 0.5444
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -691,15 +691,15 @@
       }
     },
     "HON": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 8,
-        "precision": 1.0
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 43,
-        "precision": 0.4831
+        "total": 90,
+        "aciertos": 44,
+        "precision": 0.4889
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 7,
+        "precision": 1.0
       },
       "openrouter/free": {
         "total": 2,
@@ -713,15 +713,15 @@
       }
     },
     "UBER": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 3,
-        "precision": 0.375
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 60,
-        "precision": 0.6742
+        "total": 90,
+        "aciertos": 61,
+        "precision": 0.6778
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 3,
+        "precision": 0.4286
       },
       "openrouter/free": {
         "total": 2,
@@ -735,15 +735,15 @@
       }
     },
     "GE": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 3,
-        "precision": 0.375
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 64,
-        "precision": 0.7191
+        "precision": 0.7111
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 2,
+        "precision": 0.2857
       },
       "openrouter/free": {
         "total": 2,
@@ -757,15 +757,15 @@
       }
     },
     "COST": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 7,
-        "precision": 0.875
-      },
       "trend-fallback": {
-        "total": 89,
+        "total": 90,
         "aciertos": 35,
-        "precision": 0.3933
+        "precision": 0.3889
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 6,
+        "precision": 0.8571
       },
       "openrouter/free": {
         "total": 2,
@@ -779,15 +779,15 @@
       }
     },
     "NEE": {
-      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
-        "total": 8,
-        "aciertos": 6,
-        "precision": 0.75
-      },
       "trend-fallback": {
-        "total": 89,
-        "aciertos": 43,
-        "precision": 0.4831
+        "total": 90,
+        "aciertos": 44,
+        "precision": 0.4889
+      },
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+        "total": 7,
+        "aciertos": 5,
+        "precision": 0.7143
       },
       "openrouter/free": {
         "total": 2,
@@ -803,349 +803,349 @@
   },
   "correlacion_noticias": {
     "positivo": {
-      "total": 292,
-      "acertadas": 179,
-      "precision": 0.613
+      "total": 286,
+      "acertadas": 175,
+      "precision": 0.6119
     },
     "negativo": {
-      "total": 110,
-      "acertadas": 80,
-      "precision": 0.7273
+      "total": 109,
+      "acertadas": 79,
+      "precision": 0.7248
     },
     "neutral": {
-      "total": 128,
-      "acertadas": 85,
-      "precision": 0.6641
+      "total": 125,
+      "acertadas": 82,
+      "precision": 0.656
     }
   },
-  "prec_noticia_alcista": 0.4875,
+  "prec_noticia_alcista": 0.5,
   "factores": {
     "NVDA": {
-      "total": 616,
+      "total": 617,
       "aciertos": 320,
-      "precision": 0.5195,
-      "precision_ponderada": 0.5281,
-      "precision_final": 0.5344,
-      "factor": 1.0689,
+      "precision": 0.5186,
+      "precision_ponderada": 0.5218,
+      "precision_final": 0.5283,
+      "factor": 1.0566,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.536
+      "precision_sector": 0.528
     },
     "MU": {
-      "total": 616,
+      "total": 617,
       "aciertos": 331,
-      "precision": 0.5373,
-      "precision_ponderada": 0.5521,
-      "precision_final": 0.5488,
-      "factor": 1.0977,
+      "precision": 0.5365,
+      "precision_ponderada": 0.5402,
+      "precision_final": 0.5394,
+      "factor": 1.0787,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.536
+      "precision_sector": 0.528
     },
     "DELL": {
-      "total": 616,
+      "total": 617,
       "aciertos": 289,
-      "precision": 0.4692,
-      "precision_ponderada": 0.5041,
-      "precision_final": 0.5228,
-      "factor": 1.0457,
+      "precision": 0.4684,
+      "precision_ponderada": 0.4928,
+      "precision_final": 0.514,
+      "factor": 1.028,
       "peso_local": 1.0,
       "sector": "Servidores IA",
-      "precision_sector": 0.55
+      "precision_sector": 0.5433
     },
     "AVGO": {
-      "total": 620,
+      "total": 621,
       "aciertos": 317,
-      "precision": 0.5113,
-      "precision_ponderada": 0.4815,
-      "precision_final": 0.5065,
-      "factor": 1.013,
+      "precision": 0.5105,
+      "precision_ponderada": 0.4705,
+      "precision_final": 0.4975,
+      "factor": 0.9951,
       "peso_local": 1.0,
       "sector": "Semiconductores",
-      "precision_sector": 0.536
+      "precision_sector": 0.528
     },
     "DDOG": {
-      "total": 616,
-      "aciertos": 310,
-      "precision": 0.5032,
-      "precision_ponderada": 0.6594,
-      "precision_final": 0.6167,
-      "factor": 1.2334,
+      "total": 617,
+      "aciertos": 311,
+      "precision": 0.5041,
+      "precision_ponderada": 0.6635,
+      "precision_final": 0.6177,
+      "factor": 1.2355,
       "peso_local": 1.0,
       "sector": "Software IA",
-      "precision_sector": 0.5533
-    },
-    "SMCI": {
-      "total": 616,
-      "aciertos": 340,
-      "precision": 0.5519,
-      "precision_ponderada": 0.6032,
-      "precision_final": 0.5823,
-      "factor": 1.1646,
-      "peso_local": 1.0,
-      "sector": "Servidores IA",
       "precision_sector": 0.55
     },
+    "SMCI": {
+      "total": 617,
+      "aciertos": 341,
+      "precision": 0.5527,
+      "precision_ponderada": 0.608,
+      "precision_final": 0.5831,
+      "factor": 1.1662,
+      "peso_local": 1.0,
+      "sector": "Servidores IA",
+      "precision_sector": 0.5433
+    },
     "SNOW": {
-      "total": 616,
-      "aciertos": 293,
-      "precision": 0.4756,
-      "precision_ponderada": 0.5189,
-      "precision_final": 0.5324,
-      "factor": 1.0648,
-      "peso_local": 1.0,
-      "sector": "Software IA",
-      "precision_sector": 0.5533
-    },
-    "CRWD": {
-      "total": 616,
-      "aciertos": 302,
-      "precision": 0.4903,
-      "precision_ponderada": 0.3973,
-      "precision_final": 0.4421,
-      "factor": 0.8842,
-      "peso_local": 1.0,
-      "sector": "Ciberseguridad",
-      "precision_sector": 0.4667
-    },
-    "NOW": {
-      "total": 616,
-      "aciertos": 296,
-      "precision": 0.4805,
-      "precision_ponderada": 0.4139,
-      "precision_final": 0.4694,
-      "factor": 0.9388,
-      "peso_local": 1.0,
-      "sector": "Software IA",
-      "precision_sector": 0.5533
-    },
-    "TSM": {
       "total": 617,
       "aciertos": 293,
       "precision": 0.4749,
-      "precision_ponderada": 0.5019,
-      "precision_final": 0.5187,
-      "factor": 1.0374,
+      "precision_ponderada": 0.5074,
+      "precision_final": 0.5241,
+      "factor": 1.0482,
       "peso_local": 1.0,
-      "sector": "Semiconductores",
-      "precision_sector": 0.536
-    },
-    "ARM": {
-      "total": 616,
-      "aciertos": 315,
-      "precision": 0.5114,
-      "precision_ponderada": 0.5638,
-      "precision_final": 0.5559,
-      "factor": 1.1117,
-      "peso_local": 1.0,
-      "sector": "Semiconductores",
-      "precision_sector": 0.536
-    },
-    "OKTA": {
-      "total": 616,
-      "aciertos": 273,
-      "precision": 0.4432,
-      "precision_ponderada": 0.5497,
-      "precision_final": 0.5335,
-      "factor": 1.0671,
-      "peso_local": 1.0,
-      "sector": "Ciberseguridad",
-      "precision_sector": 0.4667
-    },
-    "HPE": {
-      "total": 616,
-      "aciertos": 297,
-      "precision": 0.4821,
-      "precision_ponderada": 0.5,
-      "precision_final": 0.5204,
-      "factor": 1.0408,
-      "peso_local": 1.0,
-      "sector": "Servidores IA",
+      "sector": "Software IA",
       "precision_sector": 0.55
     },
+    "CRWD": {
+      "total": 617,
+      "aciertos": 302,
+      "precision": 0.4895,
+      "precision_ponderada": 0.3872,
+      "precision_final": 0.4346,
+      "factor": 0.8692,
+      "peso_local": 1.0,
+      "sector": "Ciberseguridad",
+      "precision_sector": 0.4633
+    },
+    "NOW": {
+      "total": 617,
+      "aciertos": 297,
+      "precision": 0.4814,
+      "precision_ponderada": 0.4209,
+      "precision_final": 0.4722,
+      "factor": 0.9444,
+      "peso_local": 1.0,
+      "sector": "Software IA",
+      "precision_sector": 0.55
+    },
+    "TSM": {
+      "total": 618,
+      "aciertos": 293,
+      "precision": 0.4741,
+      "precision_ponderada": 0.4906,
+      "precision_final": 0.5096,
+      "factor": 1.0192,
+      "peso_local": 1.0,
+      "sector": "Semiconductores",
+      "precision_sector": 0.528
+    },
+    "ARM": {
+      "total": 617,
+      "aciertos": 315,
+      "precision": 0.5105,
+      "precision_ponderada": 0.5518,
+      "precision_final": 0.5463,
+      "factor": 1.0926,
+      "peso_local": 1.0,
+      "sector": "Semiconductores",
+      "precision_sector": 0.528
+    },
+    "OKTA": {
+      "total": 617,
+      "aciertos": 274,
+      "precision": 0.4441,
+      "precision_ponderada": 0.5551,
+      "precision_final": 0.5354,
+      "factor": 1.0707,
+      "peso_local": 1.0,
+      "sector": "Ciberseguridad",
+      "precision_sector": 0.4633
+    },
+    "HPE": {
+      "total": 617,
+      "aciertos": 297,
+      "precision": 0.4814,
+      "precision_ponderada": 0.4887,
+      "precision_final": 0.5115,
+      "factor": 1.023,
+      "peso_local": 1.0,
+      "sector": "Servidores IA",
+      "precision_sector": 0.5433
+    },
     "NTAP": {
-      "total": 616,
-      "aciertos": 281,
-      "precision": 0.4562,
-      "precision_ponderada": 0.6394,
-      "precision_final": 0.61,
-      "factor": 1.22,
+      "total": 617,
+      "aciertos": 282,
+      "precision": 0.4571,
+      "precision_ponderada": 0.6437,
+      "precision_final": 0.6119,
+      "factor": 1.2237,
       "peso_local": 1.0,
       "sector": "Almacenamiento",
       "precision_sector": 0.58
     },
     "CLS": {
-      "total": 616,
-      "aciertos": 316,
-      "precision": 0.513,
-      "precision_ponderada": 0.5705,
-      "precision_final": 0.5687,
-      "factor": 1.1374,
+      "total": 617,
+      "aciertos": 317,
+      "precision": 0.5138,
+      "precision_ponderada": 0.5756,
+      "precision_final": 0.571,
+      "factor": 1.142,
       "peso_local": 1.0,
       "sector": "Almacenamiento",
       "precision_sector": 0.58
     },
     "AAPL": {
-      "total": 616,
-      "aciertos": 294,
-      "precision": 0.4773,
-      "precision_ponderada": 0.5719,
-      "precision_final": 0.5635,
-      "factor": 1.127,
+      "total": 617,
+      "aciertos": 295,
+      "precision": 0.4781,
+      "precision_ponderada": 0.577,
+      "precision_final": 0.565,
+      "factor": 1.1301,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.55
+      "precision_sector": 0.546
     },
     "AMZN": {
-      "total": 616,
+      "total": 617,
       "aciertos": 333,
-      "precision": 0.5406,
-      "precision_ponderada": 0.5718,
-      "precision_final": 0.5635,
-      "factor": 1.1269,
+      "precision": 0.5397,
+      "precision_ponderada": 0.5597,
+      "precision_final": 0.5547,
+      "factor": 1.1093,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.55
+      "precision_sector": 0.546
     },
     "GOOGL": {
-      "total": 616,
-      "aciertos": 311,
-      "precision": 0.5049,
-      "precision_ponderada": 0.6052,
-      "precision_final": 0.5835,
-      "factor": 1.167,
+      "total": 617,
+      "aciertos": 312,
+      "precision": 0.5057,
+      "precision_ponderada": 0.6099,
+      "precision_final": 0.5848,
+      "factor": 1.1696,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.55
+      "precision_sector": 0.546
     },
     "META": {
-      "total": 621,
-      "aciertos": 289,
-      "precision": 0.4654,
-      "precision_ponderada": 0.535,
-      "precision_final": 0.5414,
-      "factor": 1.0828,
+      "total": 622,
+      "aciertos": 290,
+      "precision": 0.4662,
+      "precision_ponderada": 0.5405,
+      "precision_final": 0.5431,
+      "factor": 1.0863,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.55
+      "precision_sector": 0.546
     },
     "MSFT": {
-      "total": 621,
+      "total": 622,
       "aciertos": 270,
-      "precision": 0.4348,
-      "precision_ponderada": 0.4965,
-      "precision_final": 0.5183,
-      "factor": 1.0366,
+      "precision": 0.4341,
+      "precision_ponderada": 0.4853,
+      "precision_final": 0.51,
+      "factor": 1.02,
       "peso_local": 1.0,
       "sector": "Consumer Tech",
-      "precision_sector": 0.55
+      "precision_sector": 0.546
     },
     "LLY": {
-      "total": 616,
+      "total": 617,
       "aciertos": 307,
-      "precision": 0.4984,
-      "precision_ponderada": 0.5623,
-      "precision_final": 0.5578,
-      "factor": 1.1155,
+      "precision": 0.4976,
+      "precision_ponderada": 0.5503,
+      "precision_final": 0.5478,
+      "factor": 1.0956,
       "peso_local": 1.0,
       "sector": "Farmaceutico",
-      "precision_sector": 0.55
+      "precision_sector": 0.54
     },
     "AMAT": {
-      "total": 618,
+      "total": 619,
       "aciertos": 335,
-      "precision": 0.5421,
-      "precision_ponderada": 0.6407,
-      "precision_final": 0.6378,
-      "factor": 1.2756,
+      "precision": 0.5412,
+      "precision_ponderada": 0.6278,
+      "precision_final": 0.6273,
+      "factor": 1.2546,
       "peso_local": 1.0,
       "sector": "Semicon Equip",
-      "precision_sector": 0.715
+      "precision_sector": 0.705
     },
     "LRCX": {
-      "total": 616,
+      "total": 617,
       "aciertos": 312,
-      "precision": 0.5065,
-      "precision_ponderada": 0.7231,
-      "precision_final": 0.6872,
-      "factor": 1.3745,
+      "precision": 0.5057,
+      "precision_ponderada": 0.7091,
+      "precision_final": 0.6761,
+      "factor": 1.3522,
       "peso_local": 1.0,
       "sector": "Semicon Equip",
-      "precision_sector": 0.715
+      "precision_sector": 0.705
     },
     "PANW": {
-      "total": 616,
+      "total": 617,
       "aciertos": 292,
-      "precision": 0.474,
-      "precision_ponderada": 0.428,
-      "precision_final": 0.4605,
-      "factor": 0.921,
+      "precision": 0.4733,
+      "precision_ponderada": 0.4228,
+      "precision_final": 0.456,
+      "factor": 0.912,
       "peso_local": 1.0,
       "sector": "Ciberseguridad",
-      "precision_sector": 0.4667
+      "precision_sector": 0.4633
     },
     "ORCL": {
-      "total": 616,
-      "aciertos": 349,
-      "precision": 0.5666,
-      "precision_ponderada": 0.5677,
-      "precision_final": 0.561,
-      "factor": 1.122,
+      "total": 617,
+      "aciertos": 350,
+      "precision": 0.5673,
+      "precision_ponderada": 0.5782,
+      "precision_final": 0.5686,
+      "factor": 1.1371,
       "peso_local": 1.0,
       "sector": "Cloud/Database",
-      "precision_sector": 0.55
+      "precision_sector": 0.56
     },
     "HON": {
-      "total": 616,
-      "aciertos": 279,
-      "precision": 0.4529,
-      "precision_ponderada": 0.5044,
-      "precision_final": 0.533,
-      "factor": 1.066,
+      "total": 617,
+      "aciertos": 280,
+      "precision": 0.4538,
+      "precision_ponderada": 0.5103,
+      "precision_final": 0.5348,
+      "factor": 1.0696,
       "peso_local": 1.0,
       "sector": "Industrial",
-      "precision_sector": 0.6
+      "precision_sector": 0.595
     },
     "UBER": {
-      "total": 616,
-      "aciertos": 317,
-      "precision": 0.5146,
-      "precision_ponderada": 0.6961,
-      "precision_final": 0.66,
-      "factor": 1.3201,
+      "total": 617,
+      "aciertos": 318,
+      "precision": 0.5154,
+      "precision_ponderada": 0.7051,
+      "precision_final": 0.6667,
+      "factor": 1.3334,
       "peso_local": 1.0,
       "sector": "Movilidad/Tech",
-      "precision_sector": 0.66
+      "precision_sector": 0.67
     },
     "GE": {
-      "total": 621,
+      "total": 622,
       "aciertos": 283,
-      "precision": 0.4557,
-      "precision_ponderada": 0.6873,
-      "precision_final": 0.6428,
-      "factor": 1.2855,
+      "precision": 0.455,
+      "precision_ponderada": 0.6738,
+      "precision_final": 0.6329,
+      "factor": 1.2658,
       "peso_local": 1.0,
       "sector": "Industrial",
-      "precision_sector": 0.6
+      "precision_sector": 0.595
     },
     "COST": {
-      "total": 616,
+      "total": 617,
       "aciertos": 340,
-      "precision": 0.5519,
-      "precision_ponderada": 0.466,
-      "precision_final": 0.478,
-      "factor": 0.956,
+      "precision": 0.5511,
+      "precision_ponderada": 0.4552,
+      "precision_final": 0.4688,
+      "factor": 0.9375,
       "peso_local": 1.0,
       "sector": "Consumo Defensivo",
-      "precision_sector": 0.44
+      "precision_sector": 0.43
     },
     "NEE": {
-      "total": 616,
-      "aciertos": 325,
-      "precision": 0.5276,
-      "precision_ponderada": 0.5163,
-      "precision_final": 0.5222,
-      "factor": 1.0443,
+      "total": 617,
+      "aciertos": 326,
+      "precision": 0.5284,
+      "precision_ponderada": 0.5221,
+      "precision_final": 0.5249,
+      "factor": 1.0498,
       "peso_local": 1.0,
       "sector": "Utilities/Energy",
       "precision_sector": 0.51
