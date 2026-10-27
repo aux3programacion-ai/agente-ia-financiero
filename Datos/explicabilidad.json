@@ -1,25 +1,25 @@
 {
-  "timestamp": "2026-10-27T18:37:02Z",
+  "timestamp": "2026-10-27T20:03:58Z",
   "tickers": {
     "AAPL": {
       "prob_ia": 47,
-      "prob_xgboost": 1.2,
-      "prob_consenso": 23.2,
+      "prob_xgboost": 0.6,
+      "prob_consenso": 22.9,
       "factores": [
-        {
-          "nombre": "autocorr_1",
-          "contribuye": "bajista",
-          "peso": 0.3358
-        },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2996
+          "peso": 0.2974
+        },
+        {
+          "nombre": "autocorr_1",
+          "contribuye": "bajista",
+          "peso": 0.3132
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3645
+          "peso": 0.3894
         }
       ],
       "precision_hist": 0.596,
@@ -27,50 +27,50 @@
     },
     "AMAT": {
       "prob_ia": 47,
-      "prob_xgboost": 0.8,
-      "prob_consenso": 21.3,
+      "prob_xgboost": 0.5,
+      "prob_consenso": 21.2,
       "factores": [
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.352
+          "peso": 0.3397
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3108
+          "peso": 0.2943
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3373
+          "peso": 0.366
         }
       ],
       "precision_hist": 0.6869,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "AMZN": {
-      "prob_ia": 54,
-      "prob_xgboost": 5.5,
-      "prob_consenso": 29.0,
+      "prob_ia": 47,
+      "prob_xgboost": 4.3,
+      "prob_consenso": 24.8,
       "factores": [
-        {
-          "nombre": "Dist SMA200",
-          "contribuye": "bajista",
-          "peso": 0.349
-        },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3642
+          "peso": 0.3449
+        },
+        {
+          "nombre": "Dist SMA200",
+          "contribuye": "bajista",
+          "peso": 0.3715
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.2837
         }
       ],
-      "precision_hist": 0.5859,
+      "precision_hist": 0.596,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "ARM": {
@@ -81,17 +81,17 @@
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.349
+          "peso": 0.3715
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.2837
         },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3642
+          "peso": 0.3449
         }
       ],
       "precision_hist": 0.596,
@@ -99,23 +99,23 @@
     },
     "AVGO": {
       "prob_ia": 47,
-      "prob_xgboost": 4.4,
-      "prob_consenso": 27.5,
+      "prob_xgboost": 4.1,
+      "prob_consenso": 27.4,
       "factores": [
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3224
+          "peso": 0.3128
         },
         {
           "nombre": "atr_pct",
           "contribuye": "bajista",
-          "peso": 0.2735
+          "peso": 0.3182
         },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.4042
+          "peso": 0.369
         }
       ],
       "precision_hist": 0.4646,
@@ -123,23 +123,23 @@
     },
     "CLS": {
       "prob_ia": 47,
-      "prob_xgboost": 6.5,
-      "prob_consenso": 26.5,
+      "prob_xgboost": 6.8,
+      "prob_consenso": 26.6,
       "factores": [
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3279
+          "peso": 0.3694
         },
         {
           "nombre": "atr_pct",
           "contribuye": "bajista",
-          "peso": 0.2781
+          "peso": 0.3758
         },
         {
-          "nombre": "Dist SMA200",
+          "nombre": "macd_hist_slope",
           "contribuye": "bajista",
-          "peso": 0.394
+          "peso": 0.2548
         }
       ],
       "precision_hist": 0.5657,
@@ -148,46 +148,46 @@
     "COST": {
       "prob_ia": 47,
       "prob_xgboost": 0.1,
-      "prob_consenso": 26.0,
+      "prob_consenso": 25.8,
       "factores": [
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3507
+          "peso": 0.3088
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3806
+          "peso": 0.3839
         },
         {
           "nombre": "atr_pct",
           "contribuye": "bajista",
-          "peso": 0.2687
+          "peso": 0.3073
         }
       ],
-      "precision_hist": 0.4444,
+      "precision_hist": 0.4545,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "CRWD": {
       "prob_ia": 47,
-      "prob_xgboost": 8.2,
-      "prob_consenso": 30.6,
+      "prob_xgboost": 9.1,
+      "prob_consenso": 30.9,
       "factores": [
-        {
-          "nombre": "entropy_20",
-          "contribuye": "bajista",
-          "peso": 0.3136
-        },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3768
+          "peso": 0.3921
+        },
+        {
+          "nombre": "entropy_20",
+          "contribuye": "bajista",
+          "peso": 0.3085
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.3097
+          "peso": 0.2994
         }
       ],
       "precision_hist": 0.404,
@@ -195,23 +195,23 @@
     },
     "DDOG": {
       "prob_ia": 47,
-      "prob_xgboost": 2.9,
-      "prob_consenso": 23.2,
+      "prob_xgboost": 4.3,
+      "prob_consenso": 23.9,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3632
+          "peso": 0.3859
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3346
+          "peso": 0.3104
         },
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3023
+          "peso": 0.3037
         }
       ],
       "precision_hist": 0.6465,
@@ -219,119 +219,119 @@
     },
     "DELL": {
       "prob_ia": 47,
-      "prob_xgboost": 4.5,
-      "prob_consenso": 26.0,
+      "prob_xgboost": 4.7,
+      "prob_consenso": 26.1,
       "factores": [
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3023
+          "peso": 0.3037
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3346
+          "peso": 0.3104
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3632
+          "peso": 0.3859
         }
       ],
       "precision_hist": 0.5354,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "GE": {
-      "prob_ia": 47,
-      "prob_xgboost": 2.8,
-      "prob_consenso": 23.3,
+      "prob_ia": 29,
+      "prob_xgboost": 1.8,
+      "prob_consenso": 14.5,
       "factores": [
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3358
+          "peso": 0.3328
+        },
+        {
+          "nombre": "Dist SMA50",
+          "contribuye": "bajista",
+          "peso": 0.3512
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2996
-        },
-        {
-          "nombre": "Dist SMA200",
-          "contribuye": "bajista",
-          "peso": 0.3645
+          "peso": 0.316
         }
       ],
-      "precision_hist": 0.6364,
+      "precision_hist": 0.6263,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "GOOGL": {
-      "prob_ia": 56,
-      "prob_xgboost": 23.7,
-      "prob_consenso": 39.2,
+      "prob_ia": 50,
+      "prob_xgboost": 20.0,
+      "prob_consenso": 34.3,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3645
+          "peso": 0.3894
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2996
+          "peso": 0.2974
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3358
+          "peso": 0.3132
         }
       ],
-      "precision_hist": 0.596,
+      "precision_hist": 0.6061,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "HON": {
       "prob_ia": 47,
-      "prob_xgboost": 4.8,
-      "prob_consenso": 25.8,
+      "prob_xgboost": 0.9,
+      "prob_consenso": 23.6,
       "factores": [
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3136
-        },
-        {
-          "nombre": "Dist SMA200",
-          "contribuye": "bajista",
-          "peso": 0.3768
+          "peso": 0.3085
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.3097
+          "peso": 0.2994
+        },
+        {
+          "nombre": "Dist SMA200",
+          "contribuye": "bajista",
+          "peso": 0.3921
         }
       ],
-      "precision_hist": 0.5556,
+      "precision_hist": 0.5657,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "HPE": {
       "prob_ia": 47,
-      "prob_xgboost": 2.9,
-      "prob_consenso": 25.5,
+      "prob_xgboost": 2.5,
+      "prob_consenso": 25.3,
       "factores": [
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2996
+          "peso": 0.2974
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3645
+          "peso": 0.3894
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3358
+          "peso": 0.3132
         }
       ],
       "precision_hist": 0.5253,
@@ -339,23 +339,23 @@
     },
     "LLY": {
       "prob_ia": 47,
-      "prob_xgboost": 3.7,
-      "prob_consenso": 25.8,
+      "prob_xgboost": 5.0,
+      "prob_consenso": 26.5,
       "factores": [
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.2974
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.349
+          "peso": 0.3894
         },
         {
-          "nombre": "Volatility 20d",
+          "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3642
+          "peso": 0.3132
         }
       ],
       "precision_hist": 0.5253,
@@ -363,23 +363,23 @@
     },
     "LRCX": {
       "prob_ia": 47,
-      "prob_xgboost": 1.4,
-      "prob_consenso": 20.7,
+      "prob_xgboost": 1.6,
+      "prob_consenso": 20.8,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3632
+          "peso": 0.3859
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3346
+          "peso": 0.3104
         },
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3023
+          "peso": 0.3037
         }
       ],
       "precision_hist": 0.7475,
@@ -388,94 +388,94 @@
     "META": {
       "prob_ia": 47,
       "prob_xgboost": 0.8,
-      "prob_consenso": 24.2,
+      "prob_consenso": 24.0,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3768
+          "peso": 0.3921
         },
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.3136
+          "peso": 0.3085
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.3097
+          "peso": 0.2994
         }
       ],
-      "precision_hist": 0.5354,
+      "precision_hist": 0.5455,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "MSFT": {
       "prob_ia": 47,
-      "prob_xgboost": 0.7,
-      "prob_consenso": 25.3,
+      "prob_xgboost": 0.4,
+      "prob_consenso": 24.9,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3623
-        },
-        {
-          "nombre": "autocorr_5",
-          "contribuye": "bajista",
-          "peso": 0.2978
+          "peso": 0.3828
         },
         {
           "nombre": "Dist SMA50",
           "contribuye": "bajista",
-          "peso": 0.3398
+          "peso": 0.3249
+        },
+        {
+          "nombre": "autocorr_5",
+          "contribuye": "bajista",
+          "peso": 0.2923
         }
       ],
-      "precision_hist": 0.4848,
+      "precision_hist": 0.4949,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "MU": {
       "prob_ia": 47,
-      "prob_xgboost": 3.0,
-      "prob_consenso": 24.7,
+      "prob_xgboost": 0.7,
+      "prob_consenso": 23.7,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3648
+          "peso": 0.3769
         },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3807
+          "peso": 0.3499
         },
         {
           "nombre": "MACD Hist",
           "contribuye": "bajista",
-          "peso": 0.2545
+          "peso": 0.2732
         }
       ],
-      "precision_hist": 0.5657,
+      "precision_hist": 0.5556,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "NEE": {
       "prob_ia": 47,
-      "prob_xgboost": 3.9,
-      "prob_consenso": 25.7,
+      "prob_xgboost": 2.8,
+      "prob_consenso": 25.2,
       "factores": [
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3629
+          "peso": 0.3419
         },
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.2894
+          "peso": 0.2898
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3477
+          "peso": 0.3683
         }
       ],
       "precision_hist": 0.5354,
@@ -483,119 +483,119 @@
     },
     "NOW": {
       "prob_ia": 47,
-      "prob_xgboost": 1.0,
-      "prob_consenso": 26.4,
+      "prob_xgboost": 1.1,
+      "prob_consenso": 26.5,
       "factores": [
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.2837
         },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3642
+          "peso": 0.3449
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.349
+          "peso": 0.3715
         }
       ],
       "precision_hist": 0.4444,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "NTAP": {
-      "prob_ia": 54,
-      "prob_xgboost": 4.2,
-      "prob_consenso": 27.5,
+      "prob_ia": 52,
+      "prob_xgboost": 4.9,
+      "prob_consenso": 26.7,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3645
+          "peso": 0.3894
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3358
+          "peso": 0.3132
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2996
+          "peso": 0.2974
         }
       ],
-      "precision_hist": 0.6263,
+      "precision_hist": 0.6364,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "NVDA": {
       "prob_ia": 47,
-      "prob_xgboost": 10.3,
-      "prob_consenso": 29.1,
+      "prob_xgboost": 7.9,
+      "prob_consenso": 28.1,
       "factores": [
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3642
+          "peso": 0.3449
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.2837
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.349
+          "peso": 0.3715
         }
       ],
-      "precision_hist": 0.5253,
+      "precision_hist": 0.5152,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "OKTA": {
       "prob_ia": 47,
-      "prob_xgboost": 17.3,
-      "prob_consenso": 32.1,
+      "prob_xgboost": 16.8,
+      "prob_consenso": 32.0,
       "factores": [
+        {
+          "nombre": "autocorr_1",
+          "contribuye": "bajista",
+          "peso": 0.3132
+        },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3645
+          "peso": 0.3894
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2996
-        },
-        {
-          "nombre": "autocorr_1",
-          "contribuye": "bajista",
-          "peso": 0.3358
+          "peso": 0.2974
         }
       ],
-      "precision_hist": 0.5556,
+      "precision_hist": 0.5455,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "ORCL": {
-      "prob_ia": 29,
-      "prob_xgboost": 1.2,
-      "prob_consenso": 14.7,
+      "prob_ia": 47,
+      "prob_xgboost": 3.5,
+      "prob_consenso": 24.6,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3806
+          "peso": 0.3839
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3507
+          "peso": 0.3088
         },
         {
           "nombre": "atr_pct",
           "contribuye": "bajista",
-          "peso": 0.2687
+          "peso": 0.3073
         }
       ],
       "precision_hist": 0.5859,
@@ -603,23 +603,23 @@
     },
     "PANW": {
       "prob_ia": 47,
-      "prob_xgboost": 3.1,
-      "prob_consenso": 26.9,
+      "prob_xgboost": 2.9,
+      "prob_consenso": 26.8,
       "factores": [
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3629
-        },
-        {
-          "nombre": "Dist SMA200",
-          "contribuye": "bajista",
-          "peso": 0.3477
+          "peso": 0.3419
         },
         {
           "nombre": "entropy_20",
           "contribuye": "bajista",
-          "peso": 0.2894
+          "peso": 0.2898
+        },
+        {
+          "nombre": "Dist SMA200",
+          "contribuye": "bajista",
+          "peso": 0.3683
         }
       ],
       "precision_hist": 0.4646,
@@ -627,71 +627,71 @@
     },
     "SMCI": {
       "prob_ia": 47,
-      "prob_xgboost": 7.9,
-      "prob_consenso": 26.5,
+      "prob_xgboost": 7.4,
+      "prob_consenso": 26.2,
       "factores": [
+        {
+          "nombre": "autocorr_1",
+          "contribuye": "bajista",
+          "peso": 0.2943
+        },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3642
-        },
-        {
-          "nombre": "autocorr_5",
-          "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.3397
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.349
+          "peso": 0.366
         }
       ],
       "precision_hist": 0.6061,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "SNOW": {
-      "prob_ia": 47,
-      "prob_xgboost": 0.8,
-      "prob_consenso": 23.8,
+      "prob_ia": 29,
+      "prob_xgboost": 0.9,
+      "prob_consenso": 15.0,
       "factores": [
+        {
+          "nombre": "Dist SMA50",
+          "contribuye": "bajista",
+          "peso": 0.3288
+        },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3595
+          "peso": 0.3596
         },
         {
           "nombre": "autocorr_1",
           "contribuye": "bajista",
-          "peso": 0.3174
-        },
-        {
-          "nombre": "Dist SMA50",
-          "contribuye": "bajista",
-          "peso": 0.3231
+          "peso": 0.3116
         }
       ],
-      "precision_hist": 0.5556,
+      "precision_hist": 0.5455,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     },
     "TSM": {
       "prob_ia": 47,
-      "prob_xgboost": 8.2,
-      "prob_consenso": 27.9,
+      "prob_xgboost": 7.8,
+      "prob_consenso": 27.7,
       "factores": [
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.2868
+          "peso": 0.2837
         },
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.349
+          "peso": 0.3715
         },
         {
           "nombre": "Volatility 20d",
           "contribuye": "bajista",
-          "peso": 0.3642
+          "peso": 0.3449
         }
       ],
       "precision_hist": 0.5354,
@@ -699,26 +699,26 @@
     },
     "UBER": {
       "prob_ia": 29,
-      "prob_xgboost": 1.2,
-      "prob_consenso": 13.6,
+      "prob_xgboost": 0.9,
+      "prob_consenso": 13.3,
       "factores": [
         {
           "nombre": "Dist SMA200",
           "contribuye": "bajista",
-          "peso": 0.3956
+          "peso": 0.39
         },
         {
           "nombre": "autocorr_5",
           "contribuye": "bajista",
-          "peso": 0.3251
+          "peso": 0.2978
         },
         {
           "nombre": "atr_pct",
           "contribuye": "bajista",
-          "peso": 0.2793
+          "peso": 0.3122
         }
       ],
-      "precision_hist": 0.6869,
+      "precision_hist": 0.697,
       "explicacion": "XGBoost senial bajista domina, consistente con el panorama de IA."
     }
   }
