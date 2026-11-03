@@ -3412,212 +3412,1516 @@
   "history": [],
   "recommendations": [
     {
-      "optimization": "ensemble_llm",
-      "effect": "3-5 LLMs vs 1",
-      "impact": 0.0299,
-      "confidence": 1,
-      "action": "KEEP - high impact",
-      "priority": "critical"
+      "component": "options_flow",
+      "impact_mean": 0.0093,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "nice_to_have",
+      "reason": "\u00datil pero no cr\u00edtico",
+      "details": {
+        "min_impact": 0.0093,
+        "max_impact": 0.0093
+      }
     },
     {
-      "optimization": "calibracion_stonica",
-      "effect": "IsotonicRegression",
-      "impact": 0.0195,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "macro_features",
+      "impact_mean": 0.0052,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "nice_to_have",
+      "reason": "\u00datil pero no cr\u00edtico",
+      "details": {
+        "min_impact": 0.0052,
+        "max_impact": 0.0052
+      }
     },
     {
-      "optimization": "xgb_blending",
-      "effect": "XGBoost + LLM ensemble",
-      "impact": 0.0177,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "tax_aware",
+      "impact_mean": 0.005,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": 0.005,
+        "max_impact": 0.005
+      }
     },
     {
-      "optimization": "macro_features",
-      "effect": "FRED + yield curve + VIX",
-      "impact": 0.0167,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "auto_features",
+      "impact_mean": 0.0034,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": 0.0034,
+        "max_impact": 0.0034
+      }
     },
     {
-      "optimization": "stacking_ensemble",
-      "effect": "XGB+LGBM+RF+CB",
-      "impact": 0.0156,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "sentiment_decay",
+      "impact_mean": 0.0018,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": 0.0018,
+        "max_impact": 0.0018
+      }
     },
     {
-      "optimization": "skill_injection",
-      "effect": "skills aprendidos en prompt",
-      "impact": 0.0149,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "hrp_weights",
+      "impact_mean": -0.0023,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": -0.0023,
+        "max_impact": -0.0023
+      }
     },
     {
-      "optimization": "ensemble_specialization",
-      "effect": "prompts distintos por modelo",
-      "impact": 0.0147,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "walk_forward",
+      "impact_mean": -0.0023,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": -0.0023,
+        "max_impact": -0.0023
+      }
     },
     {
-      "optimization": "mistake_injection",
-      "effect": "errores pasados como advertencias",
-      "impact": 0.0147,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "drawdown_stop",
+      "impact_mean": -0.0028,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": -0.0028,
+        "max_impact": -0.0028
+      }
     },
     {
-      "optimization": "few_shot_examples",
-      "effect": "ejemplos exitosos en prompt",
-      "impact": 0.0147,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "knowledge_distillation",
+      "impact_mean": -0.0033,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "neutral",
+      "reason": "NEUTRAL - sin impacto significativo",
+      "details": {
+        "min_impact": -0.0033,
+        "max_impact": -0.0033
+      }
     },
     {
-      "optimization": "rl_weights",
-      "effect": "pesos ajustados por RL",
-      "impact": 0.0147,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "few_shot_examples",
+      "impact_mean": -0.0053,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.0053,
+        "max_impact": -0.0053
+      }
     },
     {
-      "optimization": "sentiment_vader",
-      "effect": "VADER financiero",
-      "impact": 0.0147,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "rl_weights",
+      "impact_mean": -0.0065,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.0065,
+        "max_impact": -0.0065
+      }
     },
     {
-      "optimization": "time_series_features",
-      "effect": "entropy + Hurst + ARIMA",
-      "impact": 0.0146,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "auto_prompt_ab",
+      "impact_mean": -0.0072,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.0072,
+        "max_impact": -0.0072
+      }
     },
     {
-      "optimization": "online_learning",
-      "effect": "SGD partial_fit",
-      "impact": 0.0142,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "time_series_features",
+      "impact_mean": -0.0073,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.0073,
+        "max_impact": -0.0073
+      }
     },
     {
-      "optimization": "regime_models",
-      "effect": "modelos por regimen",
-      "impact": 0.0141,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "meta_prompt_evolution",
+      "impact_mean": -0.008,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.008,
+        "max_impact": -0.008
+      }
     },
     {
-      "optimization": "options_flow",
-      "effect": "IV skew + OI ratio",
-      "impact": 0.014,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "sentiment_vader",
+      "impact_mean": -0.0094,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.0094,
+        "max_impact": -0.0094
+      }
     },
     {
-      "optimization": "tax_aware",
-      "effect": "vender long-term primero",
-      "impact": 0.014,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "regime_models",
+      "impact_mean": -0.01,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "revisar",
+      "reason": "DUDOSO - impacto negativo leve",
+      "details": {
+        "min_impact": -0.01,
+        "max_impact": -0.01
+      }
     },
     {
-      "optimization": "knowledge_distillation",
-      "effect": "student del ensemble",
-      "impact": 0.0139,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "mistake_injection",
+      "impact_mean": -0.0108,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0108,
+        "max_impact": -0.0108
+      }
     },
     {
-      "optimization": "sentiment_decay",
-      "effect": "exponential decay noticias",
-      "impact": 0.0137,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "ensemble_specialization",
+      "impact_mean": -0.011,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.011,
+        "max_impact": -0.011
+      }
     },
     {
-      "optimization": "auto_features",
-      "effect": "features generadas por LLM",
-      "impact": 0.0137,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "debate_multimodelo",
+      "impact_mean": -0.0127,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0127,
+        "max_impact": -0.0127
+      }
     },
     {
-      "optimization": "hrp_weights",
-      "effect": "HRP vs risk parity clasico",
-      "impact": 0.0134,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "stacking_ensemble",
+      "impact_mean": -0.0163,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0163,
+        "max_impact": -0.0163
+      }
     },
     {
-      "optimization": "meta_prompt_evolution",
-      "effect": "system prompt evolucionado",
-      "impact": 0.0132,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "automl_winner",
+      "impact_mean": -0.0175,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0175,
+        "max_impact": -0.0175
+      }
     },
     {
-      "optimization": "debate_multimodelo",
-      "effect": "round 2 de consenso",
-      "impact": 0.013,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "skill_injection",
+      "impact_mean": -0.0193,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0193,
+        "max_impact": -0.0193
+      }
     },
     {
-      "optimization": "automl_winner",
-      "effect": "mejor modelo por ticker",
-      "impact": 0.013,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "ensemble_llm",
+      "impact_mean": -0.0214,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0214,
+        "max_impact": -0.0214
+      }
     },
     {
-      "optimization": "drawdown_stop",
-      "effect": "reduccion por drawdown",
-      "impact": 0.0129,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "online_learning",
+      "impact_mean": -0.0228,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0228,
+        "max_impact": -0.0228
+      }
     },
     {
-      "optimization": "walk_forward",
-      "effect": "TimeSeriesSplit vs simple",
-      "impact": 0.0121,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "calibracion_stonica",
+      "impact_mean": -0.0264,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0264,
+        "max_impact": -0.0264
+      }
     },
     {
-      "optimization": "auto_prompt_ab",
-      "effect": "A/B testing de prompts",
-      "impact": 0.0109,
-      "confidence": 1,
-      "action": "KEEP - moderate impact",
-      "priority": "important"
+      "component": "xgb_blending",
+      "impact_mean": -0.0268,
+      "impact_std": 0.0,
+      "impact_consistent": true,
+      "n_trials": 3,
+      "recommendation": "remover",
+      "reason": "NEGATIVO - empeora el sistema",
+      "details": {
+        "min_impact": -0.0268,
+        "max_impact": -0.0268
+      }
     }
-  ]
+  ],
+  "trials": [
+    {
+      "trial": 0,
+      "component": "ensemble_llm",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7567576856127878
+      },
+      "diff": {
+        "accuracy": -0.021426795170413904
+      },
+      "avg_diff": -0.021426795170413904,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "ensemble_specialization",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7672163335566737
+      },
+      "diff": {
+        "accuracy": -0.010968147226527947
+      },
+      "avg_diff": -0.010968147226527947,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "debate_multimodelo",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7655021744122724
+      },
+      "diff": {
+        "accuracy": -0.012682306370929264
+      },
+      "avg_diff": -0.012682306370929264,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "skill_injection",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7588346482478238
+      },
+      "diff": {
+        "accuracy": -0.01934983253537792
+      },
+      "avg_diff": -0.01934983253537792,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "mistake_injection",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.767341938990122
+      },
+      "diff": {
+        "accuracy": -0.01084254179307964
+      },
+      "avg_diff": -0.01084254179307964,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "few_shot_examples",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7729328808951117
+      },
+      "diff": {
+        "accuracy": -0.005251599888089986
+      },
+      "avg_diff": -0.005251599888089986,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "meta_prompt_evolution",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7702254813882345
+      },
+      "diff": {
+        "accuracy": -0.007958999394967137
+      },
+      "avg_diff": -0.007958999394967137,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "auto_prompt_ab",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7710293243342532
+      },
+      "diff": {
+        "accuracy": -0.007155156448948485
+      },
+      "avg_diff": -0.007155156448948485,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "rl_weights",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7716757200796388
+      },
+      "diff": {
+        "accuracy": -0.006508760703562877
+      },
+      "avg_diff": -0.006508760703562877,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "calibracion_stonica",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7518177770256115
+      },
+      "diff": {
+        "accuracy": -0.026366703757590204
+      },
+      "avg_diff": -0.026366703757590204,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "xgb_blending",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7513987273454927
+      },
+      "diff": {
+        "accuracy": -0.026785753437708948
+      },
+      "avg_diff": -0.026785753437708948,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "stacking_ensemble",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7618995444259917
+      },
+      "diff": {
+        "accuracy": -0.016284936357209956
+      },
+      "avg_diff": -0.016284936357209956,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "automl_winner",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7606418129544863
+      },
+      "diff": {
+        "accuracy": -0.017542667828715386
+      },
+      "avg_diff": -0.017542667828715386,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "regime_models",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7682332006042396
+      },
+      "diff": {
+        "accuracy": -0.009951280178962074
+      },
+      "avg_diff": -0.009951280178962074,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "walk_forward",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7758809609657127
+      },
+      "diff": {
+        "accuracy": -0.002303519817488997
+      },
+      "avg_diff": -0.002303519817488997,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "sentiment_vader",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7688035776132544
+      },
+      "diff": {
+        "accuracy": -0.00938090316994733
+      },
+      "avg_diff": -0.00938090316994733,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "sentiment_decay",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7800297415228308
+      },
+      "diff": {
+        "accuracy": 0.0018452607396290954
+      },
+      "avg_diff": 0.0018452607396290954,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "macro_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7833812593003667
+      },
+      "diff": {
+        "accuracy": 0.005196778517165046
+      },
+      "avg_diff": 0.005196778517165046,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "options_flow",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7874992646807406
+      },
+      "diff": {
+        "accuracy": 0.009314783897538925
+      },
+      "avg_diff": 0.009314783897538925,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "online_learning",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7554329406900133
+      },
+      "diff": {
+        "accuracy": -0.02275154009318836
+      },
+      "avg_diff": -0.02275154009318836,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "knowledge_distillation",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7748721991007677
+      },
+      "diff": {
+        "accuracy": -0.003312281682434026
+      },
+      "avg_diff": -0.003312281682434026,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "auto_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7816038743774357
+      },
+      "diff": {
+        "accuracy": 0.0034193935942340437
+      },
+      "avg_diff": 0.0034193935942340437,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "time_series_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7708459447916165
+      },
+      "diff": {
+        "accuracy": -0.007338535991585182
+      },
+      "avg_diff": -0.007338535991585182,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "drawdown_stop",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7753538647594921
+      },
+      "diff": {
+        "accuracy": -0.002830616023709598
+      },
+      "avg_diff": -0.002830616023709598,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "tax_aware",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7831581396387596
+      },
+      "diff": {
+        "accuracy": 0.004973658855557894
+      },
+      "avg_diff": 0.004973658855557894,
+      "seed": 42
+    },
+    {
+      "trial": 0,
+      "component": "hrp_weights",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7758434714213182
+      },
+      "diff": {
+        "accuracy": -0.002341009361883528
+      },
+      "avg_diff": -0.002341009361883528,
+      "seed": 42
+    },
+    {
+      "trial": 1,
+      "component": "ensemble_llm",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7567576856127878
+      },
+      "diff": {
+        "accuracy": -0.021426795170413904
+      },
+      "avg_diff": -0.021426795170413904,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "ensemble_specialization",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7672163335566737
+      },
+      "diff": {
+        "accuracy": -0.010968147226527947
+      },
+      "avg_diff": -0.010968147226527947,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "debate_multimodelo",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7655021744122724
+      },
+      "diff": {
+        "accuracy": -0.012682306370929264
+      },
+      "avg_diff": -0.012682306370929264,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "skill_injection",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7588346482478238
+      },
+      "diff": {
+        "accuracy": -0.01934983253537792
+      },
+      "avg_diff": -0.01934983253537792,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "mistake_injection",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.767341938990122
+      },
+      "diff": {
+        "accuracy": -0.01084254179307964
+      },
+      "avg_diff": -0.01084254179307964,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "few_shot_examples",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7729328808951117
+      },
+      "diff": {
+        "accuracy": -0.005251599888089986
+      },
+      "avg_diff": -0.005251599888089986,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "meta_prompt_evolution",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7702254813882345
+      },
+      "diff": {
+        "accuracy": -0.007958999394967137
+      },
+      "avg_diff": -0.007958999394967137,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "auto_prompt_ab",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7710293243342532
+      },
+      "diff": {
+        "accuracy": -0.007155156448948485
+      },
+      "avg_diff": -0.007155156448948485,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "rl_weights",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7716757200796388
+      },
+      "diff": {
+        "accuracy": -0.006508760703562877
+      },
+      "avg_diff": -0.006508760703562877,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "calibracion_stonica",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7518177770256115
+      },
+      "diff": {
+        "accuracy": -0.026366703757590204
+      },
+      "avg_diff": -0.026366703757590204,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "xgb_blending",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7513987273454927
+      },
+      "diff": {
+        "accuracy": -0.026785753437708948
+      },
+      "avg_diff": -0.026785753437708948,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "stacking_ensemble",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7618995444259917
+      },
+      "diff": {
+        "accuracy": -0.016284936357209956
+      },
+      "avg_diff": -0.016284936357209956,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "automl_winner",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7606418129544863
+      },
+      "diff": {
+        "accuracy": -0.017542667828715386
+      },
+      "avg_diff": -0.017542667828715386,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "regime_models",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7682332006042396
+      },
+      "diff": {
+        "accuracy": -0.009951280178962074
+      },
+      "avg_diff": -0.009951280178962074,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "walk_forward",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7758809609657127
+      },
+      "diff": {
+        "accuracy": -0.002303519817488997
+      },
+      "avg_diff": -0.002303519817488997,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "sentiment_vader",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7688035776132544
+      },
+      "diff": {
+        "accuracy": -0.00938090316994733
+      },
+      "avg_diff": -0.00938090316994733,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "sentiment_decay",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7800297415228308
+      },
+      "diff": {
+        "accuracy": 0.0018452607396290954
+      },
+      "avg_diff": 0.0018452607396290954,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "macro_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7833812593003667
+      },
+      "diff": {
+        "accuracy": 0.005196778517165046
+      },
+      "avg_diff": 0.005196778517165046,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "options_flow",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7874992646807406
+      },
+      "diff": {
+        "accuracy": 0.009314783897538925
+      },
+      "avg_diff": 0.009314783897538925,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "online_learning",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7554329406900133
+      },
+      "diff": {
+        "accuracy": -0.02275154009318836
+      },
+      "avg_diff": -0.02275154009318836,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "knowledge_distillation",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7748721991007677
+      },
+      "diff": {
+        "accuracy": -0.003312281682434026
+      },
+      "avg_diff": -0.003312281682434026,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "auto_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7816038743774357
+      },
+      "diff": {
+        "accuracy": 0.0034193935942340437
+      },
+      "avg_diff": 0.0034193935942340437,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "time_series_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7708459447916165
+      },
+      "diff": {
+        "accuracy": -0.007338535991585182
+      },
+      "avg_diff": -0.007338535991585182,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "drawdown_stop",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7753538647594921
+      },
+      "diff": {
+        "accuracy": -0.002830616023709598
+      },
+      "avg_diff": -0.002830616023709598,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "tax_aware",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7831581396387596
+      },
+      "diff": {
+        "accuracy": 0.004973658855557894
+      },
+      "avg_diff": 0.004973658855557894,
+      "seed": 43
+    },
+    {
+      "trial": 1,
+      "component": "hrp_weights",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7758434714213182
+      },
+      "diff": {
+        "accuracy": -0.002341009361883528
+      },
+      "avg_diff": -0.002341009361883528,
+      "seed": 43
+    },
+    {
+      "trial": 2,
+      "component": "ensemble_llm",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7567576856127878
+      },
+      "diff": {
+        "accuracy": -0.021426795170413904
+      },
+      "avg_diff": -0.021426795170413904,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "ensemble_specialization",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7672163335566737
+      },
+      "diff": {
+        "accuracy": -0.010968147226527947
+      },
+      "avg_diff": -0.010968147226527947,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "debate_multimodelo",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7655021744122724
+      },
+      "diff": {
+        "accuracy": -0.012682306370929264
+      },
+      "avg_diff": -0.012682306370929264,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "skill_injection",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7588346482478238
+      },
+      "diff": {
+        "accuracy": -0.01934983253537792
+      },
+      "avg_diff": -0.01934983253537792,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "mistake_injection",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.767341938990122
+      },
+      "diff": {
+        "accuracy": -0.01084254179307964
+      },
+      "avg_diff": -0.01084254179307964,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "few_shot_examples",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7729328808951117
+      },
+      "diff": {
+        "accuracy": -0.005251599888089986
+      },
+      "avg_diff": -0.005251599888089986,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "meta_prompt_evolution",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7702254813882345
+      },
+      "diff": {
+        "accuracy": -0.007958999394967137
+      },
+      "avg_diff": -0.007958999394967137,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "auto_prompt_ab",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7710293243342532
+      },
+      "diff": {
+        "accuracy": -0.007155156448948485
+      },
+      "avg_diff": -0.007155156448948485,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "rl_weights",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7716757200796388
+      },
+      "diff": {
+        "accuracy": -0.006508760703562877
+      },
+      "avg_diff": -0.006508760703562877,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "calibracion_stonica",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7518177770256115
+      },
+      "diff": {
+        "accuracy": -0.026366703757590204
+      },
+      "avg_diff": -0.026366703757590204,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "xgb_blending",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7513987273454927
+      },
+      "diff": {
+        "accuracy": -0.026785753437708948
+      },
+      "avg_diff": -0.026785753437708948,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "stacking_ensemble",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7618995444259917
+      },
+      "diff": {
+        "accuracy": -0.016284936357209956
+      },
+      "avg_diff": -0.016284936357209956,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "automl_winner",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7606418129544863
+      },
+      "diff": {
+        "accuracy": -0.017542667828715386
+      },
+      "avg_diff": -0.017542667828715386,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "regime_models",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7682332006042396
+      },
+      "diff": {
+        "accuracy": -0.009951280178962074
+      },
+      "avg_diff": -0.009951280178962074,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "walk_forward",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7758809609657127
+      },
+      "diff": {
+        "accuracy": -0.002303519817488997
+      },
+      "avg_diff": -0.002303519817488997,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "sentiment_vader",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7688035776132544
+      },
+      "diff": {
+        "accuracy": -0.00938090316994733
+      },
+      "avg_diff": -0.00938090316994733,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "sentiment_decay",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7800297415228308
+      },
+      "diff": {
+        "accuracy": 0.0018452607396290954
+      },
+      "avg_diff": 0.0018452607396290954,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "macro_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7833812593003667
+      },
+      "diff": {
+        "accuracy": 0.005196778517165046
+      },
+      "avg_diff": 0.005196778517165046,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "options_flow",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7874992646807406
+      },
+      "diff": {
+        "accuracy": 0.009314783897538925
+      },
+      "avg_diff": 0.009314783897538925,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "online_learning",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7554329406900133
+      },
+      "diff": {
+        "accuracy": -0.02275154009318836
+      },
+      "avg_diff": -0.02275154009318836,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "knowledge_distillation",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7748721991007677
+      },
+      "diff": {
+        "accuracy": -0.003312281682434026
+      },
+      "avg_diff": -0.003312281682434026,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "auto_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7816038743774357
+      },
+      "diff": {
+        "accuracy": 0.0034193935942340437
+      },
+      "avg_diff": 0.0034193935942340437,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "time_series_features",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7708459447916165
+      },
+      "diff": {
+        "accuracy": -0.007338535991585182
+      },
+      "avg_diff": -0.007338535991585182,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "drawdown_stop",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7753538647594921
+      },
+      "diff": {
+        "accuracy": -0.002830616023709598
+      },
+      "avg_diff": -0.002830616023709598,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "tax_aware",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7831581396387596
+      },
+      "diff": {
+        "accuracy": 0.004973658855557894
+      },
+      "avg_diff": 0.004973658855557894,
+      "seed": 44
+    },
+    {
+      "trial": 2,
+      "component": "hrp_weights",
+      "baseline": {
+        "accuracy": 0.7781844807832017
+      },
+      "without_component": {
+        "accuracy": 0.7758434714213182
+      },
+      "diff": {
+        "accuracy": -0.002341009361883528
+      },
+      "avg_diff": -0.002341009361883528,
+      "seed": 44
+    }
+  ],
+  "metric": "accuracy",
+  "updated": "2026-11-03T03:30:37.824378Z"
 }
