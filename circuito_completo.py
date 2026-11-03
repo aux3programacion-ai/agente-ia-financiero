@@ -405,7 +405,10 @@ class PipelineOrchestrator:
         ]
 
         if steps:
-            all_steps = [s for s in all_steps if s[0].split(".")[0].strip() in steps]
+            wanted = {int(s) for s in steps}
+            all_steps = [
+                s for s in all_steps if int(s[0].split(".")[0].strip()) in wanted
+            ]
 
         results = {}
         for name, func in all_steps:

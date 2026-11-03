@@ -209,6 +209,10 @@ ml:
 # ENSEMBLE LLM
 # ============================================================
 llm:
+  # Kill-switch global de LLM. Si es false (o LLM_DISABLED=1 en el entorno),
+  # analisis_ia.py NO llama a ningun proveedor y cae directamente al fallback
+  # tecnico (trend-fallback). El fallback sigue escribiendo Datos/analisis_ia.json.
+  enabled: true
   modelos:
     - "openrouter/free"
     - "meta-llama/llama-3.3-70b-instruct:free"
