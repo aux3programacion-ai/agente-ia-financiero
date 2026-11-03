@@ -145,7 +145,7 @@ ml:
   walk_forward:
     n_splits: 5
     test_size_dias: 63      # ~3 meses
-    gap_dias: 5             # embargo entre train/test
+    gap_dias: 20             # embargo >= horizonte de prediccion (20 dias)
     min_train_size: 100
   
   # XGBoost base params

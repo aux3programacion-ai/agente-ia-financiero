@@ -262,12 +262,11 @@ class PipelineOrchestrator:
 
         from walkforward_validator import walk_forward_train_test
 
+        # n_splits/test_size/gap desde config/settings.yaml (ml.walk_forward: 5 splits, 63d, gap 20d)
         result = walk_forward_train_test(
             X=X,
             y=y,
             model_fn=xgb_fn,
-            n_splits=3,
-            test_size_dias=42,
             model_name="xgboost_global",
             regime="global",
         )
