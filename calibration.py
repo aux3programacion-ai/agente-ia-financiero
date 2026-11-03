@@ -4,6 +4,7 @@ calibration.py - Calibración de probabilidades isotónica/Platt mediante
 sklearn CalibratedClassifierCV. Reemplaza el factor heurístico actual.
 Integra con model_store.py para persistencia.
 """
+
 import json
 import os
 import time
@@ -16,14 +17,14 @@ from sklearn.metrics import brier_score_loss
 
 from config.settings import get_setting
 
-DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
-OUTPUT_DIR = Path(DATA_DIR) / 'Datos'
+DATA_DIR = os.environ.get("GITHUB_WORKSPACE", ".")
+OUTPUT_DIR = Path(DATA_DIR) / "Datos"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-CAL_CONFIG = get_setting('ml.calibracion', {})
-METODO = CAL_CONFIG.get('metodo', 'isotonic')
-MIN_MUESTRAS = CAL_CONFIG.get('min_muestras_calibracion', 50)
-HOLDOUT_RATIO = CAL_CONFIG.get('holdout_ratio', 0.2)
+CAL_CONFIG = get_setting("ml.calibracion", {})
+METODO = CAL_CONFIG.get("metodo", "isotonic")
+MIN_MUESTRAS = CAL_CONFIG.get("min_muestras_calibracion", 50)
+HOLDOUT_RATIO = CAL_CONFIG.get("holdout_ratio", 0.2)
 
 
 class ProbabilityCalibrator:
@@ -41,26 +42,29 @@ class ProbabilityCalibrator:
     def fit(self, y_true: np.ndarray, y_prob: np.ndarray, X: np.ndarray | None = None):
         """
         Entrena calibrador isotónico/Platt.
-        
+
         Args:
             y_true: Labels reales (0/1)
             y_prob: Probabilidades sin calibrar
             X: Features originales (opcional, para Platt)
         """
         if len(y_true) < MIN_MUESTRAS:
-            print(f'[Calibracion] Pocas muestras ({len(y_true)} < {MIN_MUESTRAS}), saltando')
+            print(
+                f"[Calibracion] Pocas muestras ({len(y_true)} < {MIN_MUESTRAS}), saltando"
+            )
             return self
 
         self.brier_before = float(brier_score_loss(y_true, y_prob))
 
-        if self.metodo == 'isotonic':
-            self.calibrator = IsotonicRegression(out_of_bounds='clip')
+        if self.metodo == "isotonic":
+            self.calibrator = IsotonicRegression(out_of_bounds="clip")
             self.calibrator.fit(y_prob, y_true)
-        elif self.metodo == 'platt':
+        elif self.metodo == "platt":
             from sklearn.linear_model import LogisticRegression
+
             if X is not None:
                 # Platt scaling con features
-                self.calibrator = LogisticRegression(C=1.0, class_weight='balanced')
+                self.calibrator = LogisticRegression(C=1.0, class_weight="balanced")
                 self.calibrator.fit(X, y_true)
             else:
                 # Platt scaling solo con log-odds
@@ -68,7 +72,7 @@ class ProbabilityCalibrator:
                 self.calibrator = LogisticRegression(C=1.0)
                 self.calibrator.fit(log_odds.reshape(-1, 1), y_true)
         else:
-            raise ValueError(f'Método desconocido: {metodo}')
+            raise ValueError(f"Método desconocido: {metodo}")
 
         self.is_fitted = True
 
@@ -85,10 +89,10 @@ class ProbabilityCalibrator:
     def predict(self, y_prob: np.ndarray, X: np.ndarray | None = None) -> np.ndarray:
         if not self.is_fitted or self.calibrator is None:
             return y_prob
-        
-        if self.metodo == 'isotonic':
+
+        if self.metodo == "isotonic":
             return self.calibrator.predict(y_prob)
-        elif self.metodo == 'platt':
+        elif self.metodo == "platt":
             if X is not None:
                 return self.calibrator.predict_proba(X)[:, 1]
             else:
@@ -102,19 +106,21 @@ class ProbabilityCalibrator:
 
     def get_summary(self) -> dict:
         return {
-            'metodo': self.metodo,
-            'is_fitted': self.is_fitted,
-            'brier_before': self.brier_before,
-            'brier_after': self.brier_after,
-            'brier_improvement': (self.brier_before - self.brier_after) if self.brier_before is not None else None,
-            'calibration_error': self.calibration_error
+            "metodo": self.metodo,
+            "is_fitted": self.is_fitted,
+            "brier_before": self.brier_before,
+            "brier_after": self.brier_after,
+            "brier_improvement": (self.brier_before - self.brier_after)
+            if self.brier_before is not None
+            else None,
+            "calibration_error": self.calibration_error,
         }
 
 
 class CalibrationManager:
     def __init__(self):
         self.calibrators: dict[str, ProbabilityCalibrator] = {}
-        self.calib_path = OUTPUT_DIR / 'calibracion_real.json'
+        self.calib_path = OUTPUT_DIR / "calibracion_real.json"
         self._load()
 
     def _load(self):
@@ -122,35 +128,36 @@ class CalibrationManager:
             try:
                 data = json.loads(self.calib_path.read_text())
                 self.calibrators = {
-                    k: self._deserialize(v) for k, v in data.get('calibrators', {}).items()
+                    k: self._deserialize(v)
+                    for k, v in data.get("calibrators", {}).items()
                 }
             except Exception:
                 pass
 
     def _save(self):
         data = {
-            'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-            'calibrators': {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "calibrators": {
                 k: {
-                    'metodo': c.metodo,
-                    'is_fitted': c.is_fitted,
-                    'brier_before': c.brier_before,
-                    'brier_after': c.brier_after,
-                    'calibration_error': c.calibration_error
+                    "metodo": c.metodo,
+                    "is_fitted": c.is_fitted,
+                    "brier_before": c.brier_before,
+                    "brier_after": c.brier_after,
+                    "calibration_error": c.calibration_error,
                 }
                 for k, c in self.calibrators.items()
             },
-            'global_brier': self.brier_score()
+            "global_brier": self.brier_score(),
         }
         self.calib_path.write_text(json.dumps(data, indent=2))
 
     def _deserialize(self, data: dict) -> ProbabilityCalibrator:
-        c = ProbabilityCalibrator(metodo=data.get('metodo', 'isotonic'))
+        c = ProbabilityCalibrator(metodo=data.get("metodo", "isotonic"))
         # Reconstruimos el calibrador
-        c.is_fitted = data.get('is_fitted', False)
-        c.brier_before = data.get('brier_before')
-        c.brier_after = data.get('brier_after')
-        c.calibration_error = data.get('calibration_error')
+        c.is_fitted = data.get("is_fitted", False)
+        c.brier_before = data.get("brier_before")
+        c.brier_after = data.get("brier_after")
+        c.calibration_error = data.get("calibration_error")
         return c
 
     def get_or_create(self, key: str, metodo: str = METODO) -> ProbabilityCalibrator:
@@ -164,7 +171,7 @@ class CalibrationManager:
         y_true: np.ndarray,
         y_prob: np.ndarray,
         X: np.ndarray | None = None,
-        save: bool = True
+        save: bool = True,
     ) -> ProbabilityCalibrator:
         cal = self.get_or_create(key)
         cal.fit(y_true, y_prob, X)
@@ -179,6 +186,16 @@ class CalibrationManager:
                 scores.append(c.brier_after)
         return float(np.mean(scores)) if scores else 0.0
 
+    def get_summary(self) -> dict:
+        calibrators = {k: c.get_summary() for k, c in self.calibrators.items()}
+        fitted = sum(1 for c in self.calibrators.values() if c.is_fitted)
+        return {
+            "n_calibrators": len(calibrators),
+            "n_fitted": fitted,
+            "global_brier": self.brier_score(),
+            "calibrators": calibrators,
+        }
+
     def calibrate_confidences(self, predictions: list[dict]) -> list[dict]:
         """
         Aplica calibración isotónica a todas las predicciones en la bitácora.
@@ -186,15 +203,15 @@ class CalibrationManager:
         """
         calibrated = []
         for p in predictions:
-            ticker = p.get('ticker', '')
-            prob = p.get('probabilidad', 50) / 100.0
+            ticker = p.get("ticker", "")
+            prob = p.get("probabilidad", 50) / 100.0
             cal = self.calibrators.get(ticker)
             if cal and cal.is_fitted:
                 prob_cal = cal.predict_single(prob)
-                p['probabilidad_calibrada'] = round(prob_cal * 100, 1)
-                p['probabilidad_original'] = round(prob * 100, 1)
-                p['calibracion_aplicada'] = True
-                p['metodo_calibracion'] = cal.metodo
+                p["probabilidad_calibrada"] = round(prob_cal * 100, 1)
+                p["probabilidad_original"] = round(prob * 100, 1)
+                p["calibracion_aplicada"] = True
+                p["metodo_calibracion"] = cal.metodo
             calibrated.append(p)
         return calibrated
 
@@ -210,9 +227,7 @@ def get_calibration_manager() -> CalibrationManager:
 
 
 def calibrate_probabilities(
-    y_true: np.ndarray,
-    y_prob: np.ndarray,
-    metodo: str = METODO
+    y_true: np.ndarray, y_prob: np.ndarray, metodo: str = METODO
 ) -> tuple[ProbabilityCalibrator, np.ndarray]:
     cal = ProbabilityCalibrator(metodo=metodo)
     cal.fit(y_true, y_prob)
@@ -220,19 +235,23 @@ def calibrate_probabilities(
     return cal, y_calib
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Test
-    print('[Calibracion] Test con datos sintéticos...')
+    print("[Calibracion] Test con datos sintéticos...")
     np.random.seed(42)
     y_true = np.random.binomial(1, 0.3, 1000)
     y_prob_overconfident = np.clip(y_true + np.random.randn(1000) * 0.5, 0.05, 0.95)
-    
-    for metodo in ['isotonic', 'platt']:
-        cal, y_cal = calibrate_probabilities(y_true, y_prob_overconfident, metodo=metodo)
-        print(f'  {metodo}: Brier before={cal.brier_before:.4f}, after={cal.brier_after:.4f}')
-    
+
+    for metodo in ["isotonic", "platt"]:
+        cal, y_cal = calibrate_probabilities(
+            y_true, y_prob_overconfident, metodo=metodo
+        )
+        print(
+            f"  {metodo}: Brier before={cal.brier_before:.4f}, after={cal.brier_after:.4f}"
+        )
+
     # Manager test
     cm = get_calibration_manager()
-    cm.calibrate('NVDA', y_true[:500], y_prob_overconfident[:500])
-    cm.calibrate('AAPL', y_true[500:], y_prob_overconfident[500:])
-    print(f'  Global Brier: {cm.brier_score():.4f}')
+    cm.calibrate("NVDA", y_true[:500], y_prob_overconfident[:500])
+    cm.calibrate("AAPL", y_true[500:], y_prob_overconfident[500:])
+    print(f"  Global Brier: {cm.brier_score():.4f}")
