@@ -4,6 +4,7 @@ noticias_mercado.py - Obtiene noticias frescas por ticker via RSS gratuito
 (Yahoo Finance RSS + Google News RSS) y las estructura para el AI.
 Sin API key, sin librerias externas.
 """
+
 import json
 import os
 import re
@@ -15,34 +16,65 @@ from xml.etree import ElementTree
 from portafolio_utils import cargar_portafolio
 from noticias_es import enriquecer
 
-TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
-           'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
-           'LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
+TICKERS = [
+    "NVDA",
+    "MU",
+    "DELL",
+    "AVGO",
+    "DDOG",
+    "SMCI",
+    "SNOW",
+    "CRWD",
+    "NOW",
+    "TSM",
+    "ARM",
+    "OKTA",
+    "HPE",
+    "NTAP",
+    "CLS",
+    "AAPL",
+    "AMZN",
+    "GOOGL",
+    "META",
+    "MSFT",
+    "LLY",
+    "AMAT",
+    "LRCX",
+    "PANW",
+    "ORCL",
+    "HON",
+    "UBER",
+    "GE",
+    "COST",
+    "NEE",
+]
 
-DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
+DATA_DIR = os.environ.get("GITHUB_WORKSPACE", ".")
 
 # Load portfolio tickers (always monitored for news)
 PORTAFOLIO_TICKERS = set(cargar_portafolio(DATA_DIR))
 if PORTAFOLIO_TICKERS:
-    print(f'[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {", ".join(sorted(PORTAFOLIO_TICKERS))}')
+    print(
+        f"[Portafolio] Cargados {len(PORTAFOLIO_TICKERS)} tickers: {', '.join(sorted(PORTAFOLIO_TICKERS))}"
+    )
 
 # Merge portfolio tickers into core list (deduped)
 TICKERS = list(dict.fromkeys(TICKERS + sorted(PORTAFOLIO_TICKERS)))
 
 SECTOR_MAP = {
-    'Semiconductores': ['NVDA','MU','AVGO','TSM','ARM'],
-    'Servidores IA': ['DELL','SMCI','HPE'],
-    'Software IA': ['DDOG','SNOW','NOW'],
-    'Ciberseguridad': ['CRWD','PANW','OKTA'],
-    'Almacenamiento': ['NTAP','CLS'],
-    'Consumer Tech': ['AAPL','AMZN','GOOGL','META','MSFT'],
-    'Farmaceutico': ['LLY'],
-    'Semicon Equip': ['AMAT','LRCX'],
-    'Cloud/Database': ['ORCL'],
-    'Industrial': ['HON','GE'],
-    'Movilidad/Tech': ['UBER'],
-    'Consumo Defensivo': ['COST'],
-    'Utilities/Energy': ['NEE']
+    "Semiconductores": ["NVDA", "MU", "AVGO", "TSM", "ARM"],
+    "Servidores IA": ["DELL", "SMCI", "HPE"],
+    "Software IA": ["DDOG", "SNOW", "NOW"],
+    "Ciberseguridad": ["CRWD", "PANW", "OKTA"],
+    "Almacenamiento": ["NTAP", "CLS"],
+    "Consumer Tech": ["AAPL", "AMZN", "GOOGL", "META", "MSFT"],
+    "Farmaceutico": ["LLY"],
+    "Semicon Equip": ["AMAT", "LRCX"],
+    "Cloud/Database": ["ORCL"],
+    "Industrial": ["HON", "GE"],
+    "Movilidad/Tech": ["UBER"],
+    "Consumo Defensivo": ["COST"],
+    "Utilities/Energy": ["NEE"],
 }
 # Add any portfolio tickers not already mapped to "Portafolio" sector
 all_mapped = set()
@@ -50,62 +82,69 @@ for v in SECTOR_MAP.values():
     all_mapped.update(v)
 for t in PORTAFOLIO_TICKERS:
     if t not in all_mapped:
-        SECTOR_MAP['Portafolio'] = SECTOR_MAP.get('Portafolio', []) + [t]
-OUT_DIR = os.path.join(DATA_DIR, 'Datos')
+        SECTOR_MAP["Portafolio"] = SECTOR_MAP.get("Portafolio", []) + [t]
+OUT_DIR = os.path.join(DATA_DIR, "Datos")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-NEWS_PATH = os.path.join(OUT_DIR, 'noticias_recientes.json')
-RESUMEN_PATH = os.path.join(OUT_DIR, 'News_Feed_Resumen.txt')
-SEEN_PATH = os.path.join(OUT_DIR, 'noticias_vistas.json')
+NEWS_PATH = os.path.join(OUT_DIR, "noticias_recientes.json")
+RESUMEN_PATH = os.path.join(OUT_DIR, "News_Feed_Resumen.txt")
+SEEN_PATH = os.path.join(OUT_DIR, "noticias_vistas.json")
+
 
 def fetch_rss(url, max_items=3):
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             raw = resp.read()
         root = ElementTree.fromstring(raw)
-        ns = {'atom': 'http://www.w3.org/2005/Atom',
-              'dc': 'http://purl.org/dc/elements/1.1/',
-              'content': 'http://purl.org/rss/1.0/modules/content/'}
+        ns = {
+            "atom": "http://www.w3.org/2005/Atom",
+            "dc": "http://purl.org/dc/elements/1.1/",
+            "content": "http://purl.org/rss/1.0/modules/content/",
+        }
         items = []
-        for entry in root.iter('item'):
-            title = entry.findtext('title', '')
-            link = entry.findtext('link', '')
-            pubdate = entry.findtext('pubDate', '')
-            desc = entry.findtext('description', '')
+        for entry in root.iter("item"):
+            title = entry.findtext("title", "")
+            link = entry.findtext("link", "")
+            pubdate = entry.findtext("pubDate", "")
+            desc = entry.findtext("description", "")
             if title:
-                items.append({
-                    'titulo': title.strip(),
-                    'link': link.strip(),
-                    'fecha': pubdate.strip(),
-                    'descripcion': desc.strip()
-                })
+                items.append(
+                    {
+                        "titulo": title.strip(),
+                        "link": link.strip(),
+                        "fecha": pubdate.strip(),
+                        "descripcion": desc.strip(),
+                    }
+                )
             if len(items) >= max_items:
                 break
         return items
     except Exception as e:
-        print(f'  [RSS] Error: {e}')
+        print(f"  [RSS] Error: {e}")
         return []
+
 
 def extraer_sentimiento_ia(ticker, noticias):
     if not noticias:
         return None
     try:
-        if not os.environ.get('OPENROUTER_KEY'):
-            env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+        if not os.environ.get("OPENROUTER_KEY"):
+            env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
             if os.path.exists(env_path):
-                for linea in open(env_path, encoding='utf-8', errors='replace'):
+                for linea in open(env_path, encoding="utf-8", errors="replace"):
                     linea = linea.strip()
-                    if linea and not linea.startswith('#') and '=' in linea:
-                        k, v = linea.split('=', 1)
-                        k = k.strip(); v = v.strip().strip('"').strip("'")
+                    if linea and not linea.startswith("#") and "=" in linea:
+                        k, v = linea.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
                         if k and v:
                             os.environ.setdefault(k, v)
-        api_key = os.environ.get('OPENROUTER_KEY')
+        api_key = os.environ.get("OPENROUTER_KEY")
         if not api_key:
             return None
-        textos = '\n'.join(f'- {n["titulo"]}' for n in noticias[:3])
-        prompt = f'''Analiza estas noticias de {ticker} y responde SOLO este JSON:
+        textos = "\n".join(f"- {n['titulo']}" for n in noticias[:3])
+        prompt = f"""Analiza estas noticias de {ticker} y responde SOLO este JSON:
 
 Noticias:
 {textos}
@@ -118,96 +157,113 @@ Noticias:
   "resumen": "1 oracion"
 }}
 
-Score: -1.0 (muy negativo) a +1.0 (muy positivo).'''
-        payload = json.dumps({
-            'model': 'openrouter/free',
-            'messages': [
-                {'role': 'system', 'content': 'Eres un analista de noticias financieras. Respondes SOLO JSON valido.'},
-                {'role': 'user', 'content': prompt}
-            ],
-            'temperature': 0.1,
-            'max_tokens': 300
-        }).encode('utf-8')
+Score: -1.0 (muy negativo) a +1.0 (muy positivo)."""
+        payload = json.dumps(
+            {
+                "model": "openrouter/free",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Eres un analista de noticias financieras. Respondes SOLO JSON valido.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.1,
+                "max_tokens": 300,
+            }
+        ).encode("utf-8")
         req = urllib.request.Request(
-            'https://openrouter.ai/api/v1/chat/completions',
+            "https://openrouter.ai/api/v1/chat/completions",
             data=payload,
             headers={
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://github.com/aux3programacion-ai/agente-ia-financiero',
-                'X-Title': 'Agente IA Financiero'
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/aux3programacion-ai/agente-ia-financiero",
+                "X-Title": "Agente IA Financiero",
             },
-            method='POST')
+            method="POST",
+        )
         with urllib.request.urlopen(req, timeout=20) as resp:
-            raw = json.loads(resp.read())['choices'][0]['message']['content']
+            raw = json.loads(resp.read())["choices"][0]["message"]["content"]
         raw = raw.strip()
-        if raw.startswith('```'):
-            m = re.search(r'```(?:json)?\s*([\s\S]*?)```', raw)
-            if m: raw = m.group(1).strip()
-        inicio = raw.find('{'); fin = raw.rfind('}')
+        if raw.startswith("```"):
+            m = re.search(r"```(?:json)?\s*([\s\S]*?)```", raw)
+            if m:
+                raw = m.group(1).strip()
+        inicio = raw.find("{")
+        fin = raw.rfind("}")
         if inicio != -1 and fin != -1:
-            raw = raw[inicio:fin+1]
+            raw = raw[inicio : fin + 1]
         return json.loads(raw)
     except Exception as e:
-        print(f'  [Sentimiento IA] Error: {e}')
+        print(f"  [Sentimiento IA] Error: {e}")
         return None
+
 
 # General market news RSS feeds (multiple sources)
 GENERAL_RSS = [
-    ('Reuters', 'https://www.reutersagency.com/feed/'),
-    ('Reuters Markets', 'https://www.reuters.com/tools/rss'),
-    ('CNBC', 'https://www.cnbc.com/id/100003114/device/rss/rss.html'),
-    ('CNBC Markets', 'https://www.cnbc.com/id/15839069/device/rss/rss.html'),
-    ('Bloomberg', 'https://www.bloomberg.com/feed/podcast/market-morning.xml'),
-    ('MarketWatch', 'https://feeds.marketwatch.com/marketwatch/topstories/'),
-    ('Investing.com', 'https://www.investing.com/rss/news.rss'),
-    ('Yahoo Finance', 'https://finance.yahoo.com/news/rssindex')
+    ("Reuters", "https://www.reutersagency.com/feed/"),
+    ("Reuters Markets", "https://www.reuters.com/tools/rss"),
+    ("CNBC", "https://www.cnbc.com/id/100003114/device/rss/rss.html"),
+    ("CNBC Markets", "https://www.cnbc.com/id/15839069/device/rss/rss.html"),
+    ("Bloomberg", "https://www.bloomberg.com/feed/podcast/market-morning.xml"),
+    ("MarketWatch", "https://feeds.marketwatch.com/marketwatch/topstories/"),
+    ("Investing.com", "https://www.investing.com/rss/news.rss"),
+    ("Yahoo Finance", "https://finance.yahoo.com/news/rssindex"),
 ]
 
+
 def main():
-    print('[Noticias] Obteniendo noticias frescas de mercado...')
+    print("[Noticias] Obteniendo noticias frescas de mercado...")
 
     # Cargar noticias ya vistas para deduplicar
     vistas = set()
     if os.path.exists(SEEN_PATH):
         try:
             vistas = set(json.load(open(SEEN_PATH)))
-        except Exception: pass
+        except Exception:
+            pass
 
     noticias_por_ticker = {}
     noticias_generales = []
     total_nuevas = 0
 
     # --- General market news from multiple sources ---
-    print('[Noticias] Fuentes generales: Reuters, CNBC, Bloomberg, MarketWatch...')
+    print("[Noticias] Fuentes generales: Reuters, CNBC, Bloomberg, MarketWatch...")
     for fuente, url in GENERAL_RSS:
         try:
             items = fetch_rss(url, max_items=4)
             for item in items:
-                item['fuente'] = fuente
-                tid = item['titulo'][:80]
+                item["fuente"] = fuente
+                tid = item["titulo"][:80]
                 if tid not in vistas:
                     vistas.add(tid)
                     noticias_generales.append(item)
                     total_nuevas += 1
             time.sleep(0.3)
         except Exception as e:
-            print(f'  [RSS {fuente}] Error: {e}')
+            print(f"  [RSS {fuente}] Error: {e}")
 
     # --- Per-ticker news ---
     for t in TICKERS:
-        yahoo_url = f'https://finance.yahoo.com/rss/headline?s={t}'
+        yahoo_url = f"https://finance.yahoo.com/rss/headline?s={t}"
         items = fetch_rss(yahoo_url, max_items=3)
         if not items:
             time.sleep(0.3)
-            items = fetch_rss(f'https://news.google.com/rss/search?q={t}+stock&hl=en-US&gl=US', max_items=2)
+            items = fetch_rss(
+                f"https://news.google.com/rss/search?q={t}+stock&hl=en-US&gl=US",
+                max_items=2,
+            )
         if not items:
             time.sleep(0.3)
-            items = fetch_rss(f'https://feeds.finance.yahoo.com/rss/2.0/headline?s={t}&region=US&lang=en-US', max_items=2)
+            items = fetch_rss(
+                f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={t}&region=US&lang=en-US",
+                max_items=2,
+            )
 
         nuevas = []
         for item in items:
-            tid = item['titulo'][:80]
+            tid = item["titulo"][:80]
             if tid not in vistas:
                 vistas.add(tid)
                 nuevas.append(item)
@@ -223,12 +279,12 @@ def main():
         # Campos aditivos: el resto del pipeline sigue leyendo 'noticias'/'sentimiento'.
         es = enriquecer(t)
         noticias_por_ticker[t] = {
-            'noticias': noticias_por_ticker[t],
-            'sentimiento': sent,
-            'titulares_es': es['titulares_es'],
-            'sentimiento_es': es['sentimiento_es']
+            "noticias": noticias_por_ticker[t],
+            "sentimiento": sent,
+            "titulares_es": es["titulares_es"],
+            "sentimiento_es": es["sentimiento_es"],
         }
-        print(f'  [Noticias ES] {t}: {len(es["titulares_es"])} titulares en espanol')
+        print(f"  [Noticias ES] {t}: {len(es['titulares_es'])} titulares en espanol")
         time.sleep(0.2)
 
     # Construir estructura de salida por sector
@@ -236,54 +292,63 @@ def main():
     for sector, tickers in SECTOR_MAP.items():
         notis_sector = []
         for t in tickers:
-            data = noticias_por_ticker.get(t, {'noticias': [], 'sentimiento': None})
-            for n in data['noticias']:
-                notis_sector.append({'ticker': t, **n})
+            data = noticias_por_ticker.get(t, {"noticias": [], "sentimiento": None})
+            for n in data["noticias"]:
+                notis_sector.append({"ticker": t, **n})
         por_sector[sector] = notis_sector
 
     output = {
-        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'total_tickers': len(TICKERS),
-        'total_noticias_nuevas': total_nuevas,
-        'noticias_generales': noticias_generales[:20],
-        'fuentes_generales': len(GENERAL_RSS),
-        'por_ticker': noticias_por_ticker,
-        'por_sector': por_sector
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "total_tickers": len(TICKERS),
+        "total_noticias_nuevas": total_nuevas,
+        "noticias_generales": noticias_generales[:20],
+        "fuentes_generales": len(GENERAL_RSS),
+        "por_ticker": noticias_por_ticker,
+        "por_sector": por_sector,
     }
 
-    with open(NEWS_PATH, 'w', encoding='utf-8') as f:
+    with open(NEWS_PATH, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
     # Guardar set de vistas
-    with open(SEEN_PATH, 'w', encoding='utf-8') as f:
+    with open(SEEN_PATH, "w", encoding="utf-8") as f:
         json.dump(list(vistas), f, indent=2, ensure_ascii=False)
 
     # Actualizar resumen TXT legible
-    ahora = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
-    lines = [f'NEWS FEED - {ahora}', f'{total_nuevas} noticias nuevas | {len(TICKERS)} tickers escaneados | {len(GENERAL_RSS)} fuentes generales', '']
+    ahora = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines = [
+        f"NEWS FEED - {ahora}",
+        f"{total_nuevas} noticias nuevas | {len(TICKERS)} tickers escaneados | {len(GENERAL_RSS)} fuentes generales",
+        "",
+    ]
     if noticias_generales:
-        lines.append('=== MERCADO GLOBAL (Reuters, CNBC, Bloomberg, MarketWatch) ===')
+        lines.append("=== MERCADO GLOBAL (Reuters, CNBC, Bloomberg, MarketWatch) ===")
         for n in noticias_generales[:8]:
-            lines.append(f'  [{n.get("fuente","?")}] {n["titulo"][:120]}')
-        lines.append('')
-    lines.append('=== POR TICKER ===')
+            lines.append(f"  [{n.get('fuente', '?')}] {n['titulo'][:120]}")
+        lines.append("")
+    lines.append("=== POR TICKER ===")
     for t in TICKERS:
-        data = noticias_por_ticker.get(t, {'noticias': [], 'sentimiento': None})
-        notis = data['noticias']
-        sent = data.get('sentimiento')
+        data = noticias_por_ticker.get(t, {"noticias": [], "sentimiento": None})
+        notis = data["noticias"]
+        sent = data.get("sentimiento")
         if notis:
             for n in notis[:2]:
-                lines.append(f'[{t}] {n["titulo"][:120]}')
+                lines.append(f"[{t}] {n['titulo'][:120]}")
         if sent:
-            lines.append(f'       Sentimiento: {sent.get("sentimiento","?")} (score:{sent.get("score","?")})')
-    lines.append('')
-    lines.append('--- Generado por Agente IA Financiero | No constituye asesoramiento ---')
+            lines.append(
+                f"       Sentimiento: {sent.get('sentimiento', '?')} (score:{sent.get('score', '?')})"
+            )
+    lines.append("")
+    lines.append(
+        "--- Generado por Agente IA Financiero | No constituye asesoramiento ---"
+    )
 
-    with open(RESUMEN_PATH, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines))
+    with open(RESUMEN_PATH, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
 
-    print(f'[OK] {total_nuevas} noticias nuevas para {len(TICKERS)} tickers')
-    print('[OK] Noticias guardadas en noticias_recientes.json')
+    print(f"[OK] {total_nuevas} noticias nuevas para {len(TICKERS)} tickers")
+    print("[OK] Noticias guardadas en noticias_recientes.json")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
