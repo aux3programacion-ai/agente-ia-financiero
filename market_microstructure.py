@@ -4,16 +4,14 @@ market_microstructure.py - Market microstructure analysis.
 Order flow imbalance, VPIN, tick data analysis, bid-ask spread estimator,
 Kyle's lambda, and trade classification.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
 import json
 import os
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-from config.settings import get_setting
+import numpy as np
+import pandas as pd
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'microstructure'
@@ -72,7 +70,7 @@ class OrderFlowImbalance:
 class VPIN:
     """Volume-synchronized Probability of Informed Trading."""
     
-    def __init__(self, n_buckets: int = 50, bucket_volume: Optional[int] = None):
+    def __init__(self, n_buckets: int = 50, bucket_volume: int | None = None):
         self.n_buckets = n_buckets
         self.bucket_volume = bucket_volume
     
@@ -223,9 +221,9 @@ class MarketMicrostructureAnalyzer:
         self.kyle = KyleLambda()
         self.classifier = TradeClassification()
         self.liquidity = LiquidityMeasures()
-        self.results: Dict[str, Any] = {}
+        self.results: dict[str, Any] = {}
     
-    def analyze(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def analyze(self, df: pd.DataFrame) -> dict[str, Any]:
         results = {}
         
         if all(c in df.columns for c in ['bid', 'ask']):

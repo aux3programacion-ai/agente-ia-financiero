@@ -5,11 +5,10 @@ Explicabilidad regulatoria, debug de features, identificación de sesgos.
 """
 import json
 import os
-import time
-import numpy as np
-import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any
+
+import numpy as np
 
 try:
     import shap
@@ -30,7 +29,7 @@ PLOT_TOP_N = EXP_CONFIG.get('shap', {}).get('plot_top_n', 10)
 
 
 class ShapExplainer:
-    def __init__(self, model, feature_names: List[str], background_data: Optional[np.ndarray] = None):
+    def __init__(self, model, feature_names: list[str], background_data: np.ndarray | None = None):
         self.model = model
         self.feature_names = feature_names
         self.background_data = background_data
@@ -64,7 +63,7 @@ class ShapExplainer:
             print(f'[Shap] Error creating explainer: {e}')
             self.explainer = None
 
-    def explain(self, X: np.ndarray, sample: bool = True) -> Dict[str, Any]:
+    def explain(self, X: np.ndarray, sample: bool = True) -> dict[str, Any]:
         """
         Calcula SHAP values para las predicciones.
         
@@ -111,7 +110,7 @@ class ShapExplainer:
         except Exception as e:
             return {'error': str(e)}
 
-    def _compute_feature_importance(self, shap_values: np.ndarray, X: np.ndarray) -> List[Dict]:
+    def _compute_feature_importance(self, shap_values: np.ndarray, X: np.ndarray) -> list[dict]:
         """Feature importance basada en |SHAP| mean."""
         mean_abs_shap = np.mean(np.abs(shap_values), axis=0)
         total = mean_abs_shap.sum()
@@ -129,7 +128,7 @@ class ShapExplainer:
         importance.sort(key=lambda x: x['importance'], reverse=True)
         return importance
 
-    def explain_single(self, x: np.ndarray) -> Dict[str, float]:
+    def explain_single(self, x: np.ndarray) -> dict[str, float]:
         """Explica una predicción individual."""
         if self.explainer is None:
             self._build_explainer(x.reshape(1, -1))
@@ -151,7 +150,7 @@ class ShapExplainer:
         except Exception as e:
             return {'error': str(e)}
 
-    def get_dependence_plot_data(self, feature_idx: int, X: np.ndarray) -> Dict:
+    def get_dependence_plot_data(self, feature_idx: int, X: np.ndarray) -> dict:
         """Datos para SHAP dependence plot."""
         if self.shap_values is None:
             return {}
@@ -162,7 +161,7 @@ class ShapExplainer:
             'feature_name': self.feature_names[feature_idx] if feature_idx < len(self.feature_names) else f'feature_{feature_idx}'
         }
 
-    def get_summary_plot_data(self, top_n: int = 10) -> Dict:
+    def get_summary_plot_data(self, top_n: int = 10) -> dict:
         """Datos para SHAP summary plot."""
         if self.shap_values is None:
             return {}
@@ -193,16 +192,16 @@ class ShapExplainer:
 
 def explain_model_predictions(
     model,
-    feature_names: List[str],
+    feature_names: list[str],
     X: np.ndarray,
     output_name: str = 'shap_explanations'
-) -> Dict:
+) -> dict:
     """Función conveniente para explicar modelo completo."""
     explainer = ShapExplainer(model, feature_names)
     return explainer.save_explanations(X, output_name)
 
 
-def get_top_features(model, feature_names: List[str], X: np.ndarray, n: int = 10) -> List[str]:
+def get_top_features(model, feature_names: list[str], X: np.ndarray, n: int = 10) -> list[str]:
     """Retorna top N features por SHAP importance."""
     explainer = ShapExplainer(model, feature_names)
     result = explainer.explain(X)
@@ -215,8 +214,8 @@ def get_top_features(model, feature_names: List[str], X: np.ndarray, n: int = 10
 def detect_feature_drift(
     X_production: np.ndarray,
     X_reference: np.ndarray,
-    feature_names: List[str]
-) -> Dict[str, float]:
+    feature_names: list[str]
+) -> dict[str, float]:
     """
     Detecta drift en distribución de features usando SHAP.
     Retorna PSI (Population Stability Index) por feature.

@@ -4,27 +4,23 @@ multi_asset_rl.py - Multi-asset portfolio optimization with RL.
 FinRL-style environment for portfolio allocation, PPO/SAC agents
 for multi-asset rebalancing, with transaction costs and slippage.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple, Union
-from dataclasses import dataclass, field
-from datetime import datetime
 import json
 import os
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 try:
     import gymnasium as gym
     import torch
-    import torch.nn as nn
-    import torch.optim as optim
+    from torch import nn, optim
     GYM_AVAILABLE = True
     TORCH_AVAILABLE = True
 except ImportError:
     GYM_AVAILABLE = False
     TORCH_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'multi_asset_rl'
@@ -37,12 +33,12 @@ class MultiAssetPortfolioEnv(gym.Env if GYM_AVAILABLE else object):
     metadata = {'render_modes': ['human']}
     
     def __init__(self, prices: pd.DataFrame, returns: pd.DataFrame,
-                 features: Optional[pd.DataFrame] = None,
+                 features: pd.DataFrame | None = None,
                  window: int = 60, n_assets: int = 10,
                  transaction_cost: float = 0.001,
                  slippage: float = 0.0005, max_leverage: float = 1.0,
                  risk_free_rate: float = 0.05,
-                 render_mode: Optional[str] = None):
+                 render_mode: str | None = None):
         super().__init__()
         
         self.prices = prices
@@ -75,7 +71,7 @@ class MultiAssetPortfolioEnv(gym.Env if GYM_AVAILABLE else object):
         
         self.reset()
     
-    def reset(self, seed: Optional[int] = None, options: Optional[Dict] = None):
+    def reset(self, seed: int | None = None, options: dict | None = None):
         if GYM_AVAILABLE:
             super().reset(seed=seed)
         np.random.seed(seed)
@@ -166,7 +162,7 @@ class MultiAssetPortfolioEnv(gym.Env if GYM_AVAILABLE else object):
             print(f'Step: {self.current_step}, Value: {self.portfolio_value:.4f}, '
                   f'Weights: {self.portfolio[:3]}...')
     
-    def get_performance(self) -> Dict:
+    def get_performance(self) -> dict:
         returns_arr = np.array(self.returns_history)
         n = len(returns_arr)
         if n == 0:
@@ -241,7 +237,7 @@ class MultiAssetRLAgent:
         return probs
     
     def train(self, env: MultiAssetPortfolioEnv, n_episodes: int = 100,
-              eval_interval: int = 10) -> Dict:
+              eval_interval: int = 10) -> dict:
         if not TORCH_AVAILABLE:
             print('[MultiAssetRL] PyTorch not available.')
             return {'episodes': 0, 'final_sharpe': 0}
@@ -323,8 +319,8 @@ class MultiAssetRLOptimizer:
         self.env = None
         self.agent = None
     
-    def run(self, prices: pd.DataFrame, features: Optional[pd.DataFrame] = None,
-            n_assets: int = 5, window: int = 60, n_episodes: int = 50) -> Dict:
+    def run(self, prices: pd.DataFrame, features: pd.DataFrame | None = None,
+            n_assets: int = 5, window: int = 60, n_episodes: int = 50) -> dict:
         returns = prices.pct_change().dropna()
         
         # Align

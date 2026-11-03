@@ -4,13 +4,16 @@ hyperparameter_optimizer.py - AutoML con Optuna.
 Optimizacion automatica de hiperparametros con pruning,
 early stopping, integracion con model_store y walk_forward.
 """
+import os
+import warnings
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Optional, Callable, Tuple
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-import json, os, warnings, inspect
-from pathlib import Path
 
 try:
     import optuna
@@ -18,7 +21,6 @@ try:
 except ImportError:
     OPTUNA_AVAILABLE = False
 
-from config.settings import get_setting
 try:
     from model_store import ModelStore
 except ImportError:
@@ -36,23 +38,23 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 @dataclass
 class TrialResult:
-    trial_id: int; params: Dict; metric: float; duration: float
-    model_path: Optional[str] = None; pruning: bool = False
+    trial_id: int; params: dict; metric: float; duration: float
+    model_path: str | None = None; pruning: bool = False
 
 
 @dataclass
 class StudySummary:
-    study_name: str; n_trials: int; best_params: Dict
+    study_name: str; n_trials: int; best_params: dict
     best_metric: float; improvement: float; duration: float
-    trials: List[TrialResult] = field(default_factory=list)
+    trials: list[TrialResult] = field(default_factory=list)
 
 
-def sugerir_params(trial, search_space: Dict) -> Dict:
+def sugerir_params(trial, search_space: dict) -> dict:
     params = {}
     for nombre, config in search_space.items():
         tipo = config.get('tipo', 'float')
         if tipo == 'float':
-            if 'log' in config and config['log']:
+            if config.get('log'):
                 params[nombre] = trial.suggest_float(
                     nombre, config['min'], config['max'], log=True)
             else:
@@ -112,14 +114,14 @@ ESPACIOS_RED = {
 
 class HyperparameterOptimizer:
     def __init__(self, study_name: str = 'agente_financiero',
-                 storage: Optional[str] = None,
+                 storage: str | None = None,
                  direction: str = 'maximize'):
         self.study_name = study_name
         self.storage = storage or f'sqlite:///{OUTPUT_DIR}/optuna_{study_name}.db'
         self.direction = direction
-        self.study: Optional[optuna.Study] = None
-        self.trials: List[TrialResult] = []
-        self.baseline_metric: Optional[float] = None
+        self.study: optuna.Study | None = None
+        self.trials: list[TrialResult] = []
+        self.baseline_metric: float | None = None
 
     def crear_estudio(self, n_startup: int = 5, n_ei: int = 3) -> 'optuna.Study':
         if not OPTUNA_AVAILABLE:
@@ -134,9 +136,9 @@ class HyperparameterOptimizer:
             pruner=pruner, load_if_exists=True)
         return self.study
 
-    def optimizar(self, objective_fn: Callable, search_space: Dict,
-                  n_trials: int = 50, timeout: Optional[int] = None,
-                  n_jobs: int = 1, baseline_fn: Optional[Callable] = None) -> StudySummary:
+    def optimizar(self, objective_fn: Callable, search_space: dict,
+                  n_trials: int = 50, timeout: int | None = None,
+                  n_jobs: int = 1, baseline_fn: Callable | None = None) -> StudySummary:
         if baseline_fn:
             self.baseline_metric = baseline_fn()
         if not self.study:
@@ -182,19 +184,19 @@ class HyperparameterOptimizer:
             duration=getattr(best, 'duration_seconds', 0.0) or 0.0,
             trials=self.trials)
 
-    def importancia_parametros(self) -> Dict[str, float]:
+    def importancia_parametros(self) -> dict[str, float]:
         if not self.study or len(self.trials) < 10:
             return {}
         return optuna.importance.get_param_importances(self.study)
 
-    def generar_reporte(self, X_names: List[str]) -> str:
+    def generar_reporte(self, X_names: list[str]) -> str:
         s = self.resumen()
         report = f'=== Optimizacion: {s.study_name} ===\n'
         report += f'Trials: {s.n_trials}\n'
         report += f'Mejor metrica: {s.best_metric:.4f}\n'
         if s.improvement:
             report += f'Mejora vs baseline: {s.improvement:+.1%}\n'
-        report += f'Mejores parametros:\n'
+        report += 'Mejores parametros:\n'
         for k, v in sorted(s.best_params.items()):
             report += f'  {k}: {v}\n'
         if self.study:
@@ -213,8 +215,8 @@ class HyperparameterOptimizer:
 
 class OptimizadorXGBoost:
     def __init__(self, X: pd.DataFrame, y: pd.Series,
-                 cv_fn: Optional[Callable] = None,
-                 metric_fn: Optional[Callable] = None):
+                 cv_fn: Callable | None = None,
+                 metric_fn: Callable | None = None):
         self.X = X
         self.y = y
         self.cv_fn = cv_fn or self._default_cv
@@ -243,7 +245,7 @@ class OptimizadorXGBoost:
         from sklearn.metrics import roc_auc_score
         return float(roc_auc_score(y_true, y_pred))
 
-    def objetivo(self, params: Dict, trial) -> float:
+    def objetivo(self, params: dict, trial) -> float:
         params_xgb = {k: v for k, v in params.items()
                       if k in ESPACIOS_XGBOOST}
         params_xgb['verbosity'] = 0
@@ -259,7 +261,7 @@ class OptimizadorXGBoost:
             score = float(scores.mean())
         return score
 
-    def optimizar(self, n_trials: int = 50, timeout: Optional[int] = None,
+    def optimizar(self, n_trials: int = 50, timeout: int | None = None,
                   study_name: str = 'xgboost_default') -> StudySummary:
         opt = HyperparameterOptimizer(study_name=study_name)
         return opt.optimizar(
@@ -271,7 +273,7 @@ class OptimizadorXGBoost:
 
 class OptimizadorLightGBM:
     def __init__(self, X: pd.DataFrame, y: pd.Series,
-                 cv_fn: Optional[Callable] = None):
+                 cv_fn: Callable | None = None):
         self.X = X
         self.y = y
         self.cv_fn = cv_fn or self._default_cv
@@ -285,20 +287,20 @@ class OptimizadorLightGBM:
                                verbose_eval=False)
             return float(max(cv_result['auc-mean']))
         except Exception:
-            from sklearn.model_selection import cross_val_score
             from lightgbm import LGBMClassifier
+            from sklearn.model_selection import cross_val_score
             model = LGBMClassifier(**params, verbose=-1, n_estimators=50)
             scores = cross_val_score(model, X, y, cv=3, scoring='roc_auc')
             return float(scores.mean())
 
-    def objetivo(self, params: Dict, trial) -> float:
+    def objetivo(self, params: dict, trial) -> float:
         params_lgb = {k: v for k, v in params.items()
                       if k in ESPACIOS_LIGHTGBM}
         params_lgb['verbose'] = -1
         params_lgb['random_state'] = 42
         return self.cv_fn(self.X, self.y, params_lgb)
 
-    def optimizar(self, n_trials: int = 50, timeout: Optional[int] = None,
+    def optimizar(self, n_trials: int = 50, timeout: int | None = None,
                   study_name: str = 'lightgbm_default') -> StudySummary:
         opt = HyperparameterOptimizer(study_name=study_name)
         return opt.optimizar(self.objetivo, ESPACIOS_LIGHTGBM,
@@ -307,16 +309,16 @@ class OptimizadorLightGBM:
 
 class AutoMLPipeline:
     def __init__(self):
-        self.optimizadores: Dict[str, Any] = {}
-        self.resultados: Dict[str, StudySummary] = {}
-        self.mejor_modelo: Optional[str] = None
+        self.optimizadores: dict[str, Any] = {}
+        self.resultados: dict[str, StudySummary] = {}
+        self.mejor_modelo: str | None = None
         self.mejor_metrica: float = 0.0
-        self.mejores_params: Dict = {}
+        self.mejores_params: dict = {}
 
     def comparar_modelos(self, X: pd.DataFrame, y: pd.Series,
-                         modelos: Optional[List[str]] = None,
+                         modelos: list[str] | None = None,
                          n_trials: int = 30,
-                         timeout: Optional[int] = 300) -> Dict[str, StudySummary]:
+                         timeout: int | None = 300) -> dict[str, StudySummary]:
         modelos = modelos or ['xgboost', 'lightgbm', 'randomforest']
         for nombre in modelos:
             if nombre == 'xgboost':

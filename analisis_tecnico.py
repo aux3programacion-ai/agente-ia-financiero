@@ -3,8 +3,11 @@
 analisis_tecnico.py - Calcula indicadores tecnicos + regimen de mercado
 para inyectar contexto al AI. Fuente: yfinance (gratis, sin API key).
 """
-import json, os, sys, math
+import json
+import os
 from datetime import datetime, timezone
+
+import pandas as pd
 
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
            'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
@@ -14,27 +17,67 @@ DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT = os.path.join(DATA_DIR, 'Datos', 'analisis_tecnico.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
+def _ema(valores, periodo):
+    """
+    Media exponencial con alpha = 2/(periodo+1) y semilla en el primer valor.
+
+    Misma convencion que pandas `ewm(span=periodo, adjust=False)`, para que
+    este modulo y modelo_xgboost devuelvan el mismo numero.
+    """
+    if not valores:
+        return []
+    alpha = 2.0 / (periodo + 1)
+    ema = [float(valores[0])]
+    for v in valores[1:]:
+        ema.append(float(v) * alpha + ema[-1] * (1 - alpha))
+    return ema
+
+
 def calc_rsi(precios, periodo=14):
+    """
+    RSI de Wilder, acotado a [0, 100].
+
+    Antes usaba medias simples de los ultimos N cambios, que no es RSI.
+    """
     if len(precios) < periodo + 1:
         return 50
-    ganancias = 0; perdidas = 0
-    for i in range(-periodo, 0):
-        dif = precios[i] - precios[i-1]
-        if dif >= 0: ganancias += dif
-        else: perdidas += abs(dif)
-    if perdidas == 0: return 100
-    rs = (ganancias / periodo) / (perdidas / periodo)
+
+    difs = [precios[i] - precios[i - 1] for i in range(1, len(precios))]
+    media_gan = max(difs[0], 0.0)
+    media_per = max(-difs[0], 0.0)
+
+    for d in difs[1:]:
+        media_gan = (media_gan * (periodo - 1) + max(d, 0.0)) / periodo
+        media_per = (media_per * (periodo - 1) + max(-d, 0.0)) / periodo
+
+    if media_per == 0:
+        return 100 if media_gan > 0 else 50
+    rs = media_gan / media_per
     return round(100 - (100 / (1 + rs)), 1)
 
-def calc_macd(precios):
-    if len(precios) < 26:
-        return {'macd': 0, 'senial': 0, 'histograma': 0}
-    ema12 = sum(precios[-12:]) / 12
-    ema26 = sum(precios[-26:]) / 26
-    macd = ema12 - ema26
-    senial = macd * 0.3
-    hist = macd - senial
-    return {'macd': round(macd, 2), 'senial': round(senial, 2), 'histograma': round(hist, 2)}
+
+def calc_macd(precios, rapida=12, lenta=26, senal=9):
+    """
+    MACD estandar: EMA(rapida) - EMA(lenta), senal EMA del MACD e histograma.
+
+    Antes la senal era `macd * 0.3` y las "EMA" eran medias simples, lo que no
+    es un MACD y distortionaba el regimen de todos los tickers aguas abajo.
+    """
+    if len(precios) < lenta:
+        return {'macd': 0, 'senal': 0, 'histograma': 0}
+
+    # Ambas EMA se calculan sobre la serie completa y luego se alinean por fecha.
+    ema_rapida = _ema(precios, rapida)
+    ema_lenta = _ema(precios, lenta)
+
+    macd = [c - l for c, l in zip(ema_rapida[-lenta:], ema_lenta[-lenta:])]
+    linea_senal = _ema(macd, senal)
+
+    return {
+        'macd': round(macd[-1], 2),
+        'senal': round(linea_senal[-1], 2),
+        'histograma': round(macd[-1] - linea_senal[-1], 2),
+    }
 
 def calc_atr(precios_cierre, highs, lows, periodo=14):
     if len(precios_cierre) < periodo:
@@ -60,12 +103,17 @@ def obtener_tecnicos():
     # Fetch mercado primero (SPY como proxy del S&P 500)
     try:
         spy = yf.download('SPY', period='1y', interval='1d', progress=False)
+        # yfinance devuelve MultiIndex (campo, ticker) incluso para un solo simbolo.
+        if isinstance(spy.columns, pd.MultiIndex):
+            spy = spy.xs('Close', axis=1, level=0)
+            # Tras el xs queda una sola columna (el ticker), no 'Close'.
+            spy_close = spy.iloc[:, 0].to_numpy()
+        else:
+            spy_close = spy['Close'].to_numpy()
         if spy is not None and not spy.empty and len(spy) > 50:
-            spy_close = spy['Close'].values.flatten()
-            spy_ma50 = round(spy_close[-1] if len(spy_close) >= 50 else 0, 2)
-            spy_ma200 = round(spy_close[-1] if len(spy_close) >= 200 else 0, 2)
-            spy_ma50_val = round(float(spy['Close'].iloc[-50:].mean()) if len(spy) >= 50 else spy_close[-1], 2)
-            spy_ma200_val = round(float(spy['Close'].iloc[-200:].mean()) if len(spy) >= 200 else spy_close[-1], 2)
+            spy_ma50_val = round(float(spy_close[-50:].mean()), 2)
+            spy_ma200_val = round(float(spy_close[-200:].mean()) if len(spy_close) >= 200
+                                  else spy_ma50_val, 2)
             spy_actual = round(float(spy_close[-1]), 2)
             spy_ma50_trend = round((spy_close[-1] - spy_ma50_val) / spy_ma50_val * 100, 1) if spy_ma50_val else 0
 
@@ -99,6 +147,9 @@ def obtener_tecnicos():
     for t in TICKERS:
         try:
             df = yf.download(t, period='1y', interval='1d', progress=False)
+            # yfinance devuelve MultiIndex (campo, ticker) incluso para un solo simbolo.
+            if df is not None and isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
             if df is None or df.empty or len(df) < 30:
                 resultado['tecnicos'][t] = {'error': 'datos insuficientes'}
                 continue

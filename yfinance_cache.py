@@ -3,11 +3,11 @@
 yfinance_cache.py - Cache persistente para llamadas a yfinance usando diskcache.
 Reduce drásticamente el tiempo de descarga de datos.
 """
-import os
-import time
 import hashlib
-from pathlib import Path
+import json
+import os
 from functools import wraps
+from pathlib import Path
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 CACHE_DIR = Path(DATA_DIR) / 'Datos' / 'cache_yf'
@@ -124,7 +124,7 @@ def monkey_patch_yfinance():
         return result
     
     yf.download = cached_download
-    print(f'[Cache] yfinance monkey-patched con cache (TTL={ttl}s)')
+    print(f'[Cache] yfinance monkey-patched con cache (TTL={CACHE_TTL}s)')
 
 
 if __name__ == '__main__':

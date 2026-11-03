@@ -1,6 +1,13 @@
-import json, os, sys, urllib.request, re, time, html
+import html
+import json
+import os
+import re
+import sys
+import time
+import urllib.request
+
 from portafolio_utils import cargar_portafolio
-from sentimiento_finbert import vader_score, strip_html
+from sentimiento_finbert import vader_score
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
@@ -17,7 +24,7 @@ tickers = tickers[:60]
 
 def parse_rss_titles(xml_text):
     titles = []
-    for m in re.finditer(r'<title[^>]*>(.*?)</title>', xml_text, re.DOTALL | re.I):
+    for m in re.finditer(r'<title[^>]*>(.*?)</title>', xml_text, re.DOTALL | re.IGNORECASE):
         t = html.unescape(re.sub(r'<[^>]+>', '', m.group(1))).strip()
         if t:
             titles.append(t)
@@ -28,7 +35,7 @@ def fetch_titles(url):
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
         with urllib.request.urlopen(req, timeout=10) as resp:
             return parse_rss_titles(resp.read().decode('utf-8', errors='replace'))
-    except:
+    except Exception:
         return []
 
 resultados = {}

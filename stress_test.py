@@ -5,12 +5,11 @@ Simula performance histórica en crisis (2008, 2020, 2022) y escenarios sintéti
 """
 import json
 import os
-import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, List, Optional
 
 from config.settings import get_setting
 
@@ -36,7 +35,7 @@ class StressTester:
         if self.results_path.exists():
             try:
                 self.results = json.loads(self.results_path.read_text())
-            except:
+            except Exception:
                 self.results = {'stress_tests': [], 'monte_carlo': [], 'timestamp': None}
         else:
             self.results = {'stress_tests': [], 'monte_carlo': [], 'timestamp': None}
@@ -46,9 +45,9 @@ class StressTester:
 
     def run_historical_stress(
         self,
-        tickers: List[str],
-        weights: Optional[Dict[str, float]] = None
-    ) -> List[Dict]:
+        tickers: list[str],
+        weights: dict[str, float] | None = None
+    ) -> list[dict]:
         """Ejecuta stress tests en periodos históricos de crisis."""
         import yfinance as yf
         
@@ -121,7 +120,7 @@ class StressTester:
         n_simulations: int = N_SIM,
         n_days: int = N_DIAS,
         stress_factor: float = 1.0
-    ) -> Dict:
+    ) -> dict:
         """
         Simulación Monte Carlo de portfolio.
         
@@ -178,9 +177,9 @@ class StressTester:
               f'P(loss)={prob_loss:.1%}')
         return result
 
-    def run_custom_scenario(self, name: str, tickers: List[str], 
+    def run_custom_scenario(self, name: str, tickers: list[str], 
                            crash_pct: float = -0.20,
-                           recovery_days: int = 60) -> Dict:
+                           recovery_days: int = 60) -> dict:
         """Scenario sintético: crash súbito + recuperación."""
         import yfinance as yf
         
@@ -211,7 +210,7 @@ class StressTester:
         print(f'[Scenario] {name}: crash {crash_pct:.0%}, recovery {recovery_days}d')
         return scenario
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> dict:
         return {
             'n_stress_periods': len(self.results.get('stress_tests', [])),
             'n_mc_simulations': len(self.results.get('monte_carlo', [])),
@@ -235,7 +234,7 @@ def get_stress_tester() -> StressTester:
     return _stress_tester
 
 
-def run_full_stress_test(tickers: List[str], weights: Optional[Dict[str, float]] = None) -> Dict:
+def run_full_stress_test(tickers: list[str], weights: dict[str, float] | None = None) -> dict:
     """Ejecuta todos los stress tests + Monte Carlo."""
     st = get_stress_tester()
     stress = st.run_historical_stress(tickers, weights)

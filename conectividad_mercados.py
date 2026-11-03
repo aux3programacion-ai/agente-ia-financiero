@@ -3,14 +3,16 @@
 conectividad_mercados.py - Conexion directa a mercados.
 WebSocket, FIX, IBKR, Binance con heartbeat y replay.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-import json, os, time
+import os
+import time
 from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import Any
+
+import numpy as np
 
 try:
     import websocket
@@ -18,7 +20,6 @@ try:
 except ImportError:
     WEBSOCKET_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'conectividad'
@@ -28,22 +29,22 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 @dataclass
 class Tick:
     ticker: str; price: float; volume: int; timestamp: datetime
-    bid: Optional[float] = None; ask: Optional[float] = None
+    bid: float | None = None; ask: float | None = None
     exchange: str = 'SIMULATED'
 
 
 @dataclass
 class ConnectionStatus:
     exchange: str; connected: bool; latency_ms: float
-    last_heartbeat: Optional[str] = None; reconnects: int = 0
+    last_heartbeat: str | None = None; reconnects: int = 0
 
 
 class HeartbeatMonitor:
     def __init__(self, timeout_sec=30, heartbeat_interval=10):
         self.timeout_sec = timeout_sec
         self.heartbeat_interval = heartbeat_interval
-        self.last_heartbeat: Dict[str, datetime] = {}
-        self.reconnects: Dict[str, int] = {}
+        self.last_heartbeat: dict[str, datetime] = {}
+        self.reconnects: dict[str, int] = {}
 
     def record_heartbeat(self, exchange: str):
         self.last_heartbeat[exchange] = datetime.now()
@@ -64,7 +65,7 @@ class HeartbeatMonitor:
 
 class TickReplayBuffer:
     def __init__(self, maxlen=100000):
-        self.buffer: Dict[str, deque] = {}
+        self.buffer: dict[str, deque] = {}
         self.maxlen = maxlen
 
     def append(self, tick: Tick):
@@ -72,12 +73,12 @@ class TickReplayBuffer:
             self.buffer[tick.ticker] = deque(maxlen=self.maxlen)
         self.buffer[tick.ticker].append(tick)
 
-    def replay(self, ticker: str, start: datetime, end: datetime) -> List[Tick]:
+    def replay(self, ticker: str, start: datetime, end: datetime) -> list[Tick]:
         if ticker not in self.buffer:
             return []
         return [t for t in self.buffer[ticker] if start <= t.timestamp <= end]
 
-    def replay_speed(self, ticker: str, n: int = 100, speed: float = 10.0) -> List[Tick]:
+    def replay_speed(self, ticker: str, n: int = 100, speed: float = 10.0) -> list[Tick]:
         ticks = list(self.buffer.get(ticker, deque()))[-n:]
         delay = 1.0 / speed
         return ticks
@@ -85,11 +86,11 @@ class TickReplayBuffer:
 
 class WebSocketManager:
     def __init__(self):
-        self.connections: Dict[str, Any] = {}
-        self.handlers: Dict[str, List[Callable]] = {}
+        self.connections: dict[str, Any] = {}
+        self.handlers: dict[str, list[Callable]] = {}
         self.heartbeat = HeartbeatMonitor()
 
-    def connect(self, exchange: str, url: str, symbols: List[str]):
+    def connect(self, exchange: str, url: str, symbols: list[str]):
         if exchange in self.connections:
             return self.connections[exchange]
         conn = {'exchange': exchange, 'url': url, 'symbols': symbols,
@@ -117,7 +118,7 @@ class WebSocketManager:
             except Exception:
                 pass
 
-    def get_status(self) -> List[ConnectionStatus]:
+    def get_status(self) -> list[ConnectionStatus]:
         statuses = []
         for exchange in self.connections:
             latency = np.random.exponential(15)
@@ -136,7 +137,7 @@ class IBKRSimulator:
                 'client_id': self.client_id, 'timestamp': datetime.now().isoformat()}
 
     def place_order(self, ticker: str, action: str, quantity: int,
-                    order_type='MKT', price: float = 0) -> Dict:
+                    order_type='MKT', price: float = 0) -> dict:
         order = {'order_id': f'IB_{int(time.time())}', 'ticker': ticker,
                  'action': action, 'quantity': quantity, 'type': order_type,
                  'price': price, 'status': 'filled',
@@ -144,7 +145,7 @@ class IBKRSimulator:
         self.orders.append(order)
         return order
 
-    def get_positions(self) -> List[Dict]:
+    def get_positions(self) -> list[dict]:
         return [{'ticker': 'NVDA', 'position': 1000, 'avg_cost': 145.50},
                 {'ticker': 'AAPL', 'position': 500, 'avg_cost': 185.20}]
 
@@ -154,13 +155,13 @@ class BinanceSimulator:
         self.api_key = api_key; self.secret = secret; self.testnet = testnet
         self.orders = []
 
-    def get_ticker(self, symbol: str) -> Dict:
+    def get_ticker(self, symbol: str) -> dict:
         return {'symbol': symbol, 'price': round(100 + np.random.randn() * 2, 2),
                 'volume': np.random.randint(10000, 1000000),
                 'timestamp': datetime.now().isoformat()}
 
     def place_order(self, symbol: str, side: str, quantity: float,
-                    order_type='MARKET') -> Dict:
+                    order_type='MARKET') -> dict:
         order = {'order_id': f'BIN_{int(time.time())}', 'symbol': symbol,
                  'side': side, 'quantity': quantity, 'type': order_type,
                  'status': 'FILLED', 'timestamp': datetime.now().isoformat()}
@@ -174,9 +175,9 @@ class MarketConnectivity:
         self.ibkr = IBKRSimulator()
         self.binance = BinanceSimulator()
         self.replay = TickReplayBuffer()
-        self.status: Dict[str, Any] = {}
+        self.status: dict[str, Any] = {}
 
-    def connect_all(self) -> Dict:
+    def connect_all(self) -> dict:
         ib = self.ibkr.connect()
         ws = self.ws.connect('SIMULATED', 'ws://localhost:8000/ws', ['NVDA', 'AAPL'])
         self.status = {'ibkr': ib, 'websocket': ws, 'timestamp': datetime.now().isoformat()}

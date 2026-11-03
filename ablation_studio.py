@@ -6,12 +6,11 @@ Sugiere qué optimizaciones mantener, revisar, o eliminar.
 """
 import json
 import os
-import time
-import itertools
-import numpy as np
-from pathlib import Path
+from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Callable
+from pathlib import Path
+
+import numpy as np
 
 from config.settings import get_setting
 
@@ -35,7 +34,7 @@ class AblationStudio:
         if self.results_path.exists():
             try:
                 self.results = json.loads(self.results_path.read_text())
-            except:
+            except Exception:
                 self.results = {'trials': [], 'recommendations': [], 'timestamp': None}
         else:
             self.results = {'trials': [], 'recommendations': [], 'timestamp': None}
@@ -45,11 +44,11 @@ class AblationStudio:
 
     def run_trial(
         self,
-        evaluator_fn: Callable[[List[str]], Dict[str, float]],
-        components: Optional[List[str]] = None,
+        evaluator_fn: Callable[[list[str]], dict[str, float]],
+        components: list[str] | None = None,
         baseline_name: str = 'full_system',
-        n_trials: Optional[int] = None
-    ) -> List[Dict]:
+        n_trials: int | None = None
+    ) -> list[dict]:
         """
         Ejecuta ablation trial: prueba el sistema con/sin cada componente.
         
@@ -100,7 +99,7 @@ class AblationStudio:
         self._save()
         return results
 
-    def _compute_component_impact(self, component: str, metric: str = 'accuracy') -> Dict:
+    def _compute_component_impact(self, component: str, metric: str = 'accuracy') -> dict:
         """Calcula el impacto promedio de un componente en una métrica."""
         diffs = [
             r['diff'].get(metric, 0)
@@ -120,7 +119,7 @@ class AblationStudio:
         'consistent': bool(abs(np.mean(diffs)) > np.std(diffs))
         }
 
-    def generate_recommendations(self, metric: str = 'accuracy') -> List[Dict]:
+    def generate_recommendations(self, metric: str = 'accuracy') -> list[dict]:
         """
         Genera recomendaciones basadas en los resultados de ablation.
         
@@ -220,7 +219,7 @@ class AblationStudio:
         
         print()
 
-    def export_for_dashboard(self) -> Dict:
+    def export_for_dashboard(self) -> dict:
         """Exporta resultados para dashboard."""
         return {
             'n_trials': len(set(r['trial'] for r in self.results['trials'])),
@@ -235,7 +234,7 @@ class AblationStudio:
         }
 
 
-def simulate_evaluator(components: List[str]) -> Dict[str, float]:
+def simulate_evaluator(components: list[str]) -> dict[str, float]:
     """
     Evaluador simulado para demostración.
     En producción, reemplazar con evaluación real del sistema.

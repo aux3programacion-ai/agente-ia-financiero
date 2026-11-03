@@ -1,10 +1,9 @@
+import html
 import json
 import os
-import sys
-import urllib.request
 import re
 import time
-import html
+import urllib.request
 import xml.etree.ElementTree as ET
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
@@ -14,6 +13,7 @@ OUTPUT = os.path.join(DATA_DIR, 'Datos', 'sec_filings.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 from portafolio_utils import cargar_portafolio
+
 
 def tickers_a_procesar():
     portafolio = cargar_portafolio(DATA_DIR)
@@ -141,7 +141,7 @@ def main():
                     }
                     filings_por_ticker[ticker_encontrado].append(filing_entry)
                     todas_entradas.append(filing_entry)
-            except:
+            except Exception:
                 continue
 
         ahora = time.localtime()
@@ -160,7 +160,7 @@ def main():
                     proximos.append(fil)
                 elif diff_dias < -7:
                     recientes.append(fil)
-            except:
+            except Exception:
                 continue
 
         proximos.sort(key=lambda x: x['fecha'])

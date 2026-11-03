@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """cppi.py - Seguros de portafolio: CPPI y OBPI."""
+import os
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
-import json, os
-from pathlib import Path
-from datetime import datetime
-from config.settings import get_setting
+
 DATA_DIR = os.environ.get("GITHUB_WORKSPACE", ".")
 OUTPUT_DIR = Path(DATA_DIR) / "Datos" / "cppi"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

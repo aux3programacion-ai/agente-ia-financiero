@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """streaming_pipeline.py - Arquitectura event-driven para streaming en tiempo real."""
+import os
+import time
+from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-import json, os, time, threading
-from collections import deque
-from pathlib import Path
-from config.settings import get_setting
+
 DATA_DIR = os.environ.get("GITHUB_WORKSPACE", ".")
 OUTPUT_DIR = Path(DATA_DIR) / "Datos" / "streaming"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -16,7 +18,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 @dataclass
 class MarketEvent:
     ticker: str; price: float; volume: int; timestamp: datetime
-    event_type: str = 'trade'; bid: Optional[float] = None; ask: Optional[float] = None
+    event_type: str = 'trade'; bid: float | None = None; ask: float | None = None
 
 @dataclass
 class SignalEvent:
@@ -25,24 +27,24 @@ class SignalEvent:
 
 class DataBuffer:
     def __init__(self, maxlen=1000):
-        self.buffers: Dict[str, deque] = {}
+        self.buffers: dict[str, deque] = {}
         self.maxlen = maxlen
     def append(self, ticker: str, event: MarketEvent):
         if ticker not in self.buffers:
             self.buffers[ticker] = deque(maxlen=self.maxlen)
         self.buffers[ticker].append(event)
-    def get(self, ticker: str, n=10) -> List[MarketEvent]:
+    def get(self, ticker: str, n=10) -> list[MarketEvent]:
         if ticker not in self.buffers: return []
         return list(self.buffers[ticker])[-n:]
-    def latest(self, ticker: str) -> Optional[MarketEvent]:
+    def latest(self, ticker: str) -> MarketEvent | None:
         if ticker not in self.buffers or not self.buffers[ticker]: return None
         return self.buffers[ticker][-1]
 
 class StreamProcessor:
     def __init__(self):
         self.buffer = DataBuffer()
-        self.features: Dict[str, pd.Series] = {}
-        self.processors: Dict[str, Callable] = {}
+        self.features: dict[str, pd.Series] = {}
+        self.processors: dict[str, Callable] = {}
     def register_processor(self, name: str, fn: Callable):
         self.processors[name] = fn
     def on_event(self, event: MarketEvent):
@@ -52,9 +54,9 @@ class StreamProcessor:
                 result = fn(event, self.buffer)
                 if result:
                     self.features[f"{name}_{event.ticker}"] = result
-            except Exception as e:
+            except Exception:
                 pass
-    def get_latest_features(self, ticker: str) -> Dict:
+    def get_latest_features(self, ticker: str) -> dict:
         return {k: v for k, v in self.features.items() if ticker in k}
 
 class SimpleBacktestStream:
@@ -63,7 +65,7 @@ class SimpleBacktestStream:
         self.data = data; self.ticker_col = ticker_col; self.price_col = price_col
         self.volume_col = volume_col; self.speed = speed
         self.processor = StreamProcessor()
-        self.listeners: List[Callable] = []
+        self.listeners: list[Callable] = []
         self.running = False
     def add_listener(self, fn: Callable):
         self.listeners.append(fn)
@@ -86,7 +88,7 @@ class SimpleBacktestStream:
 class RealtimeAggregator:
     def __init__(self, window_sec=60):
         self.window_sec = window_sec
-        self.windows: Dict[str, deque] = {}
+        self.windows: dict[str, deque] = {}
     def add(self, ticker: str, price: float, volume: int):
         now = datetime.now()
         if ticker not in self.windows:
@@ -94,12 +96,12 @@ class RealtimeAggregator:
         self.windows[ticker].append({'time': now, 'price': price, 'volume': volume})
         while self.windows[ticker] and (now - self.windows[ticker][0]['time']).total_seconds() > self.window_sec:
             self.windows[ticker].popleft()
-    def vwap(self, ticker: str) -> Optional[float]:
+    def vwap(self, ticker: str) -> float | None:
         if ticker not in self.windows or not self.windows[ticker]: return None
         total_vol = sum(w['volume'] for w in self.windows[ticker])
         if total_vol == 0: return None
         return sum(w['price'] * w['volume'] for w in self.windows[ticker]) / total_vol
-    def flow_imbalance(self, ticker: str) -> Optional[float]:
+    def flow_imbalance(self, ticker: str) -> float | None:
         if ticker not in self.windows or len(self.windows[ticker]) < 2: return None
         prices = [w['price'] for w in self.windows[ticker]]
         direction = np.diff(prices)
@@ -113,7 +115,7 @@ class StreamingPipeline:
         self.processor = StreamProcessor()
         self.aggregator = RealtimeAggregator()
         self.stream = None
-    def run_backtest(self, data: pd.DataFrame, speed=10) -> Dict:
+    def run_backtest(self, data: pd.DataFrame, speed=10) -> dict:
         self.stream = SimpleBacktestStream(data, speed=speed)
         self.stream.add_listener(self._on_event)
         self.stream.start()

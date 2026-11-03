@@ -6,14 +6,14 @@ Reemplaza SGDClassifier estático con River para aprendizaje continuo.
 """
 import json
 import os
-import time
-import numpy as np
-from collections import defaultdict, deque
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
+
 try:
-    from river import linear_model, optim, preprocessing, drift, metrics, ensemble
+    from river import drift, ensemble, linear_model, metrics, optim, preprocessing
     RIVER_AVAILABLE = True
 except ImportError:
     RIVER_AVAILABLE = False
@@ -158,7 +158,7 @@ class OnlineLearningManager:
         if self.perf_path.exists():
             try:
                 self.performance = json.loads(self.perf_path.read_text())
-            except:
+            except Exception:
                 self.performance = {'history': [], 'drift_events': []}
         else:
             self.performance = {'history': [], 'drift_events': []}

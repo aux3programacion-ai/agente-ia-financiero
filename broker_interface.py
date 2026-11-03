@@ -4,15 +4,17 @@ broker_interface.py - Interfaz unificada de brokers.
 Clase abstracta base + implementaciones para PaperBroker,
 IBKR, Alpaca, Binance. Intercambiables sin cambiar el codigo de trading.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple, Callable
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-from enum import Enum
-import json, os, time, uuid, threading
-from pathlib import Path
+import os
+import threading
+import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+
+import numpy as np
 
 try:
     import alpaca_trade_api as alpaca_api
@@ -21,12 +23,11 @@ except ImportError:
     ALPACA_AVAILABLE = False
 
 try:
-    from ib_insync import IB, Stock, MarketOrder, LimitOrder
+    from ib_insync import IB, LimitOrder, MarketOrder, Stock
     IB_AVAILABLE = True
 except ImportError:
     IB_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'broker'
@@ -64,15 +65,15 @@ class EstadoOrden(Enum):
 class Orden:
     order_id: str; ticker: str; lado: LadoOrden; tipo: TipoOrden
     shares_solicitadas: int; shares_llenas: int = 0
-    precio_limite: Optional[float] = None
-    precio_lleno: Optional[float] = None
+    precio_limite: float | None = None
+    precio_lleno: float | None = None
     estado: EstadoOrden = EstadoOrden.PENDIENTE
     broker: str = 'paper'
     slippage_bps: float = 0.0
     comision: float = 0.0
     created: str = ''
     updated: str = ''
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -85,15 +86,15 @@ class Posicion:
 @dataclass
 class ResumenCuenta:
     capital: float; valor_portafolio: float; cash_disponible: float
-    posiciones: List[Posicion]; pnl_total: float
+    posiciones: list[Posicion]; pnl_total: float
     retorno_total: float; broker: str
 
 
 class BrokerBase(ABC):
     def __init__(self, nombre: str = 'base'):
         self.nombre = nombre
-        self.ordenes: Dict[str, Orden] = {}
-        self.posiciones: Dict[str, Posicion] = {}
+        self.ordenes: dict[str, Orden] = {}
+        self.posiciones: dict[str, Posicion] = {}
         self.capital: float = 0.0
         self._lock = threading.RLock()
         self._conectado = False
@@ -113,7 +114,7 @@ class BrokerBase(ABC):
     @abstractmethod
     def enviar_orden(self, ticker: str, lado: LadoOrden, shares: int,
                      tipo: TipoOrden = TipoOrden.MERCADO,
-                     precio_limite: Optional[float] = None) -> Orden:
+                     precio_limite: float | None = None) -> Orden:
         pass
 
     @abstractmethod
@@ -121,7 +122,7 @@ class BrokerBase(ABC):
         pass
 
     @abstractmethod
-    def obtener_posiciones(self) -> List[Posicion]:
+    def obtener_posiciones(self) -> list[Posicion]:
         pass
 
     @abstractmethod
@@ -144,8 +145,8 @@ class BrokerBase(ABC):
             except Exception:
                 pass
 
-    def historial_ordenes(self, ticker: Optional[str] = None,
-                          limite: int = 50) -> List[Orden]:
+    def historial_ordenes(self, ticker: str | None = None,
+                          limite: int = 50) -> list[Orden]:
         with self._lock:
             ords = list(self.ordenes.values())
         if ticker:
@@ -156,7 +157,7 @@ class BrokerBase(ABC):
 class BrokerPaper(BrokerBase):
     def __init__(self, capital_inicial: float = 100000,
                  comision: float = 0.0,
-                 proveedor_precio: Optional[Callable] = None):
+                 proveedor_precio: Callable | None = None):
         super().__init__('paper')
         self.capital = capital_inicial
         self._cash = capital_inicial
@@ -176,7 +177,7 @@ class BrokerPaper(BrokerBase):
 
     def enviar_orden(self, ticker: str, lado: LadoOrden, shares: int,
                      tipo: TipoOrden = TipoOrden.MERCADO,
-                     precio_limite: Optional[float] = None) -> Orden:
+                     precio_limite: float | None = None) -> Orden:
         order_id = f'PAPER_{uuid.uuid4().hex[:12]}'
         precio = precio_limite or self.obtener_precio(ticker)
         costo = shares * precio + self._comision
@@ -227,7 +228,7 @@ class BrokerPaper(BrokerBase):
                 return True
         return False
 
-    def obtener_posiciones(self) -> List[Posicion]:
+    def obtener_posiciones(self) -> list[Posicion]:
         with self._lock:
             for p in self.posiciones.values():
                 precio = self.obtener_precio(p.ticker)
@@ -268,7 +269,7 @@ class BrokerAlpaca(BrokerBase):
             acc = self._api.get_account()
             self.capital = float(acc.equity)
             return True
-        except Exception as e:
+        except Exception:
             self._conectado = False
             return False
 
@@ -287,7 +288,7 @@ class BrokerAlpaca(BrokerBase):
 
     def enviar_orden(self, ticker: str, lado: LadoOrden, shares: int,
                      tipo: TipoOrden = TipoOrden.MERCADO,
-                     precio_limite: Optional[float] = None) -> Orden:
+                     precio_limite: float | None = None) -> Orden:
         order_id = f'ALPACA_{uuid.uuid4().hex[:12]}'
         if not self._api:
             return Orden(order_id=order_id, ticker=ticker, lado=lado,
@@ -319,7 +320,7 @@ class BrokerAlpaca(BrokerBase):
     def cancelar_orden(self, order_id: str) -> bool:
         return False
 
-    def obtener_posiciones(self) -> List[Posicion]:
+    def obtener_posiciones(self) -> list[Posicion]:
         if not self._api:
             return []
         try:
@@ -396,7 +397,7 @@ class BrokerIBKR(BrokerBase):
 
     def enviar_orden(self, ticker: str, lado: LadoOrden, shares: int,
                      tipo: TipoOrden = TipoOrden.MERCADO,
-                     precio_limite: Optional[float] = None) -> Orden:
+                     precio_limite: float | None = None) -> Orden:
         order_id = f'IBKR_{uuid.uuid4().hex[:12]}'
         if not self._ib:
             return Orden(order_id=order_id, ticker=ticker, lado=lado,
@@ -433,7 +434,7 @@ class BrokerIBKR(BrokerBase):
     def cancelar_orden(self, order_id: str) -> bool:
         return False
 
-    def obtener_posiciones(self) -> List[Posicion]:
+    def obtener_posiciones(self) -> list[Posicion]:
         if not self._ib:
             return []
         try:
@@ -470,8 +471,8 @@ class BrokerIBKR(BrokerBase):
 
 class GestorBrokers:
     def __init__(self):
-        self.brokers: Dict[str, BrokerBase] = {}
-        self._activo: Optional[str] = None
+        self.brokers: dict[str, BrokerBase] = {}
+        self._activo: str | None = None
 
     def registrar(self, nombre: str, broker: BrokerBase):
         self.brokers[nombre] = broker
@@ -484,7 +485,7 @@ class GestorBrokers:
             return True
         return False
 
-    def activo(self) -> Optional[BrokerBase]:
+    def activo(self) -> BrokerBase | None:
         return self.brokers.get(self._activo)
 
     def crear_brokers_default(self, capital_inicial: float = 100000) -> 'GestorBrokers':
@@ -497,13 +498,13 @@ class GestorBrokers:
         return self
 
     def enviar_orden(self, ticker: str, lado: LadoOrden, shares: int,
-                     tipo: TipoOrden = TipoOrden.MERCADO) -> Optional[Orden]:
+                     tipo: TipoOrden = TipoOrden.MERCADO) -> Orden | None:
         b = self.activo()
         if not b:
             return None
         return b.enviar_orden(ticker, lado, shares, tipo)
 
-    def obtener_resumen(self) -> Optional[ResumenCuenta]:
+    def obtener_resumen(self) -> ResumenCuenta | None:
         b = self.activo()
         if not b:
             return None
@@ -523,7 +524,7 @@ class GestorBrokers:
                 return False
         return self.activar(nombre)
 
-    def estado_conexiones(self) -> Dict[str, bool]:
+    def estado_conexiones(self) -> dict[str, bool]:
         return {n: b.conectado for n, b in self.brokers.items()}
 
 

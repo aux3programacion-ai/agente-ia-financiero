@@ -1,9 +1,18 @@
-import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time, datetime, warnings
+import datetime
+import json
+import os
+import sys
+import warnings
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
 warnings.filterwarnings('ignore')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 
-print(f'\n=== Market Regime Detection ===\n')
+print('\n=== Market Regime Detection ===\n')
 
 try:
     print('  Fetching SPY 2y data...', end=' ')
@@ -42,7 +51,7 @@ if spy.empty:
         print('[!] Fallback empty dict saved')
     except Exception as ex:
         print(f'[!] Save failed: {ex}')
-    print(f'\n=== Regimen: INCIERTO (no data) ===')
+    print('\n=== Regimen: INCIERTO (no data) ===')
     sys.exit(0)
 
 returns = spy['Close'].pct_change()
@@ -77,7 +86,7 @@ if len(valid_vol) > 0:
 else:
     vol_regimen = 'normal'
 
-if latest_close > latest_sma50 and latest_sma50 > latest_sma200 and latest_ret50d > 5:
+if latest_close > latest_sma50 > latest_sma200 and latest_ret50d > 5:
     regimen = 'ALCISTA'
     confianza = min(0.5 + (latest_ret50d / 40), 0.95)
     if latest_ret200d > 20:
@@ -86,7 +95,7 @@ if latest_close > latest_sma50 and latest_sma50 > latest_sma200 and latest_ret50
         fase = 'mid_expansion'
     else:
         fase = 'early_expansion'
-elif latest_close < latest_sma50 and latest_sma50 < latest_sma200 and latest_ret50d < -5:
+elif latest_close < latest_sma50 < latest_sma200 and latest_ret50d < -5:
     regimen = 'BAJISTA'
     confianza = min(0.5 + (abs(latest_ret50d) / 40), 0.95)
     if latest_ret200d < -20:
@@ -153,11 +162,11 @@ try:
     os.makedirs(f'{DATA_DIR}/Datos', exist_ok=True)
     with open(f'{DATA_DIR}/Datos/regimen_mercado.json', 'w') as f:
         json.dump(output, f, indent=2)
-    print(f'[OK] regimen_mercado.json saved')
+    print('[OK] regimen_mercado.json saved')
 except Exception as e:
     print(f'[!] Save failed: {e}')
 
-print(f'\n=== Market Regime Summary ===')
+print('\n=== Market Regime Summary ===')
 print(f'  Regimen: {regimen}')
 print(f'  Confianza: {confianza:.0%}')
 print(f'  SPY: ${latest_close:.2f} (SMA50: ${latest_sma50:.2f}, SMA200: ${latest_sma200:.2f})')

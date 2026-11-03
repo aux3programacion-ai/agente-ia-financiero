@@ -6,7 +6,11 @@ Requiere: playwright (pip install playwright && playwright install chromium)
 Credenciales: archivo .env (TIKR_EMAIL, TIKR_PASSWORD)
 Salida: Datos/tikr_data.json
 """
-import json, os, sys, re, time
+import json
+import os
+import re
+import sys
+import time
 from datetime import datetime, timezone
 
 try:
@@ -52,7 +56,7 @@ NAV_ITEMS = {'Terminal TIKR','apps','Noticias del mercado','Generacion de ideas'
     'Fecha de tenencia.1','% de tenencia en cartera',
     'Cartera total reportada','Posiciones largas','Inversores',
     'Nuevo','Aumentaron','Redujeron','Vendieron','Bienvenido a TIKR',
-    'Mas Noticias','Filter News By Topic','Dataset','Main TIKR Data',
+    'Mas Noticias','Filter News By Topic','Main TIKR Data',
     'Periodo','Unidades de visualizacion','Ano del calendario'}
 
 def load_credentials():
@@ -112,12 +116,12 @@ class TIKRScraper:
         try:
             if self.context:
                 self.context.storage_state(path=STATE_FILE)
-        except: pass
+        except Exception: pass
         try:
             if self.browser: self.browser.close()
-        except: pass
+        except Exception: pass
         try: self.playwright.stop()
-        except: pass
+        except Exception: pass
 
     def login(self):
         if not self.email or not self.password:
@@ -139,7 +143,7 @@ class TIKRScraper:
                 return True
             try:
                 self.page.wait_for_selector('#input-13', timeout=8000)
-            except:
+            except Exception:
                 if 'markets' in self.page.url or 'Terminal' in self.page.inner_text('body'):
                     print('[OK] Sesion TIKR activa')
                     return True
@@ -156,7 +160,7 @@ class TIKRScraper:
                     if btn.count() > 0:
                         btn.click()
                         time.sleep(0.5)
-                except: pass
+                except Exception: pass
             print('[OK] Login TIKR exitoso')
             self._extract_jwt()
             self.context.storage_state(path=STATE_FILE)
@@ -285,7 +289,7 @@ class TIKRScraper:
                             tid = str(item.get('tid') or '')
                             if tk and cid and tid and cid != 'None':
                                 cid_map[tk] = (cid, tid)
-            except: pass
+            except Exception: pass
         for tk in tickers:
             print(f'[.] {tk}...', end=' ')
             sys.stdout.flush()

@@ -1,5 +1,16 @@
-import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time, datetime, warnings, math
+import datetime
+import json
+import os
+import sys
+import time
+import warnings
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
 from portafolio_utils import cargar_portafolio
+from regime_sizing import apply_regime_sizing, get_regime_params
 
 warnings.filterwarnings('ignore')
 
@@ -10,49 +21,9 @@ os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
 # ============================================================
-# REGIME-AWARE POSITION SIZING
-# ============================================================
-REGIME_CONFIG = {
-    'ALCISTA':     {'max_position': 0.15, 'leverage': 1.0,  'risk_per_trade': 0.02, 'max_sector': 0.30, 'cash_reserve': 0.05},
-    'LATERAL':     {'max_position': 0.08, 'leverage': 0.5,  'risk_per_trade': 0.01, 'max_sector': 0.25, 'cash_reserve': 0.15},
-    'BAJISTA':     {'max_position': 0.05, 'leverage': 0.0,  'risk_per_trade': 0.005,'max_sector': 0.15, 'cash_reserve': 0.30},
-    'INCIERTO':    {'max_position': 0.06, 'leverage': 0.3,  'risk_per_trade': 0.008,'max_sector': 0.20, 'cash_reserve': 0.20}
-}
-
-def get_regime_params():
-    """Load regime from regimen_mercado.json and return sizing params."""
-    regime_path = os.path.join(DATA_DIR, 'Datos', 'regimen_mercado.json')
-    if os.path.exists(regime_path):
-        try:
-            with open(regime_path) as f:
-                regime_data = json.load(f)
-            regime = regime_data.get('regimen', 'INCIERTO')
-            confianza = regime_data.get('confianza', 0.5)
-            # Blend with INCIERTO if low confidence
-            if confianza < 0.5:
-                base = REGIME_CONFIG['INCIERTO']
-                target = REGIME_CONFIG.get(regime, REGIME_CONFIG['INCIERTO'])
-                return {k: base[k] * (1 - confianza) + target[k] * confianza for k in base}
-            return REGIME_CONFIG.get(regime, REGIME_CONFIG['INCIERTO'])
-        except:
-            pass
-    return REGIME_CONFIG['INCIERTO']
-
-def apply_regime_sizing(weights, regime_params, portfolio_value=100000):
-    """Apply regime-aware position sizing to portfolio weights."""
-    max_pos = regime_params['max_position']
-    leverage = regime_params['leverage']
-    cash_reserve = regime_params['cash_reserve']
-    
-    # Cap individual positions
-    capped = {k: min(v, max_pos) for k, v in weights.items()}
-    total = sum(capped.values())
-    if total > 0:
-        # Renormalize and apply leverage + cash reserve
-        invested = (1 - cash_reserve) * leverage
-        scaled = {k: v / total * invested for k, v in capped.items()}
-        return scaled
-    return capped
+# REGIME-AWARE POSITION SIZING -> regime_sizing.py
+# (importado arriba: REGIME_CONFIG, get_regime_params, apply_regime_sizing)
+# ============================================
 
 portfolio_tickers = cargar_portafolio(DATA_DIR)
 
@@ -98,7 +69,7 @@ n_assets = len(valid_tickers)
 rf = 0.05
 
 print("[+] PARTE 1: Frontera Eficiente (Markowitz)")
-print(f"    Generando 5000 portafolios aleatorios...")
+print("    Generando 5000 portafolios aleatorios...")
 
 n_portfolios = 5000
 results = np.zeros((3, n_portfolios))
@@ -164,9 +135,10 @@ frontera_eficiente = {
 # ============================================================
 # HIERARCHICAL RISK PARITY (HRP)
 # ============================================================
+
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
-from collections import OrderedDict
+
 
 def get_hrp_weights(cov, corr):
     """Hierarchical Risk Parity: clustering + recursive bisection."""
@@ -232,7 +204,7 @@ def __cluster_variance(cov, items):
     return float(np.dot(w, np.dot(sub, w)))
 
 print("[+] PARTE 2: Risk Parity")
-print(f"    Calculando contribucion al riesgo...")
+print("    Calculando contribucion al riesgo...")
 
 risk_parity_weights = np.ones(n_assets) / n_assets
 portfolio_vol_initial = np.sqrt(np.dot(risk_parity_weights.T, np.dot(cov_matrix.values, risk_parity_weights)))
@@ -351,7 +323,7 @@ except Exception as e:
     print(f'    [!] Tax-Aware Rebalancing fallo: {e}')
 
 print("[+] PARTE 3: Monte Carlo Simulation")
-print(f"    Simulando 10,000 escenarios a 252 dias...")
+print("    Simulando 10,000 escenarios a 252 dias...")
 
 opt_weights = max_sharpe_weights
 port_mean = max_sharpe_return
@@ -400,7 +372,7 @@ monte_carlo = {
 }
 
 print("[+] PARTE 4: Stress Testing")
-print(f"    Analizando periodos de crisis...")
+print("    Analizando periodos de crisis...")
 
 crisis_periods = [
     ("2008 Financial Crisis", "2008-10-01", "2009-03-01"),
@@ -493,7 +465,7 @@ else:
 # REGIME-AWARE POSITION SIZING
 # ============================================================
 regime_params = get_regime_params()
-print(f"[+] PARTE 5: Regime-Aware Position Sizing")
+print("[+] PARTE 5: Regime-Aware Position Sizing")
 print(f"    Regimen detectado: {regime_params}")
 
 max_sharpe_scaled = apply_regime_sizing(frontera_eficiente['max_sharpe']['pesos'], regime_params)
@@ -539,4 +511,4 @@ with open(OUTPUT_PATH, 'w') as f:
     json.dump(result, f, indent=2)
 
 print(f"\n[+] Resultados guardados en {OUTPUT_PATH}")
-print(f"[+] Proceso completado exitosamente")
+print("[+] Proceso completado exitosamente")

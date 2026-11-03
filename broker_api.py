@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """broker_api.py - Paper-to-Live Bridge: IBKR/Alpaca execution, position sync, risk checks."""
 
-import json, os, sys, time, datetime, warnings, threading
+import os
+import sys
+import time
+import warnings
+
 warnings.filterwarnings('ignore')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
@@ -41,7 +45,7 @@ class BrokerAPI:
 
     def _connect_ibkr(self):
         try:
-            from ib_insync import IB, Stock, MarketOrder, LimitOrder, Trade
+            from ib_insync import IB, LimitOrder, MarketOrder, Stock, Trade
             self.IB = IB
             self.Stock = Stock
             self.MarketOrder = MarketOrder
@@ -62,8 +66,8 @@ class BrokerAPI:
     def _connect_alpaca(self):
         try:
             from alpaca.trading.client import TradingClient
-            from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
-            from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
+            from alpaca.trading.enums import OrderSide, OrderType, TimeInForce
+            from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
             self.AlpacaClient = TradingClient
             self.MarketOrderRequest = MarketOrderRequest
             self.LimitOrderRequest = LimitOrderRequest
@@ -343,10 +347,10 @@ if __name__ == '__main__':
         print(f'[!] {e}')
         sys.exit(1)
 
-    print(f'\n[Account]')
+    print('\n[Account]')
     for k, v in broker.account_info.items():
         print(f'  {k}: {v}')
-    print(f'\n[Positions]')
+    print('\n[Positions]')
     for t, p in sorted(broker.positions.items()):
         print(f'  {t}: {p["qty"]:.0f} @ ${p["avg_price"]:.2f} = ${p["market_value"]:.0f}')
 

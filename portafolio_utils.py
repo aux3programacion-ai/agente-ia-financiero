@@ -1,4 +1,6 @@
-import json, os
+import json
+import os
+
 
 def cargar_portafolio(data_dir='.'):
     """

@@ -4,18 +4,17 @@ automated_research.py - Automated alpha research and hypothesis generation.
 Alpha factory with combinatorial alpha expressions, hypothesis generator
 using LLM-style reasoning, and signal decay analysis.
 """
-import numpy as np
-import pandas as pd
-from itertools import combinations
-from typing import Dict, Any, List, Callable, Optional, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime
 import hashlib
 import json
 import os
+from dataclasses import dataclass, field
+from datetime import datetime
+from itertools import combinations
 from pathlib import Path
+from typing import Any
 
-from config.settings import get_setting
+import numpy as np
+import pandas as pd
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'automated_research'
@@ -105,8 +104,8 @@ class AlphaExpression:
     expression: str
     primitive: str
     operator: str = '+'
-    secondary: Optional[str] = None
-    params: Dict[str, Any] = field(default_factory=dict)
+    secondary: str | None = None
+    params: dict[str, Any] = field(default_factory=dict)
     
     def compute(self, data: pd.DataFrame) -> pd.Series:
         p1 = ALPHA_PRIMITIVES.get(self.primitive, lambda s: s)
@@ -128,9 +127,9 @@ class AlphaFactory:
     def __init__(self):
         self.primitives = list(ALPHA_PRIMITIVES.keys())
         self.operators = ['+', '-', '*', '/']
-        self.generated: Dict[str, AlphaExpression] = {}
+        self.generated: dict[str, AlphaExpression] = {}
     
-    def generate_random(self, n: int = 100) -> List[AlphaExpression]:
+    def generate_random(self, n: int = 100) -> list[AlphaExpression]:
         alphas = []
         for i in range(n):
             p1, p2 = np.random.choice(self.primitives, 2, replace=False)
@@ -145,7 +144,7 @@ class AlphaFactory:
             alphas.append(expr)
         return alphas
     
-    def generate_exhaustive(self, max_combos: int = 500) -> List[AlphaExpression]:
+    def generate_exhaustive(self, max_combos: int = 500) -> list[AlphaExpression]:
         alphas = []
         count = 0
         for p1, p2 in combinations(self.primitives, 2):
@@ -165,7 +164,7 @@ class AlphaFactory:
                 break
         return alphas
     
-    def generate_by_template(self, template: str, params_list: List[Dict]) -> List[AlphaExpression]:
+    def generate_by_template(self, template: str, params_list: list[dict]) -> list[AlphaExpression]:
         alphas = []
         for i, params in enumerate(params_list):
             name = f'alpha_{len(self.generated) + 1}'
@@ -187,10 +186,10 @@ class AlphaSelector:
     """Evaluate and select best alphas by IC, Sharpe, turnover."""
     
     def __init__(self):
-        self.results: Dict[str, Dict] = {}
+        self.results: dict[str, dict] = {}
     
     def evaluate_alpha(self, expr: AlphaExpression, data: pd.DataFrame,
-                       forward_returns: pd.Series) -> Dict:
+                       forward_returns: pd.Series) -> dict:
         sig = expr.compute(data)
         valid = sig.notna() & forward_returns.notna()
         
@@ -218,7 +217,7 @@ class AlphaSelector:
         self.results[expr.name] = result
         return result
     
-    def evaluate_all(self, alphas: List[AlphaExpression], data: pd.DataFrame,
+    def evaluate_all(self, alphas: list[AlphaExpression], data: pd.DataFrame,
                      forward_period: int = 1) -> pd.DataFrame:
         close = data['Close'] if 'Close' in data else data.iloc[:, 0]
         fwd_ret = close.pct_change(forward_period).shift(-forward_period)
@@ -242,9 +241,9 @@ class HypothesisGenerator:
     """Generate market hypotheses from data patterns."""
     
     def __init__(self):
-        self.hypotheses: List[Dict] = []
+        self.hypotheses: list[dict] = []
     
-    def from_correlation(self, df_corr: pd.DataFrame, target: str) -> List[Dict]:
+    def from_correlation(self, df_corr: pd.DataFrame, target: str) -> list[dict]:
         """Generate hypotheses from correlation matrix."""
         corr = df_corr[target].drop(target).sort_values(ascending=False)
         
@@ -265,7 +264,7 @@ class HypothesisGenerator:
             self.hypotheses.append(h)
         return self.hypotheses[-len(corr):]
     
-    def from_ic_results(self, df_ic: pd.DataFrame) -> List[Dict]:
+    def from_ic_results(self, df_ic: pd.DataFrame) -> list[dict]:
         for _, row in df_ic.iterrows():
             h = {
                 'id': hashlib.md5(f'ic:{row["alpha"]}'.encode()).hexdigest()[:8],
@@ -281,7 +280,7 @@ class HypothesisGenerator:
             self.hypotheses.append(h)
         return self.hypotheses[-len(df_ic):]
     
-    def from_regime_change(self, data: pd.DataFrame, window: int = 60) -> List[Dict]:
+    def from_regime_change(self, data: pd.DataFrame, window: int = 60) -> list[dict]:
         close = data['Close'] if 'Close' in data else data.iloc[:, 0]
         returns = close.pct_change()
         
@@ -304,7 +303,7 @@ class HypothesisGenerator:
             return [h]
         return []
     
-    def get_best(self, n: int = 5) -> List[Dict]:
+    def get_best(self, n: int = 5) -> list[dict]:
         scored = sorted(self.hypotheses, key=lambda h: h.get('strength', 0), reverse=True)
         return scored[:n]
     
@@ -319,12 +318,12 @@ class SignalDecayAnalyzer:
     """Analyze signal decay and optimal rebalance frequency."""
     
     def __init__(self):
-        self.decay_rates: Dict[str, float] = {}
+        self.decay_rates: dict[str, float] = {}
     
     def compute_decay(self, signal: pd.Series, forward_returns: pd.Series,
-                      max_lag: int = 20) -> Dict:
+                      max_lag: int = 20) -> dict:
         ics = {}
-        for lag in range(0, max_lag + 1):
+        for lag in range(max_lag + 1):
             sig_lag = signal.shift(lag)
             valid = sig_lag.notna() & forward_returns.notna()
             if valid.sum() > 10:
@@ -363,7 +362,7 @@ class AutomatedResearch:
         self.decay_analyzer = SignalDecayAnalyzer()
     
     def run_pipeline(self, data: pd.DataFrame, n_alphas: int = 100,
-                     n_select: int = 10) -> Dict:
+                     n_select: int = 10) -> dict:
         close = data['Close'] if 'Close' in data else data.iloc[:, 0]
         fwd_ret = close.pct_change().shift(-1)
         
@@ -403,7 +402,7 @@ class AutomatedResearch:
     
     def generate_report(self) -> str:
         report_path = OUTPUT_DIR / 'research_report.md'
-        report = f"# Automated Research Report\n"
+        report = "# Automated Research Report\n"
         report += f"Generated: {datetime.now().isoformat()}\n\n"
         report += f"## Generated Alphas: {len(self.factory.generated)}\n"
         report += f"## Selected Alphas: {len(self.selector.results)}\n"

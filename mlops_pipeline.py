@@ -4,21 +4,22 @@ mlops_pipeline.py - MLOps completo.
 Pipeline automatico, versionado, deteccion de drift,
 rollback, A/B testing, logging de decisiones.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-import json, os, hashlib, pickle
+import hashlib
+import json
+import os
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 try:
-    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'mlops'
@@ -27,26 +28,26 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 @dataclass
 class ModelVersion:
-    model_id: str; version: int; path: str; metrics: Dict
-    features: List[str]; created: str; status: str = 'staging'
+    model_id: str; version: int; path: str; metrics: dict
+    features: list[str]; created: str; status: str = 'staging'
 
 
 @dataclass
 class DataVersion:
     dataset_id: str; version: int; path: str; rows: int
-    columns: List[str]; hash: str; created: str
+    columns: list[str]; hash: str; created: str
 
 
 @dataclass
 class DecisionLog:
     timestamp: str; ticker: str; signal: str; confidence: float
-    model_version: int; features_used: Dict; outcome: Optional[float] = None
-    correct: Optional[bool] = None
+    model_version: int; features_used: dict; outcome: float | None = None
+    correct: bool | None = None
 
 
 class DataVersioner:
     def __init__(self):
-        self.versions: List[DataVersion] = []
+        self.versions: list[DataVersion] = []
 
     def snapshot(self, data: pd.DataFrame, dataset_id: str) -> DataVersion:
         ver = len([v for v in self.versions if v.dataset_id == dataset_id]) + 1
@@ -59,7 +60,7 @@ class DataVersioner:
         self.versions.append(dv)
         return dv
 
-    def load(self, dataset_id: str, version: Optional[int] = None) -> pd.DataFrame:
+    def load(self, dataset_id: str, version: int | None = None) -> pd.DataFrame:
         candidates = [v for v in self.versions if v.dataset_id == dataset_id]
         if version:
             candidates = [v for v in candidates if v.version == version]
@@ -67,7 +68,7 @@ class DataVersioner:
             return pd.DataFrame()
         return pd.read_csv(candidates[-1].path)
 
-    def get_history(self, dataset_id: str) -> List[DataVersion]:
+    def get_history(self, dataset_id: str) -> list[DataVersion]:
         return [v for v in self.versions if v.dataset_id == dataset_id]
 
 
@@ -75,15 +76,15 @@ class DriftDetector:
     def __init__(self, threshold=0.05, window=100):
         self.threshold = threshold
         self.window = window
-        self.reference_stats: Dict[str, Dict] = {}
-        self.drift_log: List[Dict] = []
+        self.reference_stats: dict[str, dict] = {}
+        self.drift_log: list[dict] = []
 
     def set_reference(self, data: pd.DataFrame, name: str = 'reference'):
         self.reference_stats[name] = {
             'means': data.mean().to_dict(), 'stds': data.std().to_dict(),
             'n': len(data), 'timestamp': datetime.now().isoformat()}
 
-    def detect(self, data: pd.DataFrame, name: str = 'current') -> Dict:
+    def detect(self, data: pd.DataFrame, name: str = 'current') -> dict:
         if not self.reference_stats:
             return {'drift_detected': False, 'message': 'No reference set'}
         ref = list(self.reference_stats.values())[-1]
@@ -99,17 +100,17 @@ class DriftDetector:
         self.drift_log.append(result)
         return result
 
-    def get_log(self) -> List[Dict]:
+    def get_log(self) -> list[dict]:
         return self.drift_log[-50:]
 
 
 class ModelRegistry:
     def __init__(self):
-        self.models: Dict[str, List[ModelVersion]] = {}
-        self.production: Dict[str, ModelVersion] = {}
+        self.models: dict[str, list[ModelVersion]] = {}
+        self.production: dict[str, ModelVersion] = {}
 
-    def register(self, model_id: str, path: str, metrics: Dict,
-                 features: List[str]) -> ModelVersion:
+    def register(self, model_id: str, path: str, metrics: dict,
+                 features: list[str]) -> ModelVersion:
         versions = self.models.get(model_id, [])
         ver = len(versions) + 1
         mv = ModelVersion(model_id=model_id, version=ver, path=path,
@@ -127,7 +128,7 @@ class ModelRegistry:
                 self.production[model_id] = v
                 break
 
-    def rollback(self, model_id: str) -> Optional[ModelVersion]:
+    def rollback(self, model_id: str) -> ModelVersion | None:
         if model_id in self.production:
             prod = self.production[model_id]
             prod.status = 'rolled_back'
@@ -142,8 +143,8 @@ class ModelRegistry:
 
 class ABTester:
     def __init__(self):
-        self.trials: Dict[str, Dict] = {}
-        self.results: Dict[str, List] = {}
+        self.trials: dict[str, dict] = {}
+        self.results: dict[str, list] = {}
 
     def start_trial(self, trial_id: str, model_a: str, model_b: str,
                     traffic_split: float = 0.5, min_samples: int = 100):
@@ -158,7 +159,7 @@ class ABTester:
             self.results[model] = []
         self.results[model].append(correct)
 
-    def evaluate(self, trial_id: str) -> Dict:
+    def evaluate(self, trial_id: str) -> dict:
         if trial_id not in self.trials:
             return {'error': 'Trial not found'}
         t = self.trials[trial_id]
@@ -180,10 +181,10 @@ class MLOpsPipeline:
         self.drift = DriftDetector()
         self.registry = ModelRegistry()
         self.ab = ABTester()
-        self.logs: List[DecisionLog] = []
+        self.logs: list[DecisionLog] = []
 
     def log_decision(self, ticker: str, signal: str, confidence: float,
-                     model_version: int, features: Dict):
+                     model_version: int, features: dict):
         dl = DecisionLog(timestamp=datetime.now().isoformat(), ticker=ticker,
             signal=signal, confidence=confidence, model_version=model_version,
             features_used=features)
@@ -195,7 +196,7 @@ class MLOpsPipeline:
             self.logs[idx].outcome = outcome
             self.logs[idx].correct = correct
 
-    def get_dashboard(self) -> Dict:
+    def get_dashboard(self) -> dict:
         n_logs = len(self.logs)
         correct = sum(1 for l in self.logs if l.correct is True)
         incorrect = sum(1 for l in self.logs if l.correct is False)
@@ -217,7 +218,7 @@ class MLOpsPipeline:
 
     def report(self) -> str:
         d = self.get_dashboard()
-        report = f'MLOps Dashboard\n'
+        report = 'MLOps Dashboard\n'
         report += f'Decisiones: {d["total_decisions"]} '
         report += f'(Precision: {d["accuracy"]:.1%})\n'
         report += f'Modelos registrados: {d["models_registered"]}\n'

@@ -6,13 +6,12 @@ Counterfactual simulation: "what would have happened if X had been different?"
 """
 import json
 import os
-import time
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, asdict
 
 try:
     import dowhy
@@ -28,7 +27,6 @@ try:
 except ImportError:
     ECONML_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'causal'
@@ -40,7 +38,7 @@ class CausalEffect:
     treatment: str
     outcome: str
     effect: float
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
     p_value: float
     method: str
     significant: bool
@@ -49,8 +47,8 @@ class CausalEffect:
 
 @dataclass
 class CausalGraph:
-    nodes: List[str]
-    edges: List[Tuple[str, str]]
+    nodes: list[str]
+    edges: list[tuple[str, str]]
     graph_dot: str = ''
 
 
@@ -143,7 +141,7 @@ class CausalAnalyzer:
         if self.cache_path.exists():
             try:
                 self.results = json.loads(self.cache_path.read_text())
-            except:
+            except Exception:
                 self.results = {'analyses': []}
         else:
             self.results = {'analyses': [], 'causal_graphs': []}
@@ -153,7 +151,7 @@ class CausalAnalyzer:
         self.cache_path.write_text(json.dumps(self.results, indent=2, default=str))
     
     def estimate_ate(self, data: pd.DataFrame, treatment: str, outcome: str,
-                     common_causes: List[str], instruments: List[str] = None,
+                     common_causes: list[str], instruments: list[str] = None,
                      graph_dot: str = None) -> CausalEffect:
         """
         Estimate Average Treatment Effect using DoWhy.
@@ -261,7 +259,7 @@ class CausalAnalyzer:
             )
     
     def estimate_cate(self, data: pd.DataFrame, treatment: str, outcome: str,
-                      features: List[str], common_causes: List[str]) -> Dict:
+                      features: list[str], common_causes: list[str]) -> dict:
         """
         Estimate Conditional Average Treatment Effect using CausalForest.
         Gives heterogeneous treatment effects (who benefits most?).
@@ -296,7 +294,7 @@ class CausalAnalyzer:
         except Exception as e:
             return {'error': str(e)}
     
-    def _find_heterogeneity(self, est, data, features) -> List[Dict]:
+    def _find_heterogeneity(self, est, data, features) -> list[dict]:
         """Find which features drive heterogeneity in treatment effects."""
         results = []
         for i, feat in enumerate(features):
@@ -315,14 +313,14 @@ class CausalAnalyzer:
                     'cate_high': cate_high,
                     'diff': cate_high - cate_low
                 })
-            except:
+            except Exception:
                 continue
         
         results.sort(key=lambda x: abs(x['diff']), reverse=True)
         return results[:5]
     
     def counterfactual(self, data: pd.DataFrame, treatment: str, outcome: str,
-                       common_causes: List[str], treatment_value: float = 0.0) -> Dict:
+                       common_causes: list[str], treatment_value: float = 0.0) -> dict:
         """
         Counterfactual: what would outcome be if treatment = treatment_value?
         """
@@ -360,10 +358,10 @@ class CausalAnalyzer:
                 'n_samples': len(data),
                 'method': 'dowhy'
             }
-        except Exception as e:
+        except Exception:
             return self._counterfactual_linear(data, treatment, outcome, common_causes, treatment_value)
     
-    def _counterfactual_linear(self, data, treatment, outcome, common_causes, treatment_value) -> Dict:
+    def _counterfactual_linear(self, data, treatment, outcome, common_causes, treatment_value) -> dict:
         try:
             import statsmodels.api as sm
             X = data[[treatment] + common_causes]
@@ -402,7 +400,7 @@ class CausalAnalyzer:
                 'coef_treatment': float(model.coef_[0])
             }
     
-    def market_structure_analysis(self, data: pd.DataFrame) -> Dict:
+    def market_structure_analysis(self, data: pd.DataFrame) -> dict:
         """Analyze market structure: what drives ticker returns?"""
         features = [c for c in data.columns if c not in ['returns', 'date', 'ticker']]
         if len(features) < 2:
@@ -427,7 +425,7 @@ class CausalAnalyzer:
         }
 
 
-def analyze_causal_impact(ticker: str, feature_name: str, data: pd.DataFrame = None) -> Dict:
+def analyze_causal_impact(ticker: str, feature_name: str, data: pd.DataFrame = None) -> dict:
     """Quick causal impact analysis for a ticker-feature pair."""
     analyzer = CausalAnalyzer()
     
@@ -455,7 +453,7 @@ def analyze_causal_impact(ticker: str, feature_name: str, data: pd.DataFrame = N
     return asdict(effect)
 
 
-def build_causal_graph(ticker: str) -> Dict:
+def build_causal_graph(ticker: str) -> dict:
     """Build and return causal graph for a ticker."""
     graph = CausalGraphBuilder.ticker_graph(ticker)
     return {'ticker': ticker, 'nodes': graph.nodes, 'edges': graph.edges}

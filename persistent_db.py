@@ -3,15 +3,14 @@
 persistent_db.py - Base de datos SQLite centralizada.
 CRUD para modelos, caracteristicas, decisiones, ordenes, riesgos, logs.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+import json
+import os
+import sqlite3
+import threading
 from datetime import datetime, timedelta
-import json, os, sqlite3, threading
 from pathlib import Path
 
-from config.settings import get_setting
+import pandas as pd
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 DB_PATH = Path(DATA_DIR) / 'Datos' / 'agente.db'
@@ -30,7 +29,7 @@ def get_conn() -> sqlite3.Connection:
 
 
 class DatabaseManager:
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         self.db_path = db_path or DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
@@ -119,7 +118,7 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def consultar(self, sql: str, params: tuple = ()) -> List[Dict]:
+    def consultar(self, sql: str, params: tuple = ()) -> list[dict]:
         conn = self._get_conn()
         try:
             conn.row_factory = sqlite3.Row
@@ -136,7 +135,7 @@ class DatabaseManager:
             conn.close()
 
     def guardar_modelo(self, model_id: str, nombre: str, regime: str,
-                       path: str, metrics: Dict, features: List[str]) -> int:
+                       path: str, metrics: dict, features: list[str]) -> int:
         version = len(self.consultar(
             'SELECT id FROM modelos WHERE model_id=?', (model_id,))) + 1
         self.ejecutar(
@@ -155,7 +154,7 @@ class DatabaseManager:
             'UPDATE modelos SET status=? WHERE model_id=? AND version=?',
             ('production', model_id, version))
 
-    def obtener_modelo(self, model_id: str, version: Optional[int] = None) -> Optional[Dict]:
+    def obtener_modelo(self, model_id: str, version: int | None = None) -> dict | None:
         if version:
             rows = self.consultar(
                 'SELECT * FROM modelos WHERE model_id=? AND version=? ORDER BY version DESC',
@@ -171,13 +170,13 @@ class DatabaseManager:
             return r
         return None
 
-    def listar_modelos(self) -> List[Dict]:
+    def listar_modelos(self) -> list[dict]:
         return self.consultar(
             'SELECT model_id, MAX(version) as version, nombre, status, created '
             'FROM modelos GROUP BY model_id ORDER BY created DESC')
 
     def guardar_decision(self, ticker: str, senial: str, confianza: float,
-                         model_version: int, features: Dict):
+                         model_version: int, features: dict):
         self.ejecutar(
             'INSERT INTO decisiones (timestamp,ticker,senial,confianza,model_version,features_used) '
             'VALUES (?,?,?,?,?,?)',
@@ -189,8 +188,8 @@ class DatabaseManager:
             'UPDATE decisiones SET outcome=?, correcto=? WHERE id=?',
             (outcome, int(correcto), decision_id))
 
-    def obtener_decisiones(self, ticker: Optional[str] = None,
-                           limite: int = 100) -> List[Dict]:
+    def obtener_decisiones(self, ticker: str | None = None,
+                           limite: int = 100) -> list[dict]:
         if ticker:
             return self.consultar(
                 'SELECT * FROM decisiones WHERE ticker=? ORDER BY id DESC LIMIT ?',
@@ -207,8 +206,8 @@ class DatabaseManager:
             (order_id, ticker, lado, shares, precio, broker,
              slippage_bps, datetime.now().isoformat(), 'filled'))
 
-    def obtener_ordenes(self, ticker: Optional[str] = None,
-                        limite: int = 100) -> List[Dict]:
+    def obtener_ordenes(self, ticker: str | None = None,
+                        limite: int = 100) -> list[dict]:
         if ticker:
             return self.consultar(
                 'SELECT * FROM ordenes WHERE ticker=? ORDER BY id DESC LIMIT ?',
@@ -224,8 +223,8 @@ class DatabaseManager:
             (datetime.now().isoformat(), ticker, tipo, valor, limite,
              int(excedido), detalles))
 
-    def obtener_riesgos(self, ticker: Optional[str] = None,
-                        limite: int = 100) -> List[Dict]:
+    def obtener_riesgos(self, ticker: str | None = None,
+                        limite: int = 100) -> list[dict]:
         if ticker:
             return self.consultar(
                 'SELECT * FROM riesgos WHERE ticker=? ORDER BY id DESC LIMIT ?',
@@ -247,13 +246,13 @@ class DatabaseManager:
             (ticker, nombre, desde))
 
     def guardar_metrica(self, categoria: str, nombre: str, valor: float,
-                        etiquetas: Optional[Dict] = None):
+                        etiquetas: dict | None = None):
         self.ejecutar(
             'INSERT INTO metricas (timestamp,categoria,nombre,valor,etiquetas) VALUES (?,?,?,?,?)',
             (datetime.now().isoformat(), categoria, nombre, valor,
              json.dumps(etiquetas or {})))
 
-    def obtener_dashboard(self) -> Dict:
+    def obtener_dashboard(self) -> dict:
         n_modelos = self.consultar(
             'SELECT COUNT(DISTINCT model_id) as n FROM modelos')[0]['n']
         en_prod = self.consultar(

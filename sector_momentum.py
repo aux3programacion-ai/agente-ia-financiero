@@ -1,4 +1,7 @@
-import json, os, sys, time
+import json
+import os
+import time
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -48,7 +51,7 @@ def main():
                 if len(c) > 126:
                     mom = compute_momentum(c)
                     sectors[name] = {'etf': etf, 'momentum': mom}
-            except:
+            except Exception:
                 pass
     
     # Rank by composite momentum

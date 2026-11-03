@@ -4,10 +4,16 @@ noticias_mercado.py - Obtiene noticias frescas por ticker via RSS gratuito
 (Yahoo Finance RSS + Google News RSS) y las estructura para el AI.
 Sin API key, sin librerias externas.
 """
-import json, os, urllib.request, time, re
+import json
+import os
+import re
+import time
+import urllib.request
 from datetime import datetime, timezone
 from xml.etree import ElementTree
+
 from portafolio_utils import cargar_portafolio
+from noticias_es import enriquecer
 
 TICKERS = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
            'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
@@ -85,6 +91,16 @@ def extraer_sentimiento_ia(ticker, noticias):
     if not noticias:
         return None
     try:
+        if not os.environ.get('OPENROUTER_KEY'):
+            env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+            if os.path.exists(env_path):
+                for linea in open(env_path, encoding='utf-8', errors='replace'):
+                    linea = linea.strip()
+                    if linea and not linea.startswith('#') and '=' in linea:
+                        k, v = linea.split('=', 1)
+                        k = k.strip(); v = v.strip().strip('"').strip("'")
+                        if k and v:
+                            os.environ.setdefault(k, v)
         api_key = os.environ.get('OPENROUTER_KEY')
         if not api_key:
             return None
@@ -156,7 +172,7 @@ def main():
     if os.path.exists(SEEN_PATH):
         try:
             vistas = set(json.load(open(SEEN_PATH)))
-        except: pass
+        except Exception: pass
 
     noticias_por_ticker = {}
     noticias_generales = []
@@ -201,10 +217,18 @@ def main():
 
         # Analisis de sentimiento IA para este ticker (si hay noticias nuevas)
         sent = extraer_sentimiento_ia(t, noticias_por_ticker[t])
+        # Titulares YA en espanol (Yahoo Finanzas ES + Google Noticias ES) y su
+        # tono medido con un lexico financiero local, para que la pagina muestre
+        # las noticias en espanol sin depender de traducir con IA.
+        # Campos aditivos: el resto del pipeline sigue leyendo 'noticias'/'sentimiento'.
+        es = enriquecer(t)
         noticias_por_ticker[t] = {
             'noticias': noticias_por_ticker[t],
-            'sentimiento': sent
+            'sentimiento': sent,
+            'titulares_es': es['titulares_es'],
+            'sentimiento_es': es['sentimiento_es']
         }
+        print(f'  [Noticias ES] {t}: {len(es["titulares_es"])} titulares en espanol')
         time.sleep(0.2)
 
     # Construir estructura de salida por sector
@@ -259,7 +283,7 @@ def main():
         f.write('\n'.join(lines))
 
     print(f'[OK] {total_nuevas} noticias nuevas para {len(TICKERS)} tickers')
-    print(f'[OK] Noticias guardadas en noticias_recientes.json')
+    print('[OK] Noticias guardadas en noticias_recientes.json')
 
 if __name__ == '__main__':
     main()

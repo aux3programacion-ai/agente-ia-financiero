@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lanzador unico del sistema. python run.py"""
-import os, sys, subprocess, webbrowser
-from pathlib import Path
+import os
+import subprocess
 
 MODULOS = [
     ('1', 'Model Store',               'model_store.py'),
@@ -27,12 +27,20 @@ MODULOS = [
     ('21', 'Persistent DB',            'persistent_db.py'),
     ('22', 'AutoML (Optuna)',          'hyperparameter_optimizer.py'),
     ('23', 'TCA (costos transaccion)', 'transaction_cost_analysis.py'),
+    ('24', 'Trading Orchestrator',     'trading_orchestrator.py'),
+    ('25', 'Paper Trading',            'paper_trading.py'),
+    ('26', 'Broker Interface',         'broker_interface.py'),
+    ('27', 'Broker API (IBKR/Alpaca)',  'broker_api.py'),
 ]
 
 SERVICIOS = [
     ('a', 'Iniciar API REST (uvicorn)', 'uvicorn api_rest:app --host 0.0.0.0 --port 8000'),
     ('b', 'Iniciar Dashboard Streamlit', 'streamlit run dashboard_interactivo.py'),
     ('c', 'Iniciar NLU interactivo',    'python interfaz_lenguaje_natural.py'),
+    ('d', 'Iniciar Paper Trading',      'python -c "from paper_trading import get_paper_trading_manager; m=get_paper_trading_manager(); m.start(); m.broker.set_price_provider(lambda t:150); m.run_scheduled(lambda:{t:{\'direction\':\'buy\',\'confidence\':65,\'price\':150} for t in [\'NVDA\',\'AAPL\',\'MSFT\']}, 1); input(\'Paper trading activo. Enter para detener...\'); m.stop()"'),
+    ('e', 'Iniciar Orchestrator Completo', 'python trading_orchestrator.py'),
+    ('f', 'Generar Reporte TCA',        'python -c "from transaction_cost_analysis import SimuladorTCA, TCAAnalyzer; sim=SimuladorTCA(); trades=sim.simular_lote([\'NVDA\',\'AAPL\',\'MSFT\'],3); a=TCAAnalyzer(); a.analizar_lote(trades); print(a.generar_reporte())"'),
+    ('g', 'Analizar Opciones Ticker',   'python -c "from opciones_derivados import OptionsRealDataLoader; l=OptionsRealDataLoader(); r=l.analyze_real_ticker(\'NVDA\'); print(f\'Spot: ${r[\\\'spot\\\']:.2f}, Strikes: {len(r[\\\'chain\\\'])}\'); l.save_analysis(r)"'),
 ]
 
 TESTS = [
@@ -86,9 +94,7 @@ def main():
         else:
             for key, nombre, comando in SERVICIOS:
                 if op == key:
-                    if 'uvicorn' in comando:
-                        ejecutar(comando, nombre)
-                    elif 'streamlit' in comando:
+                    if 'uvicorn' in comando or 'streamlit' in comando:
                         ejecutar(comando, nombre)
                     else:
                         ejecutar(comando, nombre)

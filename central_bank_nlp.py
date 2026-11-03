@@ -1,5 +1,9 @@
-import json, os, sys, time, re, urllib.request, html
-from collections import defaultdict
+import html
+import json
+import os
+import re
+import time
+import urllib.request
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_SPEECH = os.path.join(DATA_DIR, 'Datos', 'central_bank_nlp.json')
@@ -52,7 +56,7 @@ def fetch_fed_speeches():
         with urllib.request.urlopen(req, timeout=15) as r:
             html_content = r.read().decode('utf-8', errors='replace')
         # Extract speech titles and teasers
-        items = re.findall(r'<a[^>]*href="([^"]*press[^"]*)"[^>]*>([^<]+)</a>', html_content, re.I)
+        items = re.findall(r'<a[^>]*href="([^"]*press[^"]*)"[^>]*>([^<]+)</a>', html_content, re.IGNORECASE)
         for href, title in items[:5]:
             full_url = 'https://www.federalreserve.gov' + href if href.startswith('/') else href
             try:
@@ -60,13 +64,13 @@ def fetch_fed_speeches():
                 with urllib.request.urlopen(req2, timeout=10) as r2:
                     content = r2.read().decode('utf-8', errors='replace')
                 # Extract paragraph text
-                paras = re.findall(r'<p>([^<]+)</p>', content, re.I)
+                paras = re.findall(r'<p>([^<]+)</p>', content, re.IGNORECASE)
                 text = ' '.join(html.unescape(p) for p in paras)
                 if len(text) > 100:
                     texts.append({'title': html.unescape(title), 'text': text[:3000]})
-            except:
+            except Exception:
                 pass
-    except:
+    except Exception:
         pass
     return texts
 
@@ -81,11 +85,11 @@ def fetch_earnings_calls():
             with urllib.request.urlopen(req, timeout=10) as r:
                 html_content = r.read().decode('utf-8', errors='replace')
             # Extract transcript snippets
-            snippets = re.findall(r'<p[^>]*>([^<]+)</p>', html_content, re.I)
+            snippets = re.findall(r'<p[^>]*>([^<]+)</p>', html_content, re.IGNORECASE)
             text = ' '.join(html.unescape(s) for s in snippets[:50])
             if len(text) > 200:
                 calls.append({'ticker': t, 'text': text[:3000]})
-        except:
+        except Exception:
             pass
     return calls
 

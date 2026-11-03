@@ -1,7 +1,10 @@
-import json, sys, os, time
-import yfinance as yf
-import pandas as pd
+import json
+import os
+import sys
+import time
+
 import numpy as np
+import yfinance as yf
 
 UNIV_FILE = "Datos/univ_global.json"
 SCREENING_FILE = "Datos/screening_global.json"
@@ -57,7 +60,7 @@ def screen_ticker(ticker):
             "pct_30d": round(pct_30d, 1),
             "score": score
         }
-    except:
+    except Exception:
         return None
 
 def main():

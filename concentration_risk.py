@@ -1,6 +1,6 @@
-import json, os, sys, time, math
-import numpy as np
-from portafolio_utils import cargar_portafolio
+import json
+import os
+import time
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')

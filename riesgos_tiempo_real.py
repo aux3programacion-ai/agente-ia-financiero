@@ -4,15 +4,13 @@ riesgos_tiempo_real.py - Gestion de riesgos en tiempo real.
 Limites por estrategia/activo/mercado, circuit breakers,
 monitoreo de concentracion, apalancamiento, VAR en vivo.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, field, asdict
+import os
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-import json, os, threading
 from pathlib import Path
 
-from config.settings import get_setting
+import numpy as np
+import pandas as pd
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'riesgos'
@@ -38,7 +36,7 @@ class RiskAlert:
 @dataclass
 class CircuitBreakerEvent:
     timestamp: str; reason: str; action_taken: str
-    affected_assets: List[str]; duration_minutes: int
+    affected_assets: list[str]; duration_minutes: int
 
 
 class RealTimeVAR:
@@ -46,7 +44,7 @@ class RealTimeVAR:
         self.window = window
         self.confidence = confidence
 
-    def compute(self, returns: np.ndarray, portfolio_value: float) -> Dict:
+    def compute(self, returns: np.ndarray, portfolio_value: float) -> dict:
         if len(returns) < 10:
             return {'var_95': 0, 'var_99': 0, 'cvar_95': 0, 'method': 'insufficient_data'}
         historical_var_95 = np.percentile(returns, (1 - self.confidence) * 100)
@@ -63,8 +61,8 @@ class RealTimeVAR:
 
 class LimitManager:
     def __init__(self):
-        self.limits: Dict[str, RiskLimit] = {}
-        self.alerts: List[RiskAlert] = []
+        self.limits: dict[str, RiskLimit] = {}
+        self.alerts: list[RiskAlert] = []
 
     def add_limit(self, name: str, tipo: str, limite: float, unidad='%'):
         self.limits[name] = RiskLimit(nombre=name, tipo=tipo, limite=limite,
@@ -80,18 +78,18 @@ class LimitManager:
                     valor=value, limite=self.limits[name].limite,
                     suggested_action=f'Reducir {name}'))
 
-    def get_exceeded(self) -> List[RiskLimit]:
+    def get_exceeded(self) -> list[RiskLimit]:
         return [l for l in self.limits.values() if l.excedido]
 
 
 class CircuitBreaker:
     def __init__(self):
-        self.events: List[CircuitBreakerEvent] = []
-        self.active_breaks: Dict[str, datetime] = {}
+        self.events: list[CircuitBreakerEvent] = []
+        self.active_breaks: dict[str, datetime] = {}
         self.default_duration = 30
 
-    def trigger(self, reason: str, assets: List[str],
-                duration: Optional[int] = None) -> CircuitBreakerEvent:
+    def trigger(self, reason: str, assets: list[str],
+                duration: int | None = None) -> CircuitBreakerEvent:
         dur = duration or self.default_duration
         event = CircuitBreakerEvent(timestamp=datetime.now().isoformat(),
             reason=reason, action_taken='PAUSE_ALL',
@@ -109,7 +107,7 @@ class CircuitBreaker:
             return False
         return True
 
-    def get_active(self) -> List[str]:
+    def get_active(self) -> list[str]:
         now = datetime.now()
         return [a for a, t in self.active_breaks.items() if now < t]
 
@@ -129,8 +127,8 @@ class RiskDashboard:
             ('max_single_pnl', 'max', 0.10), ('max_daily_loss', 'max', 0.05)]:
             self.limits.add_limit(name, tipo, lim)
 
-    def evaluate(self, positions: Dict[str, float], prices: Dict[str, float],
-                 returns: pd.DataFrame, capital: float) -> Dict:
+    def evaluate(self, positions: dict[str, float], prices: dict[str, float],
+                 returns: pd.DataFrame, capital: float) -> dict:
         total_exposure = sum(abs(p) * prices.get(t, 0) for t, p in positions.items())
         leverage = total_exposure / max(capital, 1)
 

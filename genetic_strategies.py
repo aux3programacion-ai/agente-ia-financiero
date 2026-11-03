@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """genetic_strategies.py - Estrategias evolutivas con programacion genetica."""
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Callable
+import copy
+import json
+import os
+import random
 from dataclasses import dataclass, field
 from enum import Enum
-import json, os, random, copy
 from pathlib import Path
-from config.settings import get_setting
+from typing import Optional
+
+import numpy as np
+import pandas as pd
+
 DATA_DIR = os.environ.get("GITHUB_WORKSPACE", ".")
 OUTPUT_DIR = Path(DATA_DIR) / "Datos" / "genetic"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -53,16 +57,16 @@ def evaluate_tree(node: Node, data: pd.Series) -> float:
 
 @dataclass
 class Strategy:
-    name: str; entry: Node; exit_node: Optional[Node] = None
-    fitness: float = 0.0; params: Dict = field(default_factory=dict)
+    name: str; entry: Node; exit_node: Node | None = None
+    fitness: float = 0.0; params: dict = field(default_factory=dict)
 
 class GeneticStrategyOptimizer:
     def __init__(self, pop_size=50, generations=20, mutation_rate=0.2,
                  crossover_rate=0.6, max_depth=4):
         self.pop_size = pop_size; self.generations = generations
         self.mutation_rate = mutation_rate; self.crossover_rate = crossover_rate
-        self.max_depth = max_depth; self.population: List[Strategy] = []
-        self.best: Optional[Strategy] = None; self.history = []
+        self.max_depth = max_depth; self.population: list[Strategy] = []
+        self.best: Strategy | None = None; self.history = []
 
     def _random_strategy(self, i):
         return Strategy(f"strat_{i}", random_node(self.max_depth))
@@ -106,7 +110,7 @@ class GeneticStrategyOptimizer:
         _mut(m.entry)
         return m
 
-    def run(self, data: pd.DataFrame, target='forward_return') -> Dict:
+    def run(self, data: pd.DataFrame, target='forward_return') -> dict:
         self.population = [self._random_strategy(i) for i in range(self.pop_size)]
         for gen in range(self.generations):
             fitness = [self.evaluate(s, data, target) for s in self.population]

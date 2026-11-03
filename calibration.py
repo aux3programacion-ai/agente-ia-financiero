@@ -7,16 +7,14 @@ Integra con model_store.py para persistencia.
 import json
 import os
 import time
-import numpy as np
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
 
-from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+import numpy as np
+from sklearn.calibration import calibration_curve
 from sklearn.isotonic import IsotonicRegression
-from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.metrics import brier_score_loss
 
 from config.settings import get_setting
-from model_store import get_model_store
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos'
@@ -40,7 +38,7 @@ class ProbabilityCalibrator:
         self.brier_after = None
         self.calibration_error = None
 
-    def fit(self, y_true: np.ndarray, y_prob: np.ndarray, X: Optional[np.ndarray] = None):
+    def fit(self, y_true: np.ndarray, y_prob: np.ndarray, X: np.ndarray | None = None):
         """
         Entrena calibrador isotónico/Platt.
         
@@ -84,7 +82,7 @@ class ProbabilityCalibrator:
 
         return self
 
-    def predict(self, y_prob: np.ndarray, X: Optional[np.ndarray] = None) -> np.ndarray:
+    def predict(self, y_prob: np.ndarray, X: np.ndarray | None = None) -> np.ndarray:
         if not self.is_fitted or self.calibrator is None:
             return y_prob
         
@@ -97,12 +95,12 @@ class ProbabilityCalibrator:
                 log_odds = np.clip(np.log(y_prob / (1 - y_prob + 1e-12)), -10, 10)
                 return self.calibrator.predict_proba(log_odds.reshape(-1, 1))[:, 1]
 
-    def predict_single(self, prob: float, features: Optional[Dict] = None) -> float:
+    def predict_single(self, prob: float, features: dict | None = None) -> float:
         """Calibra una probabilidad individual."""
         arr = np.array([prob])
         return float(self.predict(arr)[0])
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> dict:
         return {
             'metodo': self.metodo,
             'is_fitted': self.is_fitted,
@@ -115,7 +113,7 @@ class ProbabilityCalibrator:
 
 class CalibrationManager:
     def __init__(self):
-        self.calibrators: Dict[str, ProbabilityCalibrator] = {}
+        self.calibrators: dict[str, ProbabilityCalibrator] = {}
         self.calib_path = OUTPUT_DIR / 'calibracion_real.json'
         self._load()
 
@@ -126,7 +124,7 @@ class CalibrationManager:
                 self.calibrators = {
                     k: self._deserialize(v) for k, v in data.get('calibrators', {}).items()
                 }
-            except:
+            except Exception:
                 pass
 
     def _save(self):
@@ -165,7 +163,7 @@ class CalibrationManager:
         key: str,
         y_true: np.ndarray,
         y_prob: np.ndarray,
-        X: Optional[np.ndarray] = None,
+        X: np.ndarray | None = None,
         save: bool = True
     ) -> ProbabilityCalibrator:
         cal = self.get_or_create(key)
@@ -181,7 +179,7 @@ class CalibrationManager:
                 scores.append(c.brier_after)
         return float(np.mean(scores)) if scores else 0.0
 
-    def calibrate_confidences(self, predictions: List[Dict]) -> List[Dict]:
+    def calibrate_confidences(self, predictions: list[dict]) -> list[dict]:
         """
         Aplica calibración isotónica a todas las predicciones en la bitácora.
         Retorna predicciones calibradas.
@@ -215,7 +213,7 @@ def calibrate_probabilities(
     y_true: np.ndarray,
     y_prob: np.ndarray,
     metodo: str = METODO
-) -> Tuple[ProbabilityCalibrator, np.ndarray]:
+) -> tuple[ProbabilityCalibrator, np.ndarray]:
     cal = ProbabilityCalibrator(metodo=metodo)
     cal.fit(y_true, y_prob)
     y_calib = cal.predict(y_prob)

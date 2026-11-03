@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """macro_features.py - Macro regime features from FRED, VIX, yields, DXY"""
-import json, os, sys, urllib.request, time, datetime, warnings
-import numpy as np, pandas as pd
+import datetime
+import json
+import os
+import time
+import urllib.request
+import warnings
+
+import pandas as pd
+
 warnings.filterwarnings('ignore')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')

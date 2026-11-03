@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """mercado_tiempo_real.py - Dashboard de mercado en vivo. Precios, noticias, top picks 30d."""
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
-import json, os, time as time_module
+import json
+import os
+import time as time_module
+from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
+
 try:
-    import streamlit as st
-    import plotly.graph_objects as go
     import plotly.express as px
+    import plotly.graph_objects as go
+    import streamlit as st
     STREAMLIT_AVAILABLE = True
 except ImportError:
     STREAMLIT_AVAILABLE = False
@@ -45,7 +46,7 @@ class MercadoData:
         p = DATOS / path
         if p.exists():
             try: return json.loads(p.read_text(encoding='utf-8'))
-            except: return None
+            except Exception: return None
         return None
 
     def get_probabilidades(self):
@@ -71,13 +72,13 @@ class MercadoData:
         for ticker in ['SPY', 'QQQ', 'DIA', '^VIX', 'DX-Y.NYB', 'TLT']:
             try:
                 t = yf.Ticker(ticker)
-                hist = t.history(period='1d', interval='1m', progress=False)
+                hist = t.history(period='1d', interval='1m')
                 if not hist.empty:
                     result[ticker] = float(hist['Close'].iloc[-1])
                 else:
-                    hist = t.history(period='5d', progress=False)
+                    hist = t.history(period='5d')
                     result[ticker] = float(hist['Close'].iloc[-1]) if not hist.empty else defaults[ticker]
-            except:
+            except Exception:
                 result[ticker] = defaults[ticker]
         return result
 
@@ -115,13 +116,13 @@ class MercadoData:
             return fallback
         try:
             t = yf.Ticker(ticker)
-            hist = t.history(period='1d', interval='1m', progress=False)
+            hist = t.history(period='1d', interval='1m')
             if not hist.empty:
                 return float(hist['Close'].iloc[-1])
-            hist = t.history(period='5d', progress=False)
+            hist = t.history(period='5d')
             if not hist.empty:
                 return float(hist['Close'].iloc[-1])
-        except:
+        except Exception:
             pass
         return fallback
 
@@ -248,8 +249,8 @@ class MercadoData:
 def mostrar_tabs():
     de = MercadoData()
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "Resumen", "Top Picks 30d", "Noticias", "Screening", "XGBoost", "Sistema", "Acciones a Comprar"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        "Resumen", "Top Picks 30d", "Noticias", "Screening", "XGBoost", "Sistema", "Acciones a Comprar", "Pro Dashboard"])
 
     with tab1:
         st.subheader("Indices en Vivo")
@@ -409,6 +410,215 @@ def mostrar_tabs():
             st.markdown(f'<table style="width:100%;border-collapse:collapse">{header}{"".join(rows)}</table>', unsafe_allow_html=True)
 
             st.caption(f"Precios en vivo via yfinance. {len(acciones)} acciones analizadas. Precio venta = objetivo 30d del sistema. Ordenado por retorno potencial descendente.")
+
+
+    with tab8:
+        render_pro_dashboard(de)
+
+
+def render_pro_dashboard(de: 'MercadoData'):
+    st.subheader("Pro Dashboard - Analisis Integrado")
+    if st.button("Actualizar noticias en tiempo real", key='btn_news'):
+        import subprocess
+        try:
+            r = subprocess.run(['python', 'noticias_mercado.py'], capture_output=True, text=True, timeout=600, cwd=str(Path(__file__).parent))
+            st.success('Noticias actualizadas. Recarga la pagina para ver el sentimiento fresco.')
+            st.text(r.stdout[-2000:])
+        except subprocess.TimeoutExpired:
+            st.error('Timeout actualizando noticias')
+    xgb = de.get_xgboost()
+    tickers = sorted(xgb.keys()) if xgb else []
+    if not tickers:
+        st.warning("Sin datos de modelo_xgboost")
+        return
+    tk = st.selectbox("Ticker", tickers, index=0, key='pro_ticker')
+    modo = st.radio("Modo de vista", ["Principiante", "Trader/Pro"], horizontal=True, key='pro_modo')
+    info = xgb.get(tk, {})
+    prob = info.get('prob_up_20d') or 50
+    wf = info.get('wf_accuracy') or 0.5
+    brier = info.get('wf_brier')
+    vol = info.get('fwd_vol_20d_annual') or 0.25
+
+    import yfinance as yf
+    try:
+        hist = yf.Ticker(tk).history(period='6mo', interval='1d')
+    except Exception:
+        hist = pd.DataFrame()
+
+    # --- Diagnostico en lenguaje natural ---
+    direccion = 'ALCISTA' if prob >= 55 else 'BAJISTA' if prob <= 45 else 'LATERAL'
+    v_map = {'ALCISTA': ('COMPRA MODERADA' if prob < 70 else 'COMPRA FUERTE', 'green'),
+             'BAJISTA': ('VENTA / PRECAUCION', 'red'), 'LATERAL': ('NEUTRAL', 'yellow')}
+    veredicto, vcolor = v_map[direccion]
+    riesgo = 'ALTO' if vol > 0.35 else 'MEDIO' if vol > 0.22 else 'BAJO'
+    notis = de.get_noticias_por_ticker().get(tk, {})
+    st.markdown(f'''<div class="metric-card"><div class="label">DIAGNOSTICO {tk}</div>
+    <div style="color:#ddd;font-size:0.95em;line-height:1.5">"El modelo proyecta una tendencia <b>{direccion}</b> para los proximos 5-20 dias con {prob:.0f}% de probabilidad.
+    Riesgo actual: <b>{riesgo}</b> (vol. anualizada {vol*100:.0f}%).</div></div>''', unsafe_allow_html=True)
+
+    # --- Resumen ejecutivo generado por LLM (con fallback) ---
+    resumen = None
+    try:
+        import analisis_ia as _ia
+        if _ia.PROVEEDOR:
+            prompt = (f"Ticker {tk}. Direccion proyectada: {direccion}, probabilidad {prob:.0f}%, "
+                      f"volatilidad anualizada {vol*100:.0f}%, accuracy walk-forward {wf*100:.0f}%. "
+                      f"Hitos tecnicos: prob_up_20d {prob:.0f}%, brier {brier}. Noticias: {notis}. "
+                      f"Escribe 2-3 lineas en espanol claro, sin tecnicismos, como resumen para un inversor minorista.")
+            resumen = _ia.llamar_modelo(_ia.MODELOS[0], prompt, sp='Eres un analista financiero conciso y claro.')
+    except Exception:
+        resumen = None
+    if resumen and isinstance(resumen, str) and len(resumen) > 20:
+        st.info(f"Resumen IA: {resumen.strip()}")
+
+    # --- Gauge / Tacometro de decision ---
+    score = int(min(100, max(0, prob)))
+    fig_g = go.Figure(go.Indicator(
+        mode="gauge+number", value=score,
+        title={'text': "Score de Decision (0-100)"},
+        gauge={'axis': {'range': [0, 100]},
+               'bar': {'color': '#00e676' if score >= 60 else '#ffab00' if score >= 45 else '#ff1744'},
+               'steps': [{'range': [0, 25], 'color': '#3a0d12'}, {'range': [25, 45], 'color': '#3a2a0d'},
+                         {'range': [45, 60], 'color': '#2a2a3a'}, {'range': [60, 80], 'color': '#0d2a1a'},
+                         {'range': [80, 100], 'color': '#0d3a1a'}]}))
+    fig_g.update_layout(template='plotly_dark', height=260)
+    st.plotly_chart(fig_g, use_container_width=True)
+
+    # --- Traduccion a dinero real ---
+    inv = 10000
+    ret_esp = (prob / 100 - 0.5) * 2 * vol * np.sqrt(20 / 252) if (np := __import__('numpy')) is not None else 0
+    gan_esp = inv * ret_esp
+    riesgo_max = inv * (2 * vol * np.sqrt(20 / 252))
+    c1, c2, c3 = st.columns(3)
+    c1.markdown(f'<div class="metric-card"><div class="label">VEREDICTO</div><div class="value {vcolor}">{veredicto}</div></div>', unsafe_allow_html=True)
+    c2.markdown(f'<div class="metric-card"><div class="label">GANANCIA ESPERADA / $10k</div><div class="value green">${gan_esp:+,.0f} MXN</div></div>', unsafe_allow_html=True)
+    c3.markdown(f'<div class="metric-card"><div class="label">RIESGO MAXIMO / $10k</div><div class="value red">-${riesgo_max:,.0f} MXN</div></div>', unsafe_allow_html=True)
+
+    # --- Semaforo de conviccion ---
+    if brier is not None and brier < 0.25 and vol < 0.3:
+        semaforo, sc = 'VERDE - Mercado estable', '#00e676'
+    elif brier is not None and brier < 0.35:
+        semaforo, sc = 'AMARILLO - Cierta incertidumbre', '#ffab00'
+    else:
+        semaforo, sc = 'ROJO - Alta incertidumbre / modelo dudoso', '#ff1744'
+    st.markdown(f'<div class="metric-card"><div class="label">SEMAFORO DE CONVICCION</div><div class="value" style="color:{sc}">{semaforo}</div></div>', unsafe_allow_html=True)
+
+    news_score = info.get('news_score') or 0.0
+    news_ajuste = info.get('news_ajuste') or 0.0
+    prob_modelo = info.get('prob_up_20d_modelo')
+    if prob_modelo is not None:
+        st.caption(
+            f"Probabilidad del modelo: {prob_modelo:.1f}% | Ajuste por noticias "
+            f"({news_score:+.2f} de sentimiento, peso limitado): {news_ajuste:+.1f} pp | Final: {prob:.1f}%"
+        )
+
+    # --- Checklist de factores (Pros vs Contras) ---
+    exp = de._read_json('explicabilidad.json') or {}
+    facs = (exp.get('tickers', {}).get(tk, {}) or {}).get('factores', [])
+    if facs:
+        pros = [f for f in facs if str(f.get('contribuye', '')).lower() in ('alcista', 'positivo', 'comprador')]
+        contras = [f for f in facs if f not in pros]
+        st.markdown("**Factores (XAI humano)**")
+        pc1, pc2 = st.columns(2)
+        with pc1:
+            for f in pros[:4]:
+                st.markdown(f"- :large_green_circle: **{f.get('nombre')}** (+{f.get('peso',0)*100:.0f}%)")
+            if not pros:
+                st.caption("Sin impulsos alcistas claros")
+        with pc2:
+            for f in contras[:4]:
+                st.markdown(f"- :red_circle: **{f.get('nombre')}** (-{f.get('peso',0)*100:.0f}%)")
+            if not contras:
+                st.caption("Sin alertas bajistas claras")
+    colL, colR = st.columns([3, 2])
+    with colL:
+        if hist.empty:
+            st.info("Sin datos historicos")
+        else:
+            if modo == "Principiante":
+                fig = go.Figure(data=[go.Scatter(x=hist.index, y=hist['Close'], mode='lines', name='Precio', line=dict(color='#00f0ff'))])
+            else:
+                fig = go.Figure(data=[go.Candlestick(x=hist.index, open=hist['Open'], high=hist['High'],
+                                                     low=hist['Low'], close=hist['Close'], name='Precio')])
+                for w, c in [(20, '#00f0ff'), (50, '#b388ff'), (200, '#ffab00')]:
+                    fig.add_trace(go.Scatter(x=hist.index, y=hist['Close'].rolling(w).mean(), name=f'EMA{w}', line=dict(color=c, width=1)))
+            close = hist['Close']
+            # Cono de prediccion P10/P50/P90 (proxy de sigma via fwd_vol)
+            last = float(close.iloc[-1])
+            import numpy as np
+            dias = np.arange(1, 21)
+            sigma_d = vol / np.sqrt(252)
+            mu = (prob / 100 - 0.5) * 2 * sigma_d * np.sqrt(dias)  # drift por conviccion
+            p50 = last * np.exp(mu)
+            banda = last * (np.exp(1.28 * sigma_d * np.sqrt(dias)) - 1)
+            p90 = p50 + banda
+            p10 = p50 - banda
+            idx_f = pd.date_range(hist.index[-1], periods=21, freq='B')[1:]
+            fig.add_trace(go.Scatter(x=idx_f, y=p90, line=dict(width=0), showlegend=False))
+            fig.add_trace(go.Scatter(x=idx_f, y=p10, fill='tonexty', fillcolor='rgba(0,240,255,0.12)',
+                                     line=dict(width=0), name='Cono P10-P90'))
+            fig.add_trace(go.Scatter(x=idx_f, y=p50, line=dict(color='#00e676', dash='dash'), name='P50'))
+            fig.update_layout(template='plotly_dark', height=520, xaxis_rangeslider_visible=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Indicadores tecnicos
+        if not hist.empty:
+            rsi = None
+            try:
+                import numpy as np
+                delta = close.diff()
+                ag = delta.clip(lower=0).rolling(14).mean()
+                al = (-delta.clip(upper=0)).rolling(14).mean()
+                rsi = 100 - 100 / (1 + ag / al.replace(0, np.nan))
+                st.caption(f"RSI(14): {float(rsi.iloc[-1]):.1f} | Vol anual fwd: {vol*100:.0f}%")
+            except Exception:
+                pass
+
+    with colR:
+        # Sentimiento
+        notis = de.get_noticias_por_ticker().get(tk, {})
+        s_color = {'positivo': 'green', 'negativo': 'red'}.get(notis.get('sentimiento'), 'yellow')
+        st.markdown(f'<div class="metric-card"><div class="label">NEWS SENTIMENT</div><div class="value {s_color}">{notis.get("sentimiento","n/d").upper()}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="label">SCORE</div><div class="value yellow">{notis.get("score","n/d")}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="label">Prob Subida 20d</div><div class="value cyan">{prob:.0f}%</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="label">WF Accuracy / Brier</div><div class="value">{wf*100:.0f}% / {brier if brier is not None else "n/d"}</div></div>', unsafe_allow_html=True)
+
+        # Ultimas noticias del ticker
+        news_data = de.get_noticias()
+        nt_list = []
+        if isinstance(news_data, dict):
+            pt = news_data.get('por_ticker', {}) or {}
+            nt = pt.get(tk, {})
+            if isinstance(nt, dict):
+                nt_list = nt.get('noticias', [])[:5] or nt.get('items', [])[:5]
+            if not nt_list:
+                nt_list = (news_data.get('noticias') or [])[:5]
+        if nt_list:
+            st.markdown("**Noticias recientes**")
+            for n in nt_list:
+                t = n.get('titulo') if isinstance(n, dict) else str(n)
+                st.caption(f"- {t}")
+
+        # XAI
+        exp = de._read_json('explicabilidad.json') or {}
+        facs = (exp.get('tickers', {}).get(tk, {}) or {}).get('factores', [])
+        if facs:
+            st.markdown("**Top Factores (explicabilidad)**")
+            for f in facs[:4]:
+                st.markdown(f"- `{f.get('nombre')}` → {f.get('contribuye')} (w={f.get('peso',0):.2f})")
+
+        # Riesgo
+        if not hist.empty:
+            import numpy as np
+            tr = pd.concat([hist['High']-hist['Low'], (hist['High']-hist['Close'].shift()).abs(), (hist['Low']-hist['Close'].shift()).abs()], axis=1).max(axis=1)
+            atr = float(tr.rolling(14).mean().iloc[-1])
+            precio = float(hist['Close'].iloc[-1])
+            stop = precio - 2 * atr
+            tp = precio + 4 * atr
+            st.markdown(f'<div class="metric-card"><div class="label">STOP SUGERIDO</div><div class="value red">${stop:.2f}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-card"><div class="label">TAKE PROFIT (1:2)</div><div class="value green">${tp:.2f}</div></div>', unsafe_allow_html=True)
+
+    st.caption(f"Datos: yfinance (vivo) + analisis IA/XGBoost. Cono P10-P90 es proxy estadistico, no modelo probabilistico real. Metricas del backtest: ver backtest_engine / seguimiento_senales.")
 
 
 def main():

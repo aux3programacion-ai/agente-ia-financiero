@@ -3,13 +3,14 @@
 parallel_utils.py - Utilidades de paralelización para descarga y procesamiento de tickers.
 Reduce drásticamente el tiempo de ejecución de los pipelines.
 """
-import time
 import os
+import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import List, Any, Callable, Dict, Optional
+from typing import Any
 
 try:
-    from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
+    from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
     PARALLEL_AVAILABLE = True
 except ImportError:
     PARALLEL_AVAILABLE = False
@@ -25,13 +26,13 @@ if 'GITHUB_ACTIONS' in os.environ:
 
 def parallel_map(
     func: Callable,
-    items: List[Any],
+    items: list[Any],
     max_workers: int = _MAX_WORKERS,
     use_processes: bool = False,
     show_progress: bool = True,
     timeout_per_item: int = 60,
     desc: str = 'Processing'
-) -> List[Any]:
+) -> list[Any]:
     """
     Ejecuta función en paralelo sobre items.
     
@@ -83,11 +84,11 @@ def parallel_map(
 
 
 def parallel_download_yfinance(
-    tickers: List[str],
+    tickers: list[str],
     download_func: Callable,
     max_workers: int = _MAX_WORKERS,
     **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Descarga datos de yfinance en paralelo.
     
@@ -128,12 +129,12 @@ def parallel_download_yfinance(
 
 
 def parallel_process_tickers(
-    tickers: List[str],
+    tickers: list[str],
     process_func: Callable[[str], Any],
     max_workers: int = _MAX_WORKERS,
     delay_between: float = 0.0,
     **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Procesa tickers en paralelo con delay opcional entre requests.
     
@@ -155,12 +156,12 @@ def parallel_process_tickers(
     return parallel_map(process_func, tickers, max_workers=max_workers, **kwargs)
 
 
-def parallel_gather_technicals(tickers: List[str], max_workers: int = _MAX_WORKERS) -> Dict:
+def parallel_gather_technicals(tickers: list[str], max_workers: int = _MAX_WORKERS) -> dict:
     """
     Descarga indicadores técnicos en paralelo para todos los tickers.
     """
-    import yfinance as yf
     import numpy as np
+    import yfinance as yf
     
     def fetch_tecnicos(ticker):
         try:
@@ -190,19 +191,20 @@ def parallel_gather_technicals(tickers: List[str], max_workers: int = _MAX_WORKE
                 'max_drawdown_1y': max_dd,
                 'n_days': len(close)
             }
-        except Exception as e:
+        except Exception:
             return ticker, None
     
     results = parallel_map(fetch_tecnicos, tickers, max_workers=max_workers, desc='Tecnicos')
     return {r[0]: r[1] for r in results if r[1] is not None}
 
 
-def parallel_gather_features(tickers: List[str], max_workers: int = _MAX_WORKERS) -> Dict:
+def parallel_gather_features(tickers: list[str], max_workers: int = _MAX_WORKERS) -> dict:
     """
     Calcula features en paralelo para todos los tickers (auto_feature_engineering).
     """
-    from auto_feature_engineering import compute_auto_features
     import yfinance as yf
+
+    from auto_feature_engineering import compute_auto_features
     
     def fetch_and_compute(ticker):
         try:
@@ -215,7 +217,7 @@ def parallel_gather_features(tickers: List[str], max_workers: int = _MAX_WORKERS
             vol = df['Volume'].dropna().values if 'Volume' in df else None
             features = compute_auto_features(close, vol, ticker)
             return ticker, features
-        except Exception as e:
+        except Exception:
             return ticker, None
     
     import pandas as pd

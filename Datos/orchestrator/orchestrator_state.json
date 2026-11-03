@@ -1,0 +1,83 @@
+{
+  "ordenes": [
+    {
+      "timestamp": "2026-06-10T21:53:50.035419",
+      "ticker": "NVDA",
+      "lado": "COMPRA",
+      "shares": 100,
+      "resultados": {
+        "broker": {
+          "order_id": "PAPER_68fb28e885b4",
+          "estado": "llena",
+          "precio": 136.49374095081845,
+          "slippage": 0.0
+        },
+        "ejecucion": {
+          "algo": "VWAP",
+          "fill_price": 99.75963579679721,
+          "slippage_bps": 0.0
+        },
+        "tca": {
+          "total_bps": 3655.37,
+          "calidad": "mala"
+        }
+      }
+    },
+    {
+      "timestamp": "2026-06-10T21:53:50.086631",
+      "ticker": "AAPL",
+      "lado": "COMPRA",
+      "shares": 100,
+      "resultados": {
+        "broker": {
+          "order_id": "PAPER_bff26ba2c022",
+          "estado": "llena",
+          "precio": 125.53111649934272,
+          "slippage": 0.0
+        },
+        "ejecucion": {
+          "algo": "VWAP",
+          "fill_price": 99.90200111681926,
+          "slippage_bps": 0.0
+        },
+        "tca": {
+          "total_bps": 2559.11,
+          "calidad": "mala"
+        }
+      }
+    }
+  ],
+  "reporte": {
+    "timestamp": "2026-06-10T21:53:50.086631",
+    "capital": 100000,
+    "n_ordenes": 2,
+    "broker": {
+      "valor_portafolio": 97031.22283771331,
+      "cash": 73797.51425498388,
+      "pnl": -2968.777162286686,
+      "retorno": -0.029687771622866857
+    },
+    "tca": {
+      "total_trades": 2,
+      "slippage_promedio": 3101.24,
+      "slippage_mediano": 3101.24,
+      "slippage_std": 775.1728799435645,
+      "costo_total_promedio": 3107.24,
+      "mejor_calidad": 2559.11,
+      "peor_calidad": 3655.37,
+      "trades_excelentes": 0,
+      "trades_buenos": 0,
+      "trades_regulares": 0,
+      "trades_malos": 2,
+      "desglose_promedio": {
+        "slippage": 3101.24,
+        "market_impact": 0.0,
+        "timing": 0.0,
+        "oportunity": 0.0,
+        "spread": 5.0,
+        "comision": 1.0
+      },
+      "total_costos_dinero": 8201.84
+    }
+  }
+}

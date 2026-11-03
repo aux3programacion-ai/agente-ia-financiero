@@ -5,11 +5,17 @@ Integra todos los módulos: datos -> features -> ML -> calibración -> backtest 
 """
 import json
 import os
-import time
 import sys
-from pathlib import Path
+import time
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, Optional
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+from logger import get_module_logger
+
+_log = get_module_logger('circuito_completo')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 sys.path.insert(0, DATA_DIR)
@@ -30,11 +36,11 @@ class PipelineOrchestrator:
         self.steps = []
         self.state = self._load_state()
 
-    def _load_state(self) -> Dict:
+    def _load_state(self) -> dict:
         if PIPELINE_STATE_PATH.exists():
             try:
                 return json.loads(PIPELINE_STATE_PATH.read_text())
-            except:
+            except Exception:
                 pass
         return {'last_run': None, 'steps': {}, 'errors': []}
 
@@ -43,12 +49,9 @@ class PipelineOrchestrator:
         PIPELINE_STATE_PATH.write_text(json.dumps(self.state, indent=2))
 
     def _step(self, name: str, func, *args, **kwargs) -> Any:
-        """Ejecuta un paso del pipeline con timing y error handling."""
         step_start = time.time()
-        print(f'\n{"="*60}')
-        print(f'  [{datetime.now().strftime("%H:%M:%S")}] {name}...')
-        print(f'{"="*60}')
-        
+        _log.info(f"=== {name} ===")
+
         try:
             result = func(*args, **kwargs)
             elapsed = time.time() - step_start
@@ -58,7 +61,7 @@ class PipelineOrchestrator:
                 'elapsed_s': round(elapsed, 2),
                 'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
             }
-            print(f'  [{status}] {name} completado en {elapsed:.1f}s')
+            _log.info(f"[{status}] {name} completado en {elapsed:.1f}s")
             return result
         except Exception as e:
             elapsed = time.time() - step_start
@@ -73,7 +76,7 @@ class PipelineOrchestrator:
                 'error': str(e)[:500],
                 'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
             })
-            print(f'  [ERROR] {name}: {str(e)[:150]}')
+            _log.error(f"[ERROR] {name}: {str(e)[:150]}")
             return None
 
     def step_01_tecnicos(self):
@@ -138,8 +141,9 @@ class PipelineOrchestrator:
         return cm.get_summary()
 
     def step_11_walkforward_validation(self):
-        from walkforward_validator import cross_validate_model_predictive_power
         from xgboost import XGBClassifier
+
+        from walkforward_validator import cross_validate_model_predictive_power
         
         # Cargar features y targets
         feat_path = OUTPUT_DIR / 'auto_features.json'
@@ -154,7 +158,7 @@ class PipelineOrchestrator:
             features = json.loads(feat_path.read_text())
             predicciones = json.loads(pred_path.read_text())
             tecnicos = json.loads(regime_path.read_text())
-        except:
+        except Exception:
             return None
         
         records = []
@@ -175,7 +179,6 @@ class PipelineOrchestrator:
             return None
         
         import pandas as pd
-        import numpy as np
         df = pd.DataFrame(records)
         feature_cols = [c for c in df.columns if c not in ('ticker', 'fecha', 'target')]
         
@@ -183,7 +186,7 @@ class PipelineOrchestrator:
         y = df['target'].values
         
         def xgb_fn(X, y, params):
-            return XGBClassifier(**{**params}, n_estimators=50, max_depth=3, verbosity=0).fit(X, y)
+            return XGBClassifier(**params, n_estimators=50, max_depth=3, verbosity=0).fit(X, y)
         
         result = cross_validate_model_predictive_power(
             features_df=pd.DataFrame(X, columns=feature_cols),
@@ -203,7 +206,6 @@ class PipelineOrchestrator:
         pred_path = OUTPUT_DIR / 'predicciones_hist.json'
         
         if pred_path.exists():
-            import numpy as np
             predicciones = json.loads(pred_path.read_text())
             for ticker, data in predicciones.items():
                 for p in data.get('predicciones', []):
@@ -247,8 +249,8 @@ class PipelineOrchestrator:
             return None
         
         try:
+
             import joblib
-            import glob
             pkl_files = list(model_path.rglob('**/model.pkl'))
             if not pkl_files:
                 return None
@@ -291,7 +293,7 @@ class PipelineOrchestrator:
         manager = RegimeModelManager()
         return manager.get_regime_performance()
 
-    def run_all(self, steps: Optional[list] = None):
+    def run_all(self, steps: list | None = None):
         """Ejecuta pipeline completo o steps específicos."""
         all_steps = [
             ('01. Técnicos', self.step_01_tecnicos),
@@ -322,19 +324,16 @@ class PipelineOrchestrator:
         
         total_elapsed = time.time() - self.start_time
         errors = [s for s in self.state['steps'].values() if s.get('status') == 'ERROR']
-        
-        print(f'\n{"="*60}')
-        print(f'  PIPELINE COMPLETO - RESUMEN')
-        print(f'{"="*60}')
-        print(f'  Total: {total_elapsed:.1f}s')
-        print(f'  Steps OK: {sum(1 for s in self.state["steps"].values() if s["status"] == "OK")}')
-        print(f'  Steps WARN: {sum(1 for s in self.state["steps"].values() if s["status"] == "WARN")}')
-        print(f'  Steps ERROR: {len(errors)}')
+
+        _log.info("=" * 40)
+        _log.info(f"PIPELINE COMPLETO - Total: {total_elapsed:.1f}s")
+        _log.info(f"Steps OK: {sum(1 for s in self.state['steps'].values() if s['status'] == 'OK')}"
+                  f" WARN: {sum(1 for s in self.state['steps'].values() if s['status'] == 'WARN')}"
+                  f" ERROR: {len(errors)}")
         if errors:
             for e in errors:
-                print(f'    ! {e}')
-        print(f'{"="*60}')
-        
+                _log.warning(f"  ! {e}")
+
         self._save_state()
         return results
 

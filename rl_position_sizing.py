@@ -6,15 +6,13 @@ State: market regime, portfolio stats, ticker features, risk metrics.
 Action: position weights per ticker.
 Reward: Sharpe ratio + drawdown penalty.
 """
-import json
 import os
 import time
-import math
-import numpy as np
-from pathlib import Path
 from collections import deque
-from typing import Dict, Any, List, Optional, Tuple, Callable
-from dataclasses import dataclass
+from collections.abc import Callable
+from pathlib import Path
+
+import numpy as np
 
 try:
     import gymnasium as gym
@@ -24,10 +22,13 @@ except ImportError:
     GYM_AVAILABLE = False
 
 try:
-    from stable_baselines3 import PPO, SAC, A2C, DDPG
-    from stable_baselines3.common.vec_env import DummyVecEnv
-    from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
+    from stable_baselines3 import A2C, DDPG, PPO, SAC
+    from stable_baselines3.common.callbacks import (
+        EvalCallback,
+        StopTrainingOnRewardThreshold,
+    )
     from stable_baselines3.common.monitor import Monitor
+    from stable_baselines3.common.vec_env import DummyVecEnv
     SB3_AVAILABLE = True
 except ImportError:
     SB3_AVAILABLE = False
@@ -64,9 +65,9 @@ class PortfolioEnv(gym.Env if GYM_AVAILABLE else object):
     """
     
     def __init__(self,
-                 price_data: Optional[np.ndarray] = None,
-                 feature_data: Optional[np.ndarray] = None,
-                 tickers: List[str] = None,
+                 price_data: np.ndarray | None = None,
+                 feature_data: np.ndarray | None = None,
+                 tickers: list[str] = None,
                  initial_capital: float = 100000.0,
                  lookback: int = 20,
                  rebalance_freq: int = 5,
@@ -201,7 +202,7 @@ class PortfolioEnv(gym.Env if GYM_AVAILABLE else object):
         
         return float(reward)
     
-    def reset(self, seed: Optional[int] = None):
+    def reset(self, seed: int | None = None):
         super().reset(seed=seed)
         self.current_step = np.random.randint(self.lookback + 10, self.n_timesteps - self.window_length)
         self.portfolio_value = self.initial_capital
@@ -235,8 +236,7 @@ class PortfolioEnv(gym.Env if GYM_AVAILABLE else object):
             scale = self.max_leverage / max(total_exposure, 1e-8)
             weights *= scale
         
-        if cash_reserve > 0.5:
-            cash_reserve = 0.5
+        cash_reserve = min(cash_reserve, 0.5)
         
         self.current_weights = weights * (1 - cash_reserve)
         self.prev_prices = self.price_data[self.current_step]
@@ -282,7 +282,7 @@ class RLPositionSizing:
                  gae_lambda: float = 0.95,
                  clip_range: float = 0.2,
                  ent_coef: float = 0.01,
-                 tensorboard_log: Optional[str] = None):
+                 tensorboard_log: str | None = None):
         
         self.algo = algo
         self.total_timesteps = total_timesteps
@@ -304,7 +304,7 @@ class RLPositionSizing:
             'ent_coef': ent_coef
         }
     
-    def create_env(self, price_data: Optional[np.ndarray] = None, **env_kwargs):
+    def create_env(self, price_data: np.ndarray | None = None, **env_kwargs):
         if not GYM_AVAILABLE:
             raise ImportError('Install gymnasium: pip install gymnasium')
         
@@ -312,7 +312,7 @@ class RLPositionSizing:
         self.env = Monitor(env)
         return self.env
     
-    def train(self, env=None, save: bool = True) -> Dict:
+    def train(self, env=None, save: bool = True) -> dict:
         if not SB3_AVAILABLE:
             raise ImportError('Install stable-baselines3: pip install stable-baselines3')
         if not GYM_AVAILABLE:
@@ -406,7 +406,7 @@ class RLPositionSizing:
             'model_path': str(model_path) if save else None
         }
     
-    def load(self, path: Optional[str] = None) -> bool:
+    def load(self, path: str | None = None) -> bool:
         if path is None:
             path = OUTPUT_DIR / f'rl_{self.algo.lower()}_sizing.zip'
         
@@ -427,7 +427,7 @@ class RLPositionSizing:
             print(f'[RL] Load failed: {e}')
             return False
     
-    def predict_weights(self, observation: np.ndarray) -> Dict[str, float]:
+    def predict_weights(self, observation: np.ndarray) -> dict[str, float]:
         if self.model is None:
             raise ValueError('Model not loaded')
         
@@ -448,7 +448,7 @@ class RLPositionSizing:
     
     def create_wrapper(self, env) -> Callable:
         """Returns a function that takes market state and returns position sizes."""
-        def sizing_fn(market_state: Dict) -> Dict[str, float]:
+        def sizing_fn(market_state: dict) -> dict[str, float]:
             obs = env.reset()[0]
             return self.predict_weights(obs)
         return sizing_fn
@@ -477,7 +477,7 @@ class RLSizer:
         return path
 
 
-def train_rl_sizer(algo: str = 'PPO', timesteps: int = 20000, tickers: List[str] = None) -> RLSizer:
+def train_rl_sizer(algo: str = 'PPO', timesteps: int = 20000, tickers: list[str] = None) -> RLSizer:
     if tickers is None:
         tickers = TICKERS[:10]
     

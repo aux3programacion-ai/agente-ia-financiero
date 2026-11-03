@@ -1,5 +1,7 @@
-import json, os, sys, time
-import numpy as np
+import json
+import os
+import time
+
 import pandas as pd
 import yfinance as yf
 
@@ -83,7 +85,7 @@ def score_liquidity(ticker):
                 score += 7
             elif mcap > 10e9:
                 score += 5
-        except:
+        except Exception:
             pass
         
         # Illiquidity penalty: zero-volume days

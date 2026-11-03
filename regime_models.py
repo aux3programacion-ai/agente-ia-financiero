@@ -5,15 +5,21 @@ Cada régimen (ALCISTA, BAJISTA, LATERAL) tiene su propio modelo especializado.
 """
 import json
 import os
-import time
+import warnings
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from hmmlearn.hmm import GaussianHMM
 
 from config.settings import get_setting
 from model_store import get_model_store
-from walkforward_validator import walk_forward_train_test, cross_validate_model_predictive_power
+from walkforward_validator import (
+    walk_forward_train_test,
+)
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos'
@@ -29,8 +35,8 @@ TICKERS_CORE = get_setting('tickers.core', [])
 
 class RegimeModelManager:
     def __init__(self):
-        self.models: Dict[str, Any] = {}
-        self.results: Dict[str, Dict] = {}
+        self.models: dict[str, Any] = {}
+        self.results: dict[str, dict] = {}
         self.store = get_model_store()
 
     def prepare_regime_data(
@@ -38,7 +44,7 @@ class RegimeModelManager:
         features_df: pd.DataFrame,
         target_series: pd.Series,
         regimes_series: pd.Series
-    ) -> Dict[str, Tuple[pd.DataFrame, pd.Series]]:
+    ) -> dict[str, tuple[pd.DataFrame, pd.Series]]:
         """Prepara datos separados por régimen."""
         regime_data = {}
         for regime in REGIMENES:
@@ -59,7 +65,7 @@ class RegimeModelManager:
         regimes_series: pd.Series,
         walk_forward: bool = True,
         **wf_kwargs
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         """
         Entrena modelo XGBoost por cada régimen con suficiente data.
         
@@ -118,7 +124,7 @@ class RegimeModelManager:
             try:
                 loaded = self.store.load_latest(f'xgb_regime_{regime}', regime)
                 self.models[regime] = loaded['model']
-            except:
+            except Exception:
                 return np.full(len(features) if hasattr(features, '__len__') else 1, 0.5)
         
         model = self.models[regime]
@@ -129,7 +135,7 @@ class RegimeModelManager:
     def ensemble_regime_predictions(
         self,
         features: np.ndarray,
-        regimes_probs: Dict[str, float],
+        regimes_probs: dict[str, float],
         fallback_model: Any = None
     ) -> np.ndarray:
         """
@@ -151,7 +157,7 @@ class RegimeModelManager:
                 pred = self.predict_regime(features, regime)
                 predictions.append(pred)
                 weights.append(prob)
-            except:
+            except Exception:
                 continue
         
         if not predictions:
@@ -162,23 +168,35 @@ class RegimeModelManager:
         weights = np.array(weights) / sum(weights)
         return np.average(np.array(predictions), axis=0, weights=weights)
 
-    def get_regime_performance(self) -> Dict:
+    def get_regime_performance(self) -> dict:
         """Retorna performance de cada modelo por régimen."""
         perf = {}
         for regime in REGIMENES:
             try:
                 loaded = self.store.load_latest(f'xgb_regime_{regime}', regime)
                 perf[regime] = loaded['metadata']['metrics']
-            except:
+            except Exception:
                 perf[regime] = {'error': 'no model'}
         return perf
+
+    def train_hmm_regime_detector(self, data: pd.DataFrame, n_components: int = 3):
+        """
+        Entrena un modelo HMM para detectar regímenes latentes basado en rendimientos y volatilidad.
+        'data' debe tener columnas: ['returns', 'volatility']
+        """
+        model = GaussianHMM(n_components=n_components, covariance_type="full", n_iter=1000)
+        model.fit(data)
+        return model
+
+    def predict_regimes_hmm(self, model: GaussianHMM, data: pd.DataFrame) -> np.ndarray:
+        return model.predict(data)
 
 
 def train_regime_models_from_history(
     predictions_file: str = 'aprendizaje.json',
     features_file: str = 'auto_features.json',
     regime_file: str = 'regimen_mercado.json'
-) -> Dict:
+) -> dict:
     """
     Entrena modelos por régimen desde archivos históricos.
     """

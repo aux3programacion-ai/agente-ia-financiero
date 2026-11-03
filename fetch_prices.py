@@ -3,7 +3,12 @@
    Fallback: scraping Google Finance, luego datos simulados.
    Salida: JSON con precios, cambios, y fuente de datos.
 """
-import json, sys, os, random, urllib.request, re, time
+import json
+import os
+import random
+import re
+import sys
+import urllib.request
 from datetime import datetime
 
 TICKERS = [
@@ -133,7 +138,7 @@ for t in TICKERS:
                     if price_el:
                         try:
                             price = float(price_el.get_text(strip=True).replace('$', '').replace(',', ''))
-                        except: pass
+                        except Exception: pass
             if price is None:
                 m = re.search(r'"lbl":"([^"]+)"', html) or re.search(r'data-last-price="([^"]+)"', html)
                 if m:

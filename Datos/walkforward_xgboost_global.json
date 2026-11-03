@@ -1,0 +1,68 @@
+{
+  "n_splits": 2,
+  "n_total_oos": 42,
+  "oos_accuracy": 1.0,
+  "oos_auc_roc": 1.0,
+  "oos_brier_score": 0.001334319062899341,
+  "mean_split_accuracy": 1.0,
+  "std_split_accuracy": 0.0,
+  "min_split_accuracy": 1.0,
+  "max_split_accuracy": 1.0,
+  "accuracy_stability": 0.0,
+  "overfitting_ratio": 0.0,
+  "splits": [
+    {
+      "split": 0,
+      "train_start": "2022-01-03T00:00:00",
+      "train_end": "2022-05-20T00:00:00",
+      "test_start": "2022-05-30T00:00:00",
+      "test_end": "2022-06-27T00:00:00",
+      "n_train": 100,
+      "n_test": 21,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "auc_roc": 1.0,
+      "log_loss": 0.03863122686743736,
+      "brier": 0.0014432512689381838,
+      "train_accuracy": 1.0
+    },
+    {
+      "split": 1,
+      "train_start": "2022-01-03T00:00:00",
+      "train_end": "2022-06-27T00:00:00",
+      "test_start": "2022-07-05T00:00:00",
+      "test_end": "2022-08-02T00:00:00",
+      "n_train": 126,
+      "n_test": 21,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "auc_roc": 1.0,
+      "log_loss": 0.03557668253779411,
+      "brier": 0.0012253870954737067,
+      "train_accuracy": 1.0
+    }
+  ],
+  "models_saved": [
+    {
+      "split": 0,
+      "version": "v22.0.0",
+      "test_accuracy": 1.0
+    },
+    {
+      "split": 1,
+      "version": "v22.0.0",
+      "test_accuracy": 1.0
+    }
+  ],
+  "timestamp": "2026-06-10T05:45:02.896763Z",
+  "config": {
+    "n_splits": 2,
+    "test_size_dias": 21,
+    "gap_dias": 5,
+    "min_train_size": 100
+  }
+}

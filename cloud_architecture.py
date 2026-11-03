@@ -4,12 +4,10 @@ cloud_architecture.py - Cloud-native architecture setup.
 Ray (distributed compute), Feast (feature store), Prefect/Airflow (orchestration),
 Kubernetes/Docker deployment configs.
 """
-import json
 import os
-import sys
-from pathlib import Path
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 try:
     import ray
@@ -23,7 +21,6 @@ try:
 except ImportError:
     PREFECT_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'cloud'
@@ -60,15 +57,15 @@ class RayCluster:
             self.initialized = False
     
     @staticmethod
-    def _backtest_batch(tickers: List[str], start: str, end: str) -> Dict:
+    def _backtest_batch(tickers: list[str], start: str, end: str) -> dict:
         from backtest_engine import run_backtest
         results = {}
         for ticker in tickers:
             results[ticker] = run_backtest(tickers=[ticker], start_date=start, end_date=end)
         return results
     
-    def parallel_backtest(self, tickers: List[str], start: str, end: str,
-                          batch_size: int = 10) -> List[Any]:
+    def parallel_backtest(self, tickers: list[str], start: str, end: str,
+                          batch_size: int = 10) -> list[Any]:
         if not self.initialized:
             self.start()
         
@@ -81,9 +78,9 @@ class RayCluster:
                     [tickers[i:i+batch_size] for i in range(0, len(tickers), batch_size)]]
     
     @staticmethod
-    def _train_single(config: Dict) -> Dict:
-        from xgboost import XGBClassifier
+    def _train_single(config: dict) -> dict:
         import numpy as np
+        from xgboost import XGBClassifier
         
         X = np.random.randn(1000, 10)
         y = (X[:, 0] > 0).astype(int)
@@ -91,7 +88,7 @@ class RayCluster:
         model.fit(X, y)
         return {'accuracy': float((model.predict(X) == y).mean()), 'config': config}
     
-    def distributed_hyperparameter_search(self, param_grid: List[Dict]) -> List[Dict]:
+    def distributed_hyperparameter_search(self, param_grid: list[dict]) -> list[dict]:
         if not self.initialized:
             self.start()
         
@@ -115,7 +112,7 @@ class FeastFeatureStore:
         repo.mkdir(parents=True, exist_ok=True)
         
         # feature_store.yaml
-        (repo / 'feature_store.yaml').write_text(f"""
+        (repo / 'feature_store.yaml').write_text("""
 project: agente_financiero
 registry: data/registry.db
 provider: local
@@ -230,8 +227,9 @@ class PrefectPipeline:
             
             @task
             def step_ml():
-                from walkforward_validator import generate_walk_forward_splits
                 import pandas as pd
+
+                from walkforward_validator import generate_walk_forward_splits
                 dates = pd.date_range('2022-01-01', '2024-12-31', freq='B')
                 splits = generate_walk_forward_splits(dates)
                 return {'n_splits': len(splits)}
@@ -244,8 +242,9 @@ class PrefectPipeline:
             
             @task
             def step_backtest(results):
+                from datetime import timedelta
+
                 from backtest_engine import run_backtest
-                from datetime import datetime, timedelta
                 return run_backtest(
                     start_date=(datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d'),
                     end_date=datetime.now().strftime('%Y-%m-%d')
@@ -472,7 +471,7 @@ confluent-kafka>=2.3.0
 """
         path = Path(DATA_DIR) / 'requirements-cloud.txt'
         path.write_text(extras.strip())
-        print(f'[Cloud] requirements-cloud.txt generated')
+        print('[Cloud] requirements-cloud.txt generated')
         return str(path)
 
 

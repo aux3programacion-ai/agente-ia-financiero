@@ -1,13 +1,15 @@
 name: Ciclo 30T Intradia
 
 on:
+  push:
+    branches: [master]
   schedule:
-    - cron: '0 13 * * 1-5'   # 08:00 Mexico - Pre-mercado
-    - cron: '0 15 * * 1-5'   # 10:00 Mexico
-    - cron: '0 17 * * 1-5'   # 12:00 Mexico
-    - cron: '0 19 * * 1-5'   # 14:00 Mexico - Media tarde
-    - cron: '0 21 * * 1-5'   # 16:00 Mexico - Post-mercado
-    - cron: '0 22 * * 1-5'   # 17:00 Mexico - Cierre
+    - cron: '0 13 * * *'   # 08:00 Mexico - Pre-mercado (todos los dias)
+    - cron: '0 15 * * *'   # 10:00 Mexico
+    - cron: '0 17 * * *'   # 12:00 Mexico
+    - cron: '0 19 * * *'   # 14:00 Mexico - Media tarde
+    - cron: '0 21 * * *'   # 16:00 Mexico - Post-mercado
+    - cron: '0 22 * * *'   # 17:00 Mexico - Cierre
   workflow_dispatch:
 
 permissions:
@@ -20,14 +22,81 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  analisis:
+  # ==========================================================================
+  # GATE: nothing is analysed, committed or published unless this passes.
+  # Antes el pipeline publicaba datos en GitHub Pages sin ejecutar un solo test.
+  # ==========================================================================
+  calidad:
+    name: Calidad (gates)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -q -r requirements.txt
+
+      - name: Verificar dependencias declaradas
+        shell: bash
+        # Informativo: lista imports de terceros ausentes de requirements.txt.
+        # No falla el pipeline, pero deja constancia de la deriva.
+        run: |
+          python - <<'PY'
+          import importlib.util, re, sys
+          from pathlib import Path
+
+          declaradas = Path('requirements.txt').read_text(encoding='utf-8').lower()
+          locales = {p.stem for p in Path('.').glob('*.py')}
+
+          faltan = set()
+          for f in Path('.').glob('*.py'):
+              if f.name.startswith('_'):
+                  continue
+              for linea in f.read_text(encoding='utf-8', errors='ignore').splitlines():
+                  m = re.match(r'\s*(?:import|from)\s+([a-zA-Z0-9_]+)', linea)
+                  if not m:
+                      continue
+                  mod = m.group(1)
+                  if mod in sys.stdlib_module_names or mod in locales:
+                      continue
+                  if importlib.util.find_spec(mod) is None:
+                      continue  # no instalado: puede ser opcional
+                  if mod.replace('_', '-').lower() not in declaradas:
+                      faltan.add(mod)
+          print('modulos usados no declarados:', sorted(faltan) or 'ninguno')
+          PY
+
+      - name: Todos los .py compilan
+        run: python -m compileall -q . -x "(\\\\|build|dist|node_modules|__pycache__|\.pytest_cache|\.hypothesis)"
+
+      - name: Lint (errores y nombres no definidos)
+        run: |
+          pip install -q ruff
+          ruff check --select E9,F821,F811,F401 --ignore F401 .
+
+      - name: Tests
+        run: python -m pytest tests -q
+
+  analisis:
+    needs: calidad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
       - name: Instalar dependencias Python
         shell: bash
-        run: pip install yfinance beautifulsoup4 lxml xgboost scikit-learn numpy pandas requests lightgbm catboost optuna -q
+        # requirements.txt es la fuente unica de verdad: la lista inline anterior
+        # estaba desincronizada (faltaban structlog, pyyaml, pydantic, scipy...).
+        run: pip install -q -r requirements.txt
 
       - name: Instalar Playwright y Chromium
         shell: bash
@@ -160,6 +229,10 @@ jobs:
         continue-on-error: true
         run: python drawdown_stop.py
 
+      - name: Backtest (historico real vs buy & hold)
+        shell: bash
+        run: python backtest_engine.py
+
       - name: Optimizacion de portafolio (Markowitz, risk parity, HRP, tax-aware, Monte Carlo, stress test)
         shell: bash
         run: python optimizacion_portafolio.py
@@ -184,6 +257,11 @@ jobs:
       - name: Evaluar predicciones y calibrar (aprendizaje autonomo)
         shell: bash
         run: python aprendizaje.py
+
+      - name: Seguimiento de senales (log + evaluacion Brier)
+        shell: bash
+        continue-on-error: true
+        run: python seguimiento_senales.py
 
       - name: Skill Memory (aprendizaje de patrones exitosos)
         shell: bash

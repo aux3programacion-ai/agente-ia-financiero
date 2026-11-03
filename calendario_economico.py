@@ -1,10 +1,7 @@
+import calendar
+import datetime
 import json
 import os
-import datetime
-import urllib.request
-import re
-import time
-import calendar
 
 
 def es_dia_habil(fecha):

@@ -4,15 +4,15 @@ model_store.py - Persistencia y versionado de modelos ML.
 Guarda/carga modelos XGBoost, ensemble, calibradores, scalers.
 Integra con MLflow para experiment tracking.
 """
-import os
-import json
-import joblib
 import hashlib
+import json
+import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
-import numpy as np
+from typing import Any
+
+import joblib
 
 try:
     import mlflow
@@ -53,7 +53,7 @@ class ModelStore:
         with open(self.metadata_file, 'w') as f:
             json.dump(self.metadata, f, indent=2)
 
-    def _model_hash(self, model, params: Dict) -> str:
+    def _model_hash(self, model, params: dict) -> str:
         """Genera hash único del modelo basado en parámetros y coeficientes."""
         if hasattr(model, 'get_booster'):
             booster = model.get_booster()
@@ -70,10 +70,10 @@ class ModelStore:
         model: Any,
         name: str,
         regime: str = 'global',
-        version: Optional[str] = None,
-        params: Optional[Dict] = None,
-        metrics: Optional[Dict] = None,
-        feature_names: Optional[List[str]] = None,
+        version: str | None = None,
+        params: dict | None = None,
+        metrics: dict | None = None,
+        feature_names: list[str] | None = None,
         scaler: Any = None,
         calibrator: Any = None
     ) -> str:
@@ -162,8 +162,8 @@ class ModelStore:
         self,
         name: str,
         regime: str = 'global',
-        version: Optional[str] = None
-    ) -> Tuple[Any, Dict]:
+        version: str | None = None
+    ) -> tuple[Any, dict]:
         """
         Carga modelo. Si version=None, carga el más reciente.
         Retorna (model, metadata).
@@ -205,19 +205,19 @@ class ModelStore:
             'metadata': record
         }
 
-    def load_latest(self, name: str, regime: str = 'global') -> Tuple[Any, Dict]:
+    def load_latest(self, name: str, regime: str = 'global') -> tuple[Any, dict]:
         """Carga la versión más reciente."""
         return self.load_model(name, regime, version=None)
 
-    def list_models(self) -> Dict:
+    def list_models(self) -> dict:
         """Lista todos los modelos guardados."""
         return self.metadata['models']
 
-    def list_versions(self, name: str, regime: str = 'global') -> List[str]:
+    def list_versions(self, name: str, regime: str = 'global') -> list[str]:
         key = f'{name}_{regime}'
         return self.metadata['versions'].get(key, [])
 
-    def delete_model(self, name: str, regime: str = 'global', version: Optional[str] = None):
+    def delete_model(self, name: str, regime: str = 'global', version: str | None = None):
         """Elimina modelo (versión específica o todas)."""
         key = f'{name}_{regime}'
         if key not in self.metadata['models']:
@@ -251,7 +251,7 @@ class ModelStore:
         self._save_metadata()
         print(f'[ModelStore] Promovido a production: {name}/{regime}/{version}')
 
-    def load_production(self, name: str, regime: str = 'global') -> Tuple[Any, Dict]:
+    def load_production(self, name: str, regime: str = 'global') -> tuple[Any, dict]:
         """Carga modelo marcado como production."""
         latest_link = self.model_dir / name / regime / 'latest'
         if not latest_link.exists():
@@ -260,7 +260,7 @@ class ModelStore:
         version = latest_link.resolve().name
         return self.load_model(name, regime, version)
 
-    def compare_versions(self, name: str, regime: str, v1: str, v2: str) -> Dict:
+    def compare_versions(self, name: str, regime: str, v1: str, v2: str) -> dict:
         """Compara métricas de dos versiones."""
         key = f'{name}_{regime}'
         m1 = self.metadata['models'][key].get(v1, {}).get('metrics', {})

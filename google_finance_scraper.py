@@ -5,7 +5,11 @@ acciones relacionadas, perfil corporativo y datos financieros desde Google Finan
 Fuente gratuita, sin API key. Usa requests + BeautifulSoup.
 Salida: Datos/google_finance.json
 """
-import json, os, sys, time, re
+import json
+import os
+import re
+import sys
+import time
 from datetime import datetime, timezone
 
 try:
@@ -30,6 +34,7 @@ HEADERS = {
 
 from portafolio_utils import cargar_portafolio
 
+
 def tickers_a_procesar():
     portafolio = cargar_portafolio(DATA_DIR)
     combinados = list(TICKERS_CORE)
@@ -45,18 +50,18 @@ def parse_number(text):
         return None
     if text.endswith('T'):
         try: return round(float(text[:-1]) * 1e12, 2)
-        except: return text
+        except Exception: return text
     elif text.endswith('B'):
         try: return round(float(text[:-1]) * 1e9, 2)
-        except: return text
+        except Exception: return text
     elif text.endswith('M'):
         try: return round(float(text[:-1]) * 1e6, 2)
-        except: return text
+        except Exception: return text
     elif text.endswith('K'):
         try: return round(float(text[:-1]) * 1e3, 2)
-        except: return text
+        except Exception: return text
     try: return float(text)
-    except: return text
+    except Exception: return text
 
 EXCHANGES = ['NASDAQ', 'NYSE']
 
@@ -71,7 +76,7 @@ def scrape_ticker(ticker):
                 html = resp.text
                 used_url = url
                 break
-        except:
+        except Exception:
             continue
 
     if not html:
@@ -123,7 +128,7 @@ def scrape_ticker(ticker):
         if price_el:
             try:
                 result['price'] = float(price_el.get_text(strip=True).replace('$', '').replace(',', ''))
-            except: pass
+            except Exception: pass
 
         pct_el = stock_section.find('span', {'jsname': 'vY9t3b'})
         if pct_el:
@@ -133,7 +138,7 @@ def scrape_ticker(ticker):
         if change_el:
             try:
                 result['change_abs'] = float(change_el.get_text(strip=True))
-            except: pass
+            except Exception: pass
 
     # --- Related Stocks ---
     related_stocks = []

@@ -1,4 +1,7 @@
-import json, os, re, html, urllib.request, time
+import html
+import json
+import os
+import re
 from html.parser import HTMLParser
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))

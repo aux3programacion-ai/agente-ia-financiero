@@ -4,30 +4,59 @@ analisis_ia.py - Analisis IA via OpenRouter con ensemble multi-modelo.
 Inyecta noticias frescas, indicadores tecnicos, regimen de mercado,
 y feedback de aprendizaje. Pondera resultados por precision historica.
 """
-import json, os, sys, urllib.request, urllib.error, time, re, random, datetime
+import datetime
+import json
+import os
+import re
+import time
+import urllib.error
+import urllib.request
+
 import numpy as np
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 
-API_KEY = os.environ.get('OPENROUTER_KEY')
+def _cargar_env():
+    """Carga claves desde .env si no estan en el entorno."""
+    if os.environ.get('OPENROUTER_KEY'):
+        return
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if not os.path.exists(env_path):
+        return
+    for linea in open(env_path, encoding='utf-8', errors='replace'):
+        linea = linea.strip()
+        if not linea or linea.startswith('#') or '=' not in linea:
+            continue
+        k, v = linea.split('=', 1)
+        k = k.strip(); v = v.strip().strip('"').strip("'")
+        if k and v:
+            os.environ.setdefault(k, v)
 
-MODELOS = [
-    'openrouter/free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
-    'nousresearch/hermes-3-llama-3.1-405b:free',
-    'openai/gpt-oss-120b:free',
-    'google/gemma-4-31b-it:free',
-    'qwen/qwen3-coder:free',
-    'google/gemma-4-26b-a4b-it:free',
-    'moonshotai/kimi-k2.6:free',
-    'openai/gpt-oss-20b:free',
-    'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-    'nvidia/nemotron-3-nano-30b-a3b:free',
-    'z-ai/glm-4.5-air:free',
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    'meta-llama/llama-3.2-3b-instruct:free'
-]
+_cargar_env()
+
+OPENROUTER_KEY = os.environ.get('OPENROUTER_KEY', '')
+NVIDIA_KEY = os.environ.get('NVIDIA_API_KEY', '')
+GEMINI_KEY = os.environ.get('GEMINI_API_KEY', '')
+
+def _detectar_proveedor():
+    if OPENROUTER_KEY and 'your_' not in OPENROUTER_KEY:
+        return ('openrouter', OPENROUTER_KEY,
+                'https://openrouter.ai/api/v1/chat/completions',
+                ['openrouter/free', 'meta-llama/llama-3.3-70b-instruct:free',
+                 'nvidia/nemotron-3-super-120b-a12b:free', 'google/gemma-4-31b-it:free'])
+    if GEMINI_KEY and 'your_' not in GEMINI_KEY:
+        return ('gemini', GEMINI_KEY,
+                'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+                ['gemini-flash-latest', 'gemini-pro-latest'])
+    if NVIDIA_KEY:
+        return ('nvidia', NVIDIA_KEY,
+                'https://integrate.api.nvidia.com/v1/chat/completions',
+                ['meta/llama-3.3-70b-instruct', 'meta/llama-3.1-8b-instruct'])
+    return (None, '', '', [])
+
+PROVEEDOR, API_KEY, LLM_URL, MODELOS = _detectar_proveedor()
+if PROVEEDOR:
+    print(f'[LLM] Proveedor: {PROVEEDOR} | modelos: {MODELOS[0]}')
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM',
                'ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT',
@@ -110,7 +139,7 @@ def trend_prob(ticker):
 
         price = td.get('precio', 100)
         return round(prob), round(conf), price
-    except:
+    except Exception:
         return 50, 45, 100
 
 # Pre-populate from technical data for all core tickers
@@ -129,6 +158,7 @@ os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 # --- Load portfolio tickers (always included in analysis) ---
 from portafolio_utils import cargar_portafolio, cargar_portafolio_cantidades
+
 PORTAFOLIO_TICKERS = set(cargar_portafolio(DATA_DIR))
 PORTAFOLIO_CANTIDADES = cargar_portafolio_cantidades(DATA_DIR)
 if PORTAFOLIO_TICKERS:
@@ -170,7 +200,8 @@ if os.path.exists(SCREENING_PATH):
                 if remaining <= 0:
                     break
                 # Exclude already included core tickers
-                candidates = [t['ticker'] for t in por_mercado[m] if t['ticker'] not in sampled]
+                candidates = [(t if isinstance(t, str) else t['ticker']) for t in por_mercado[m]
+                              if (t if isinstance(t, str) else t['ticker']) not in sampled]
                 alloc = max(1, int(remaining * market_counts[m] / total_extra))
                 for c in candidates[:alloc]:
                     if len(sampled) >= MAX_TICKERS_AI:
@@ -267,7 +298,7 @@ texto_google_finance = ''
 GF_PATH = os.path.join(DATA_DIR, 'Datos', 'google_finance.json')
 if os.path.exists(GF_PATH):
     try:
-        gf = json.load(open(GF_PATH))
+        gf = json.load(open(GF_PATH, encoding='utf-8'))
         gf_tickers = gf.get('tickers', {})
         lines_gf = ['\nDATOS GOOGLE FINANCE (fundamentales, beta, rango 52sem, earnings, relacionados):']
         for t in TICKERS:
@@ -304,7 +335,7 @@ texto_tikr = ''
 TIKR_PATH = os.path.join(DATA_DIR, 'Datos', 'tikr_data.json')
 if os.path.exists(TIKR_PATH):
     try:
-        tikr = json.load(open(TIKR_PATH))
+        tikr = json.load(open(TIKR_PATH, encoding='utf-8'))
         tikr_tickers = tikr.get('tickers', {})
         lines_tikr = ['\nDATOS TIKR (ownership, noticias, valoracion, estimaciones, ratios):']
         for t in TICKERS:
@@ -313,7 +344,7 @@ if os.path.exists(TIKR_PATH):
                 continue
             parts = []
             about = ' '.join(tdt.get('about_text', [])[:30])
-            if '52 Week High' in about: parts.append(f'52w high/low presente en about')
+            if '52 Week High' in about: parts.append('52w high/low presente en about')
             if 'Beta' in about:
                 for ln in about.split(' '):
                     if 'Beta' in ln and ln.replace('Beta','').strip().replace('.','').replace(',','').isdigit():
@@ -398,7 +429,7 @@ if os.path.exists(IA_OUTPUT_PATH):
         fb = prev.get('feedback_aprendizaje', '')
         if fb:
             feedback_precision = '\n' + fb + '\n'
-    except:
+    except Exception:
         pass
 
 # --- Cargar precision por modelo para ensemble ---
@@ -410,7 +441,7 @@ if os.path.exists(CALIB_PATH):
         for m, ms in modelos_stats.items():
             if ms.get('total', 0) >= 2:
                 precision_por_modelo[m] = ms['precision']
-    except:
+    except Exception:
         pass
 
 # --- EWMA weights online learning (via Learning Engine) ---
@@ -436,7 +467,7 @@ if not ewma_model_weights:
                     ewma_model_weights[m] = score
             if ewma_model_weights:
                 print(f'[EWMA] Fallback a precision historica para {len(ewma_model_weights)} modelos')
-        except:
+        except Exception:
             pass
 
 SYSTEM_PROMPT = 'Eres un analista financiero experto con 20 anos de experiencia en mercados globales. Respondes SOLO con JSON valido, sin markdown, sin explicaciones.'
@@ -475,7 +506,7 @@ if os.path.exists(FEW_SHOT_PATH):
                     tk, rg = key.split('_', 1)
                     lines_fs.append(f'{tk} ({rg}): Prob={best["probabilidad"]}% -> {best["analisis"][:100]}')
             auto_few_shot = '\n'.join(lines_fs)
-    except:
+    except Exception:
         pass
 
 FT_INJECT_PATH = os.path.join(DATA_DIR, 'Datos', 'evolution_state.json')
@@ -484,7 +515,7 @@ if os.path.exists(FT_INJECT_PATH):
         ev = json.load(open(FT_INJECT_PATH))
         if ev.get('n_predictions', 0) > 50:
             auto_finetune = f'PATRONES APRENDIDOS: {ev["n_sector_patterns"]} sectores con patrones identificados. Prompt optimizado: {ev.get("prompt_winner", "base")}.'
-    except:
+    except Exception:
         pass
 
 feedback_section = ''
@@ -517,7 +548,7 @@ if os.path.exists(SKILL_PATH):
 effective_system_prompt = SYSTEM_PROMPT
 if skill_meta_evolution:
     effective_system_prompt = skill_meta_evolution
-    print(f'[Meta] System prompt evolucionado por aprendizaje')
+    print('[Meta] System prompt evolucionado por aprendizaje')
 
 ticker_list_str = ', '.join(TICKERS)
 USER_PROMPT_TEMPLATE = f'''Genera analisis para estos {len(TICKERS)} tickers de mercados globales (US, Mexico, Europa, Asia).
@@ -553,9 +584,31 @@ Cada ticker en "probabilidades" debe tener:
   "precio_objetivo_1y" (precio estimado $ en 1 ano),
   "mercado" (region: "US"/"MEXICO"/"EUROPA"/"ASIA"/"GLOBAL")'''
 
+def _llm_cache_get(key):
+    p = os.path.join(DATA_DIR, 'Datos', 'llm_cache.json')
+    try:
+        c = json.load(open(p, encoding='utf-8')) if os.path.exists(p) else {}
+        return c.get(key)
+    except Exception:
+        return None
+
+def _llm_cache_set(key, val):
+    p = os.path.join(DATA_DIR, 'Datos', 'llm_cache.json')
+    try:
+        c = json.load(open(p, encoding='utf-8')) if os.path.exists(p) else {}
+        c[key] = val
+        json.dump(c, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    except Exception:
+        pass
+
 def llamar_modelo(modelo, prompt, sp=None):
     sp = sp or effective_system_prompt
-    url = 'https://openrouter.ai/api/v1/chat/completions'
+    import hashlib
+    cache_key = hashlib.sha1(f'{modelo}|{sp}|{prompt}'.encode()).hexdigest()
+    cached = _llm_cache_get(cache_key)
+    if cached:
+        return cached
+    url = LLM_URL
     payload = json.dumps({
         'model': modelo,
         'messages': [
@@ -563,18 +616,33 @@ def llamar_modelo(modelo, prompt, sp=None):
             {'role': 'user', 'content': prompt}
         ],
         'temperature': 0.1,
-        'max_tokens': 4000
+        'max_tokens': 8000
     }).encode('utf-8')
-    req = urllib.request.Request(url, data=payload,
-        headers={
-            'Authorization': f'Bearer {API_KEY}',
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://github.com/aux3programacion-ai/agente-ia-financiero',
-            'X-Title': 'Agente IA Financiero'
-        },
-        method='POST')
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read())['choices'][0]['message']['content']
+    for intento in range(2):
+        req = urllib.request.Request(url, data=payload,
+            headers={
+                'Authorization': f'Bearer {API_KEY}',
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://github.com/aux3programacion-ai/agente-ia-financiero',
+                'X-Title': 'Agente IA Financiero'
+            },
+            method='POST')
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                msg = json.loads(resp.read())['choices'][0]['message']
+                content = msg.get('content')
+                if content is None:
+                    content = msg.get('reasoning') or msg.get('reasoning_content') or ''
+                if not isinstance(content, str) or not content.strip():
+                    raise ValueError(f'modelo devolvio contenido vacio (finish={msg.get("finish_reason")})')
+                _llm_cache_set(cache_key, content)
+                return content
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and intento == 0:
+                import time as _t
+                _t.sleep(8)
+                continue
+            raise
 
 def extraer_json(texto):
     texto = texto.strip()
@@ -621,7 +689,7 @@ respuestas_modelos = []
 modelos_exitosos = []
 
 if not API_KEY:
-    print('[!] OPENROUTER_KEY no configurada, usando tendencia tecnica')
+    print('[!] Sin clave LLM configurada, usando tendencia tecnica')
     resultado_final = generar_trend_fallback()
     resultado_final['modelo_usado'] = 'no-key'
 else:
@@ -640,7 +708,7 @@ else:
     specialty_perf = {}
     if os.path.exists(SPECIALTY_PATH):
         try: specialty_perf = json.load(open(SPECIALTY_PATH))
-        except: pass
+        except Exception: pass
     # Assign specialties based on past performance or round-robin
     # Track which model has which specialty
     model_specialty = {}
@@ -673,7 +741,7 @@ else:
             modelos_ordenados.append((m, muestra))
         modelos_ordenados.sort(key=lambda x: x[1], reverse=True)
         MODELOS_ORDERED = [m[0] for m in modelos_ordenados]
-        print(f'[Bandit] Modelos ordenados por Thompson Sampling')
+        print('[Bandit] Modelos ordenados por Thompson Sampling')
     except Exception as e:
         MODELOS_ORDERED = list(MODELOS)
         print(f'[!] Bandit fallo, orden original: {e}')
@@ -825,7 +893,7 @@ RL_PATH = os.path.join(DATA_DIR, 'Datos', 'model_rl_weights.json')
 rl_weights = {}
 if os.path.exists(RL_PATH):
     try: rl_weights = json.load(open(RL_PATH))
-    except: pass
+    except Exception: pass
 
 RL_APR_PATH = os.path.join(DATA_DIR, 'Datos', 'aprendizaje.json')
 if os.path.exists(RL_APR_PATH):
@@ -875,7 +943,7 @@ PROMPT_AB_PATH = os.path.join(DATA_DIR, 'Datos', 'prompt_ab_test.json')
 prompt_ab_data = {'variations': {}, 'winner': 'A', 'trials': {}}
 if os.path.exists(PROMPT_AB_PATH):
     try: prompt_ab_data = json.load(open(PROMPT_AB_PATH))
-    except: pass
+    except Exception: pass
 
 # Track which variation was used this cycle
 prompt_variation_used = prompt_ab_data.get('winner', 'A')
@@ -894,7 +962,7 @@ if os.path.exists(MISTAKE_PATH):
             for m in mistakes[:5]:
                 lines.append(f'{m["ticker"]}: Se predijo {m["probabilidad"]}% pero ocurrio lo opuesto. Contexto: {m["contexto"]}')
             mistake_injection = '\n'.join(lines)
-    except:
+    except Exception:
         pass
 
 # ============================================================
@@ -935,7 +1003,7 @@ Analiza las siguientes discrepancias entre modelos de IA y genera un JSON con pr
 Responde SOLO con JSON, sin markdown. Formato: {{"probabilidades": {{"TICKER": {{"probabilidad": 55, "confianza": 60, "analisis": "Consenso tras debate: ..."}}}}}}'''
             
             # Call consensus model
-            consensus_raw = llamar_modelo('openrouter/free', debate_prompt_full, sp=effective_system_prompt)
+            consensus_raw = llamar_modelo(MODELOS[0], debate_prompt_full, sp=effective_system_prompt)
             try:
                 consensus = extraer_json(consensus_raw)
                 if validar_resultado(consensus):
@@ -985,13 +1053,13 @@ Para cada ticker, responde:
 
 Responde SOLO con JSON: {{"revision": [{{"ticker": "NVDA", "falta": "...", "riesgo": "...", "robustez": 7}}]}}'''
         
-        review_raw = llamar_modelo('openrouter/free', review_prompt, sp='Eres un revisor critico senior. Respondes SOLO con JSON valido.')
+        review_raw = llamar_modelo(MODELOS[0], review_prompt, sp='Eres un revisor critico senior. Respondes SOLO con JSON valido.')
         try:
             review_data = extraer_json(review_raw)
             if review_data and 'revision' in review_data:
                 resultado_final['meta_cognition'] = review_data['revision']
                 print(f'[MetaCog] Revision generada para {len(review_data["revision"])} tickers')
-        except:
+        except Exception:
             pass
     except Exception as e:
         print(f'[!] Meta-cognition fallo: {e}')
@@ -1028,7 +1096,7 @@ if os.path.exists(CALIB_PATH):
         # Si precision con noticias positivas es mejor que 50%, dar peso
         if prec_pos > 0.52 or prec_neg > 0.52:
             news_weight = min(max(prec_pos - 0.5, prec_neg - 0.5) * 20, 10)
-    except:
+    except Exception:
         pass
 
 news_adjusted_count = 0
@@ -1044,7 +1112,7 @@ for t in TICKERS:
                     news_time = datetime.datetime.fromisoformat(ns['timestamp'].replace('Z', '+00:00'))
                     hours_ago = (datetime.datetime.now(datetime.timezone.utc) - news_time).total_seconds() / 3600
                     decay_factor = max(0.1, np.exp(-hours_ago / 24))  # half-life ~16.6 hours
-                except:
+                except Exception:
                     pass
             prob = resultado_final['probabilidades'][t].get('probabilidad', 50)
             adjustment = score * news_weight * decay_factor
@@ -1055,7 +1123,7 @@ for t in TICKERS:
             resultado_final['probabilidades'][t]['peso_noticias'] = round(news_weight, 2)
             resultado_final['probabilidades'][t]['decay_noticias'] = round(decay_factor, 2)
             news_adjusted_count += 1
-        except:
+        except Exception:
             pass
 if news_adjusted_count > 0:
     print(f'[Noticias] Ajuste aplicado con peso {news_weight:.1f} a {news_adjusted_count} tickers')
@@ -1080,9 +1148,8 @@ if os.path.exists(HIST_PATH):
                         calibration_data.append((prob, outcome))
         
         if len(calibration_data) >= 50:
-            from sklearn.isotonic import IsotonicRegression
-            from sklearn.calibration import CalibratedClassifierCV
             import numpy as np
+            from sklearn.isotonic import IsotonicRegression
             
             X_cal = np.array([d[0] for d in calibration_data]).reshape(-1, 1)
             y_cal = np.array([d[1] for d in calibration_data])
@@ -1201,7 +1268,7 @@ try:
     feedback_30d = engine.get_feedback_text()
     if feedback_30d:
         resultado_final['feedback_aprendizaje_30d'] = feedback_30d
-        print(f'[Learn] Feedback 30d inyectado en output')
+        print('[Learn] Feedback 30d inyectado en output')
 except Exception as e:
     print(f'[!] Learning engine feedback: {e}')
 
@@ -1244,7 +1311,7 @@ if os.path.exists(HIST_PATH):
     try:
         with open(HIST_PATH) as f:
             hist_preds = json.load(f)
-    except: pass
+    except Exception: pass
 
 modelo_usado_pred = resultado_final.get('modelo_usado', 'desconocido')
 
@@ -1280,4 +1347,4 @@ for t in TICKERS:
 
 with open(HIST_PATH, 'w') as f:
     json.dump(hist_preds, f, indent=2, ensure_ascii=False)
-print(f'[OK] Predicciones guardadas en historial')
+print('[OK] Predicciones guardadas en historial')

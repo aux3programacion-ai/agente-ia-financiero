@@ -1,5 +1,9 @@
-import json, os, time, urllib.request, re, sys, math
-from datetime import datetime
+import json
+import os
+import time
+import urllib.request
+
+import numpy as np
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')

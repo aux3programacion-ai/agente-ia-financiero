@@ -5,9 +5,12 @@ Uso:  python start.py            (menu interactivo)
       python start.py dashboard   (lanza dashboard directo)
       python start.py api         (lanza API REST)
 """
-import sys, os, subprocess, webbrowser, json
-from pathlib import Path
+import os
+import subprocess
+import sys
+import webbrowser
 from datetime import datetime
+from pathlib import Path
 
 BASE = Path(__file__).parent
 DATOS = BASE / 'Datos'
@@ -28,7 +31,7 @@ def banner():
       | |__| |  _| |_| |\  | |_) |_| |_|____/ | |  
        \_____| |_____|_| \_|____/|_____|_____| |_|  
     ''', 'cyan'))
-    print(color(f'              SISTEMA FINANCIERO AUTOMATIZADO v2.0', 'bold'))
+    print(color('              SISTEMA FINANCIERO AUTOMATIZADO v2.0', 'bold'))
     print(color(f'              {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n', 'yellow'))
 
 def status():
@@ -42,7 +45,7 @@ def status():
         commit = os.popen('git log -1 --format="%h" 2>nul').read().strip()
         if branch:
             print(color(f'  [GIT] {branch} @ {commit}', 'yellow'))
-    except:
+    except Exception:
         pass
     print()
 

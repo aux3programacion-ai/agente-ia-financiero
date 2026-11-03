@@ -6,13 +6,18 @@ Evita recalcular features, permite time-travel y auditoría de features.
 import json
 import os
 import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union
 
 from config.settings import get_setting
+from data_validator import FeatureSchema
+from logger import get_module_logger
+
+_log = get_module_logger('feature_store')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 STORE_DIR = Path(DATA_DIR) / 'Datos' / 'feature_store'
@@ -24,8 +29,8 @@ FORMAT = FS_CONFIG.get('formato', 'parquet')
 PARTITIONED = FS_CONFIG.get('particionado', ['fecha', 'ticker'])
 
 try:
-    import pyarrow.parquet as pq
     import pyarrow as pa
+    import pyarrow.parquet as pq
     PARQUET_AVAILABLE = True
 except ImportError:
     PARQUET_AVAILABLE = False
@@ -42,7 +47,7 @@ class FeatureStore:
         if self.meta_path.exists():
             try:
                 self.registry = json.loads(self.meta_path.read_text())
-            except:
+            except Exception:
                 self.registry = {'features': {}, 'versions': {}}
         else:
             self.registry = {'features': {}, 'versions': {}}
@@ -57,9 +62,9 @@ class FeatureStore:
     def store_features(
         self,
         ticker: str,
-        features: Dict[str, float],
-        timestamp: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        features: dict[str, float],
+        timestamp: str | None = None,
+        metadata: dict | None = None
     ) -> bool:
         if not ENABLED:
             return False
@@ -68,28 +73,35 @@ class FeatureStore:
             timestamp = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
         
         fecha = timestamp[:10]
+        
+        # Validar con Pydantic
+        try:
+            record_data = {
+                'ticker': ticker,
+                'timestamp': timestamp,
+                'fecha': fecha,
+                'features': features,
+                'metadata': metadata or {}
+            }
+            validated_record = FeatureSchema(**record_data)
+        except Exception as e:
+            _log.error(f"[FeatureStore] Error validando features: {e}")
+            return False
+
         part_path = self._partition_path(fecha, ticker)
         part_path.mkdir(parents=True, exist_ok=True)
 
-        record = {
-            'ticker': ticker,
-            'timestamp': timestamp,
-            'fecha': fecha,
-            'features': features,
-            'metadata': metadata or {}
-        }
+        record = validated_record.model_dump()
 
         format = FORMAT
         if format == 'parquet' and PARQUET_AVAILABLE:
             file_path = part_path / f'{timestamp.replace(":", "-")}.parquet'
             try:
-                df = pd.DataFrame([{
-                    'ticker': ticker,
-                    'timestamp': timestamp,
-                    'fecha': fecha,
-                    **features,
-                    'metadata': json.dumps(metadata or {})
-                }])
+                # Use model_dump for flat dataframe
+                df_data = {**{k: v for k, v in record.items() if k != 'features'}, **record['features']}
+                if 'metadata' in df_data:
+                    df_data['metadata'] = json.dumps(df_data['metadata'])
+                df = pd.DataFrame([df_data])
                 df.to_parquet(file_path, index=False)
             except Exception as e:
                 print(f'[FeatureStore] Error parquet: {e}')
@@ -115,12 +127,12 @@ class FeatureStore:
 
     def load_features(
         self,
-        ticker: Optional[str] = None,
-        fecha_inicio: Optional[str] = None,
-        fecha_fin: Optional[str] = None,
-        feature_names: Optional[List[str]] = None,
+        ticker: str | None = None,
+        fecha_inicio: str | None = None,
+        fecha_fin: str | None = None,
+        feature_names: list[str] | None = None,
         as_dataframe: bool = True
-    ) -> Union[pd.DataFrame, List[Dict]]:
+    ) -> pd.DataFrame | list[dict]:
         if not self.store_dir.exists():
             return pd.DataFrame() if as_dataframe else []
         
@@ -135,14 +147,21 @@ class FeatureStore:
                 return self._load_json(ticker, fecha_inicio, fecha_fin, feature_names, as_dataframe)
             
             tables = []
+            errores = []
             for f in files:
                 try:
-                    table = pq.read_table(f)
+                    # partitioning=None: el path ya trae year=/month=/ticker= y
+                    # pyarrow lo interpretaria como particion Hive, creando una
+                    # columna `ticker` dictionary que choca con la del propio
+                    # archivo y hace fallar la lectura.
+                    table = pq.read_table(f, partitioning=None)
                     tables.append(table)
-                except:
-                    continue
-            
+                except Exception as e:
+                    errores.append(f'{Path(f).name}: {str(e)[:80]}')
+
             if not tables:
+                if errores:
+                    _log.error(f"[FeatureStore] {len(errores)} archivos ilegibles: {errores[:3]}")
                 return pd.DataFrame() if as_dataframe else []
             
             import pyarrow as pa
@@ -177,7 +196,7 @@ class FeatureStore:
                 if feature_names:
                     rec['features'] = {k: v for k, v in rec['features'].items() if k in feature_names}
                 records.append(rec)
-            except:
+            except Exception:
                 continue
         
         if as_dataframe:
@@ -200,16 +219,16 @@ class FeatureStore:
         df = self.load_features(ticker=ticker, as_dataframe=True)
         if df.empty or feature_name not in df.columns:
             return pd.Series(dtype=float)
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
         df = df.sort_values('timestamp')
-        cutoff = datetime.now() - timedelta(days=days)
+        cutoff = pd.Timestamp(datetime.now(timezone.utc)) - timedelta(days=days)
         df = df[df['timestamp'] >= cutoff]
         return df.set_index('timestamp')[feature_name]
 
-    def list_features(self) -> Dict[str, Any]:
+    def list_features(self) -> dict[str, Any]:
         return self.registry.get('features', {})
 
-    def get_feature_stats(self, ticker: str, days: int = 252) -> Dict:
+    def get_feature_stats(self, ticker: str, days: int = 252) -> dict:
         df = self.load_features(ticker=ticker, as_dataframe=True)
         if df.empty:
             return {}
@@ -239,7 +258,7 @@ class FeatureStore:
                         rec = json.load(f)
                     if rec.get('fecha', '') < cutoff:
                         path.unlink()
-                except:
+                except Exception:
                     continue
         
         for path in self.store_dir.rglob('*.parquet'):
@@ -249,7 +268,7 @@ class FeatureStore:
                     df_old = df[df['fecha'] < cutoff]
                     if len(df_old) > 0:
                         path.unlink()
-            except:
+            except Exception:
                 continue
         
         print(f'[FeatureStore] Purged records before {cutoff}')

@@ -3,12 +3,14 @@
 learning_engine.py - Motor de aprendizaje integrado.
 Resuelve: evaluacion 30d, EWMA, bandit algorithm, RL sizing, feedback loop.
 """
-import json, os, math, time, random
-import numpy as np
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+import json
+import os
+import random
 from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+
+import numpy as np
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 DATOS = Path(DATA_DIR) / 'Datos'
@@ -36,26 +38,26 @@ class Evaluador30D:
         self.hist = self._cargar_historial()
         self.precios_historicos = self._cargar_precios_historicos()
 
-    def _cargar_historial(self) -> Dict:
+    def _cargar_historial(self) -> dict:
         if HIST_PATH.exists():
             try: return json.loads(HIST_PATH.read_text(encoding='utf-8'))
-            except: return {}
+            except Exception: return {}
         return {}
 
-    def _cargar_precios_historicos(self) -> Dict[str, Dict[str, float]]:
+    def _cargar_precios_historicos(self) -> dict[str, dict[str, float]]:
         """Carga historico de precios desde yfinance para evaluacion 30d."""
         precios = {}
         for t in TICKERS:
             try:
                 import yfinance as yf
-                h = yf.Ticker(t).history(period='6mo', progress=False)
+                h = yf.Ticker(t).history(period='6mo')
                 if not h.empty:
                     precios[t] = {str(k.date()): float(v) for k, v in h['Close'].items()}
-            except:
+            except Exception:
                 pass
         return precios
 
-    def evaluar_pendientes(self) -> Dict:
+    def evaluar_pendientes(self) -> dict:
         """Evalua predicciones que tienen >=20 dias de antiguedad."""
         hoy = datetime.now(timezone.utc)
         resultados = {
@@ -97,7 +99,7 @@ class Evaluador30D:
                 if p.get('resultado_30d') is None and t in self.precios_historicos:
                     try:
                         fecha_pred = datetime.strptime(p['fecha'], '%Y-%m-%d').date()
-                    except:
+                    except Exception:
                         continue
                     dias_transcurridos = (hoy.date() - fecha_pred).days
                     if 20 <= dias_transcurridos <= 40:
@@ -152,7 +154,7 @@ class Evaluador30D:
         HIST_PATH.write_text(json.dumps(self.hist, indent=2, ensure_ascii=False), encoding='utf-8')
         return resultados
 
-    def precision_30d_por_ticker(self) -> Dict[str, float]:
+    def precision_30d_por_ticker(self) -> dict[str, float]:
         """Precision a 30 dias por ticker para calibracion."""
         prec = {}
         for t in TICKERS:
@@ -173,13 +175,13 @@ class EWMAWeightManager:
         self.alpha = alpha
         self.hist = self._cargar_historial()
 
-    def _cargar_historial(self) -> Dict:
+    def _cargar_historial(self) -> dict:
         if HIST_PATH.exists():
             try: return json.loads(HIST_PATH.read_text(encoding='utf-8'))
-            except: return {}
+            except Exception: return {}
         return {}
 
-    def compute_weights(self) -> Dict[str, float]:
+    def compute_weights(self) -> dict[str, float]:
         """Retorna {modelo: peso_ewma} basado en rendimiento reciente real."""
         outcomes = defaultdict(lambda: {'correct': 0, 'total': 0, 'ewma': 0.5})
 
@@ -210,7 +212,7 @@ class EWMAWeightManager:
 
         return weights
 
-    def get_ensemble_weights(self, modelos_exitosos: List[str]) -> Dict[str, float]:
+    def get_ensemble_weights(self, modelos_exitosos: list[str]) -> dict[str, float]:
         """Retorna pesos para los modelos que respondieron en el ensamble."""
         ewma = self.compute_weights()
         pesos = {}
@@ -242,10 +244,10 @@ class BanditThompson:
         self.epsilon = epsilon
         self.params = self._cargar()
 
-    def _cargar(self) -> Dict:
+    def _cargar(self) -> dict:
         if BANDIT_PATH.exists():
             try: return json.loads(BANDIT_PATH.read_text(encoding='utf-8'))
-            except: return {}
+            except Exception: return {}
         return {}
 
     def _guardar(self):
@@ -264,7 +266,7 @@ class BanditThompson:
         p['total'] += 1
         self._guardar()
 
-    def seleccionar_modelos(self, candidatos: List[str], k: int = 3) -> List[str]:
+    def seleccionar_modelos(self, candidatos: list[str], k: int = 3) -> list[str]:
         """
         Selecciona k modelos usando Thompson Sampling con exploracion epsilon-greedy.
         - Con prob epsilon: exploracion (elige aleatorio)
@@ -287,7 +289,7 @@ class BanditThompson:
         scores.sort(key=lambda x: x[1], reverse=True)
         return [s[0] for s in scores[:k]]
 
-    def mejores_modelos(self, n: int = 5) -> List[Tuple[str, float]]:
+    def mejores_modelos(self, n: int = 5) -> list[tuple[str, float]]:
         """Retorna los n mejores modelos por media de la Beta."""
         scores = []
         for m, p in self.params.items():
@@ -308,7 +310,7 @@ class RLSizingBridge:
         self.model = None
         self.algo = 'PPO'
 
-    def cargar_o_entrenar(self, tickers: List[str] = None):
+    def cargar_o_entrenar(self, tickers: list[str] = None):
         """Carga modelo existente o entrena uno nuevo."""
         rl_path = DATOS / 'rl_sizing' / f'rl_{self.algo.lower()}_sizing.zip'
         try:
@@ -330,9 +332,9 @@ class RLSizingBridge:
         except Exception as e:
             print(f'[RLSizing] Error entrenando: {e}')
 
-    def predecir_pesos(self, senales: Dict[str, float],
-                       precios: Dict[str, float],
-                       capital: float) -> Dict[str, float]:
+    def predecir_pesos(self, senales: dict[str, float],
+                       precios: dict[str, float],
+                       capital: float) -> dict[str, float]:
         """
         Dadas senales de compra/venta con probabilidad, retorna pesos
         ajustados por RL.
@@ -367,10 +369,10 @@ class FeedbackLoop:
     def __init__(self):
         self.hist = self._cargar_historial()
 
-    def _cargar_historial(self) -> Dict:
+    def _cargar_historial(self) -> dict:
         if HIST_PATH.exists():
             try: return json.loads(HIST_PATH.read_text(encoding='utf-8'))
-            except: return {}
+            except Exception: return {}
         return {}
 
     def actualizar_skills(self):
@@ -378,7 +380,7 @@ class FeedbackLoop:
         skills = {}
         if SKILL_PATH.exists():
             try: skills = json.loads(SKILL_PATH.read_text(encoding='utf-8'))
-            except: skills = {}
+            except Exception: skills = {}
 
         for t in TICKERS:
             preds = self.hist.get(t, {}).get('predicciones', [])
@@ -408,7 +410,7 @@ class FeedbackLoop:
         rl = {}
         if RL_PATH.exists():
             try: rl = json.loads(RL_PATH.read_text(encoding='utf-8'))
-            except: rl = {}
+            except Exception: rl = {}
 
         model_stats = defaultdict(lambda: {'correct': 0, 'total': 0, 'conf_sum': 0, 'error_conf_sum': 0})
         for t in TICKERS:
@@ -503,7 +505,7 @@ class LearningEngine:
         self.rl_sizing = RLSizingBridge()
         self.feedback = FeedbackLoop()
 
-    def ejecutar_ciclo(self) -> Dict:
+    def ejecutar_ciclo(self) -> dict:
         """Ejecuta el ciclo completo de aprendizaje."""
         resultados = {}
 
@@ -517,9 +519,9 @@ class LearningEngine:
         # 2. Si hay nuevos outcomes 30d, ejecutar feedback loop
         if eval_result['evaluados_30d'] > 0:
             self.feedback.actualizar_skills()
-            print(f'[Learn] Skills actualizadas con outcomes 30d')
+            print('[Learn] Skills actualizadas con outcomes 30d')
             self.feedback.actualizar_rl_weights()
-            print(f'[Learn] RL weights actualizados')
+            print('[Learn] RL weights actualizados')
 
         # 3. Inyectar feedback en analisis_ia.json para el LLM
         feedback_text = self.feedback.inyectar_feedback_en_prompt()
@@ -528,7 +530,7 @@ class LearningEngine:
                 ia = json.loads(IA_PATH.read_text(encoding='utf-8'))
                 ia['feedback_aprendizaje_30d'] = feedback_text
                 IA_PATH.write_text(json.dumps(ia, indent=2, ensure_ascii=False), encoding='utf-8')
-                print(f'[Learn] Feedback 30d inyectado en prompt')
+                print('[Learn] Feedback 30d inyectado en prompt')
             except Exception as e:
                 print(f'[Learn] Error inyectando feedback: {e}')
 
@@ -552,10 +554,10 @@ class LearningEngine:
 
         return resultados
 
-    def get_ewma_weights(self) -> Dict[str, float]:
+    def get_ewma_weights(self) -> dict[str, float]:
         return self.ewma.compute_weights()
 
-    def get_bandit_selection(self, modelos: List[str], k: int = 3) -> List[str]:
+    def get_bandit_selection(self, modelos: list[str], k: int = 3) -> list[str]:
         return self.bandit.seleccionar_modelos(modelos, k)
 
     def get_feedback_text(self) -> str:

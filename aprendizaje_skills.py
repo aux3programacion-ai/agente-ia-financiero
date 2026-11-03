@@ -1,5 +1,9 @@
-import json, os, sys, time, re, math
-from collections import defaultdict, Counter
+import json
+import math
+import os
+import re
+import time
+from collections import defaultdict
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT = os.path.join(DATA_DIR, 'Datos', 'skill_memory.json')
@@ -23,7 +27,7 @@ def load_prediction_history():
     try:
         data = json.load(open(path))
         return data.get('predicciones', [])
-    except:
+    except Exception:
         return []
 
 def extract_skills_from_history(predictions):
@@ -275,7 +279,7 @@ def detect_learning_plateaus(predictions):
             continue
         try:
             week = ts[:7]  # YYYY-MM
-        except:
+        except Exception:
             continue
         correct = 1 if p.get('acierto') else 0
         ticker_accuracy_by_week[t].append((week, correct))
@@ -339,7 +343,7 @@ def main():
     if os.path.exists(regime_path):
         try:
             regime = json.load(open(regime_path)).get('regimen', 'UNKNOWN')
-        except:
+        except Exception:
             pass
     
     # Extract skills
@@ -348,6 +352,14 @@ def main():
     
     for t, s in sorted(skills.items(), key=lambda x: x[1]['success_rate'], reverse=True)[:5]:
         print(f'    {t}: rate={s["success_rate"]:.0%} ({s["n_correct"]}C/{s["n_incorrect"]}I) rango={s["optimal_prob_range"]} nivel={s["skill_level"]}')
+    
+    # Cross-ticker knowledge transfer: debe resolverse ANTES de generar la
+    # inyeccion, que consume las notas de transferencia.
+    transfers, transfer_notes = cross_ticker_transfer(skills, predictions)
+    if transfer_notes:
+        print(f'  {len(transfer_notes)} transferencias cross-ticker generadas')
+        for n in transfer_notes[:3]:
+            print(f'    {n}')
     
     # Generate injection
     injection = generate_skill_injection(skills, regime, transfer_notes)
@@ -363,13 +375,6 @@ def main():
     mistakes = extract_mistake_memory(predictions)
     if mistakes:
         print(f'  {len(mistakes)} errores severos registrados en mistake_memory')
-    
-    # Cross-ticker knowledge transfer
-    transfers, transfer_notes = cross_ticker_transfer(skills, predictions)
-    if transfer_notes:
-        print(f'  {len(transfer_notes)} transferencias cross-ticker generadas')
-        for n in transfer_notes[:3]:
-            print(f'    {n}')
     
     # Learning curve plateau detection
     plateaus = detect_learning_plateaus(predictions)
@@ -410,7 +415,7 @@ def main():
     perf_history = []
     if os.path.exists(perf_path):
         try: perf_history = json.load(open(perf_path))
-        except: pass
+        except Exception: pass
     perf_history.append({
         'timestamp': result['timestamp'],
         'n_skills': len(skills),

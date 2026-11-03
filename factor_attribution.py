@@ -1,4 +1,7 @@
-import json, os, sys, time
+import json
+import os
+import time
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -58,7 +61,7 @@ def main():
             total_val = sum(h.get('valor', 0) for h in holdings.values()) or 1
             for t, h in holdings.items():
                 weights[t.upper()] = h.get('valor', 0) / total_val
-        except:
+        except Exception:
             pass
     if not weights:
         w = 1 / len(TICKERS_CORE)

@@ -8,13 +8,11 @@ import json
 import os
 import time
 import uuid
-from pathlib import Path
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Tuple, Callable
-from dataclasses import dataclass, field, asdict
 from enum import Enum
-
-from config.settings import get_setting
+from pathlib import Path
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'paper_trading'
@@ -66,7 +64,7 @@ class Order:
     filled_shares: int = 0
     commission: float = 0.0
     reason: str = ''
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
     def to_dict(self):
         d = asdict(self)
@@ -102,10 +100,10 @@ class PaperBroker:
         self.capital = initial_capital
         self.initial_capital = initial_capital
         self.commission = commission
-        self.positions: Dict[str, Position] = {}
-        self.orders: List[Order] = []
-        self.trade_history: List[Dict] = []
-        self.equity_curve: List[Dict] = []
+        self.positions: dict[str, Position] = {}
+        self.orders: list[Order] = []
+        self.trade_history: list[dict] = []
+        self.equity_curve: list[dict] = []
         self.account_id = f'paper_{uuid.uuid4().hex[:6]}'
         self.start_time = datetime.now(timezone.utc).isoformat()
 
@@ -185,7 +183,7 @@ class PaperBroker:
         self.trade_history.append(order.to_dict())
         self._record_snapshot(order.ticker)
 
-    def _simulate_fill(self, order: Order) -> Optional[float]:
+    def _simulate_fill(self, order: Order) -> float | None:
         price = self._get_price(order.ticker)
         if price is None or price <= 0:
             return None
@@ -242,7 +240,7 @@ class PaperBroker:
     def set_price_provider(self, provider: Callable[[str], float]):
         self._price_provider = provider
 
-    def update_prices(self, prices: Dict[str, float]):
+    def update_prices(self, prices: dict[str, float]):
         for ticker, price in prices.items():
             if ticker in self.positions:
                 self.positions[ticker].update_market_value(price)
@@ -266,13 +264,13 @@ class PaperBroker:
                 return True
         return False
 
-    def close_position(self, ticker: str) -> Optional[Order]:
+    def close_position(self, ticker: str) -> Order | None:
         if ticker not in self.positions:
             return None
         pos = self.positions[ticker]
         return self.submit_order(ticker, OrderSide.SELL, pos.shares)
 
-    def close_all(self) -> List[Order]:
+    def close_all(self) -> list[Order]:
         orders = []
         for ticker in list(self.positions.keys()):
             o = self.close_position(ticker)
@@ -280,7 +278,7 @@ class PaperBroker:
                 orders.append(o)
         return orders
 
-    def get_account_summary(self) -> Dict:
+    def get_account_summary(self) -> dict:
         return {
             'account_id': self.account_id,
             'broker': 'paper',
@@ -366,8 +364,12 @@ class AlpacaBroker(PaperBroker):
                      price=0.0, stop_price=0.0, trail_percent=0.0, **kwargs) -> Order:
         if self.client:
             try:
-                from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
-                from alpaca.trading.enums import OrderSide as AlpacaSide, OrderType as AlpacaType, TimeInForce
+                from alpaca.trading.enums import OrderSide as AlpacaSide
+                from alpaca.trading.enums import TimeInForce
+                from alpaca.trading.requests import (
+                    LimitOrderRequest,
+                    MarketOrderRequest,
+                )
                 
                 alpaca_side = AlpacaSide.BUY if side == OrderSide.BUY else AlpacaSide.SELL
                 
@@ -407,7 +409,7 @@ class AlpacaBroker(PaperBroker):
             filled_at=str(getattr(alpaca_order, 'filled_at', ''))
         )
 
-    def get_positions(self) -> List[Dict]:
+    def get_positions(self) -> list[dict]:
         if not self.client:
             return []
         try:
@@ -425,7 +427,7 @@ class AlpacaBroker(PaperBroker):
             print(f'[Alpaca] Get positions failed: {e}')
             return []
 
-    def get_account(self) -> Dict:
+    def get_account(self) -> dict:
         if not self.client:
             return super().get_account_summary()
         try:
@@ -437,7 +439,7 @@ class AlpacaBroker(PaperBroker):
                 'day_trade_count': int(acct.daytrade_count),
                 'status': acct.status
             }
-        except:
+        except Exception:
             return super().get_account_summary()
 
 
@@ -470,7 +472,7 @@ class IBKRBroker(PaperBroker):
                      price=0.0, stop_price=0.0, trail_percent=0.0, **kwargs) -> Order:
         if self.app and self._connected:
             try:
-                from ib_insync import Stock, MarketOrder, LimitOrder, StopOrder
+                from ib_insync import LimitOrder, MarketOrder, Stock, StopOrder
                 contract = Stock(ticker.upper(), 'SMART', 'USD')
                 
                 ib_side = 'BUY' if side == OrderSide.BUY else 'SELL'
@@ -498,7 +500,7 @@ class IBKRBroker(PaperBroker):
         
         return super().submit_order(ticker, side, shares, order_type, price, stop_price, trail_percent)
 
-    def get_positions(self) -> List[Dict]:
+    def get_positions(self) -> list[dict]:
         if not self.app:
             return []
         try:
@@ -509,7 +511,7 @@ class IBKRBroker(PaperBroker):
                 'avg_entry': float(p.avgCost),
                 'current_price': float(p.marketPrice) if hasattr(p, 'marketPrice') else 0
             } for p in positions]
-        except:
+        except Exception:
             return []
 
     def disconnect(self):
@@ -525,6 +527,8 @@ class PaperTradingManager:
         self.strategies = {}
         self.active = False
         self.scheduler = None
+        self.stop_loss_pct = 5.0
+        self.stop_loss_triggered: list[str] = []
 
     def connect_alpaca(self, api_key: str = ALPACA_KEY, secret: str = ALPACA_SECRET) -> AlpacaBroker:
         self.broker = AlpacaBroker(api_key, secret)
@@ -536,7 +540,7 @@ class PaperTradingManager:
         self.broker_type = 'ibkr'
         return self.broker
 
-    def execute_signal(self, ticker: str, signal: Dict) -> Optional[Order]:
+    def execute_signal(self, ticker: str, signal: dict) -> Order | None:
         direction = signal.get('direction', 'hold')
         confidence = signal.get('confidence', 50)
         price = signal.get('price', 0)
@@ -574,7 +578,7 @@ class PaperTradingManager:
                     )
         return None
 
-    def apply_portfolio_weights(self, weights: Dict[str, float], prices: Dict[str, float]):
+    def apply_portfolio_weights(self, weights: dict[str, float], prices: dict[str, float]):
         """Apply target portfolio weights (rebalance)."""
         portfolio_value = self.broker.portfolio_value
         current = self.broker.positions
@@ -597,7 +601,7 @@ class PaperTradingManager:
             elif shares < 0:
                 self.broker.submit_order(ticker, OrderSide.SELL, abs(shares))
 
-    def generate_report(self) -> Dict:
+    def generate_report(self) -> dict:
         summary = self.broker.get_account_summary()
         
         if len(self.broker.equity_curve) >= 2:
@@ -635,9 +639,33 @@ class PaperTradingManager:
         signals = signal_fn()
         for ticker, signal in signals.items():
             self.execute_signal(ticker, signal)
+
+        prices = {t: s.get('price') for t, s in signals.items() if s.get('price')}
+        if prices:
+            self.check_stop_loss(prices)
         
         self.broker.save_state()
         self.generate_report()
+
+    def check_stop_loss(self, prices: dict[str, float]) -> list[Order]:
+        """Cierra posiciones con perdida >= stop_loss_pct (stop-loss automatico)."""
+        closed: list[Order] = []
+        if not self.active or not prices:
+            return closed
+        for ticker, pos in list(self.broker.positions.items()):
+            if pos.shares <= 0:
+                continue
+            price = prices.get(ticker) or pos.current_price
+            if price <= 0:
+                continue
+            pos.update_market_value(price)
+            if pos.pnl_pct <= -self.stop_loss_pct:
+                order = self.broker.close_position(ticker)
+                if order:
+                    self.stop_loss_triggered.append(f'{ticker} ({pos.pnl_pct:.1f}%)')
+                    print(f'[StopLoss] Cerrada {ticker} a ${price:.2f} (P&L {pos.pnl_pct:.1f}%)')
+                    closed.append(order)
+        return closed
 
     def start(self):
         self.active = True

@@ -1,37 +1,44 @@
 #!/usr/bin/env python3
 """trading_orchestrator.py - Puente entre brokers, ejecucion algoritmica, TCA y paper trading."""
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
+import json
+import os
+import time
 from datetime import datetime
-import json, os, time
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 from config.settings import get_setting
+from logger import get_module_logger
+
+_log = get_module_logger('trading_orchestrator')
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'orchestrator'
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 try:
-    from broker_interface import GestorBrokers, LadoOrden, TipoOrden, BrokerPaper
+    from broker_interface import GestorBrokers, LadoOrden
     BROKER_AVAILABLE = True
 except Exception:
     BROKER_AVAILABLE = False
 
 try:
-    from ejecucion_algoritmica import ExecutionManager, VWAPExecutor, TWAPExecutor, ImplementationShortfallExecutor
+    from ejecucion_algoritmica import (
+        ExecutionManager,
+    )
     EJEC_AVAILABLE = True
 except Exception:
     EJEC_AVAILABLE = False
 
 try:
-    from transaction_cost_analysis import TCAAnalyzer, SimuladorTCA
+    from transaction_cost_analysis import TCAAnalyzer
     TCA_AVAILABLE = True
 except Exception:
     TCA_AVAILABLE = False
 
 try:
-    from paper_trading import PaperTradingManager, get_paper_trading_manager
+    from paper_trading import get_paper_trading_manager
     PAPER_AVAILABLE = True
 except Exception:
     PAPER_AVAILABLE = False
@@ -46,21 +53,21 @@ class TradingOrchestrator:
         self.paper = get_paper_trading_manager() if PAPER_AVAILABLE else None
         self.ordenes_ejecutadas = []
 
-    def iniciar_paper_trading(self, tickers: Optional[List[str]] = None):
+    def iniciar_paper_trading(self, tickers: list[str] | None = None):
         if not self.paper:
-            print('[Orch] paper_trading no disponible')
+            _log.warning("paper_trading no disponible")
             return
         self.paper.start()
         if tickers:
             prices = {t: 100.0 + hash(t) % 5000 / 100 for t in tickers}
             self.paper.broker.set_price_provider(lambda t, p=prices: p.get(t, 100.0))
-        print(f'[Orch] Paper trading iniciado con ${self.capital:,.0f}')
+        _log.info(f"Paper trading iniciado con ${self.capital:,.0f}")
 
     def detener_paper_trading(self):
         if self.paper:
             self.paper.stop()
 
-    def rl_position_sizing(self, senales_path: str = None) -> Dict[str, float]:
+    def rl_position_sizing(self, senales_path: str = None) -> dict[str, float]:
         """Carga pesos RL desde analisis_ia.json para position sizing."""
         if senales_path is None:
             senales_path = os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')
@@ -81,24 +88,87 @@ class TradingOrchestrator:
                 precios_rl = {t: d.get('precio_objetivo_30d', 100) for t, d in pbs.items() if isinstance(d, dict)}
                 pesos = rl.predecir_pesos(senales, precios_rl, self.capital)
         except Exception as e:
-            print(f'[RL Sizing] Error: {e}')
+            _log.error(f"RL Sizing: {e}")
         return pesos
+
+    def verificar_riesgo(self, ticker: str, shares: int, precio: float) -> bool:
+        """Verifica reglas de riesgo antes de ejecutar."""
+        config = get_setting('risk_management')
+        if not config:
+            return True
+        
+        report = self.reporte_general()
+        total_portafolio = report.get('broker', {}).get('valor_portafolio', self.capital)
+        
+        # 1. Verificar límite de exposición
+        valor_posicion = shares * precio
+        if (valor_posicion / max(total_portafolio, 1.0)) > config.get('max_exposure_per_ticker_pct', 0.10):
+            _log.error(f"Riesgo rechazado: Exposición excedida en {ticker}")
+            return False
+            
+        # 2. Verificar límite de pérdida diaria
+        pnl_diario = report.get('broker', {}).get('pnl', 0)
+        if pnl_diario < -config.get('daily_loss_limit_usd', 500):
+            if config.get('kill_switch_enabled', True):
+                _log.critical("¡KILL SWITCH ACTIVADO! Límite de pérdida diaria alcanzado.")
+                self.detener_paper_trading()
+                return False
+                
+        return True
+
+    def _precio_actual(self, ticker: str) -> float | None:
+        """
+        Precio real del ticker. Devuelve None si no hay ninguna fuente disponible:
+        preferimos no operar a inventar un precio.
+        """
+        precios_path = os.path.join(DATA_DIR, 'Datos', 'precios_reales.json')
+        if os.path.exists(precios_path):
+            try:
+                with open(precios_path) as f:
+                    precio = json.load(f).get('precios', {}).get(ticker, {}).get('price')
+                if precio:
+                    return float(precio)
+            except (OSError, ValueError, TypeError):
+                pass
+
+        try:
+            import yfinance as yf
+            hist = yf.Ticker(ticker).history(period='5d')
+            if hist is not None and not hist.empty:
+                return float(hist['Close'].iloc[-1])
+        except Exception as e:
+            _log.warning(f"No se pudo obtener precio de {ticker}: {str(e)[:80]}")
+
+        # Solo se usa el proveedor del broker si fue configurado explicitamente:
+        # su valor por defecto devuelve 100.0, que no es un precio real.
+        broker = getattr(self.paper, 'broker', None) if self.paper else None
+        if broker is not None and hasattr(broker, '_price_provider'):
+            try:
+                precio = float(broker._price_provider(ticker))
+                if precio > 0:
+                    return precio
+            except Exception:
+                pass
+        return None
 
     def ejecutar_senal(self, ticker: str, lado: str, shares: int = None, algo: str = 'VWAP', usar_broker: bool = True):
         resultados = {}
+        precio = self._precio_actual(ticker)
+        if precio is None:
+            return {"error": f"Sin precio de mercado para {ticker}; no se ejecuta la orden"}
+
         if shares is None:
-            pesos_rl = self.rl_position_sizing()
-            peso = pesos_rl.get(ticker, 0.05)
-            precio = 100.0
-            try:
-                ia = json.load(open(os.path.join(DATA_DIR, 'Datos', 'analisis_ia.json')))
-                pbs = ia.get('probabilidades', {})
-                if ticker in pbs and isinstance(pbs[ticker], dict):
-                    precio = pbs[ticker].get('precio_objetivo_30d', 100)
-            except:
-                pass
-            shares = max(1, int(self.capital * peso / precio))
-            print(f'[RL Sizing] {ticker}: peso={peso:.3f} shares={shares}')
+            pesos = self.rl_position_sizing()
+            peso = pesos.get(ticker, 0.0)
+            if not peso:
+                peso = get_setting('risk_management', default={}).get('peso_maximo_por_ticker', 0.10)
+            valor = min(self.capital * peso, self.capital)
+            shares = max(1, int(valor / precio))
+            _log.info(f"RL Sizing {ticker}: peso={peso:.3f} precio={precio:.2f} shares={shares}")
+
+        # --- APLICAR REGLAS DE RIESGO ---
+        if not self.verificar_riesgo(ticker, shares, precio):
+            return {"error": "Riesgo rechazado por política de seguridad"}
 
         if usar_broker and self.gestor:
             lado_enum = LadoOrden.COMPRA if lado.upper() == 'COMPRA' else LadoOrden.VENTA
@@ -153,7 +223,7 @@ class TradingOrchestrator:
         self._guardar_estado()
         return resultados
 
-    def reporte_general(self) -> Dict:
+    def reporte_general(self) -> dict:
         report = {
             'timestamp': datetime.now().isoformat(),
             'capital': self.capital,
@@ -169,13 +239,13 @@ class TradingOrchestrator:
                         'pnl': res.pnl_total,
                         'retorno': res.retorno_total
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                _log.warning(f"Broker summary failed: {e}")
         if self.tca:
             try:
                 report['tca'] = self.tca.resumen_estadistico()
-            except Exception:
-                pass
+            except Exception as e:
+                _log.warning(f"TCA summary failed: {e}")
         return report
 
     def _guardar_estado(self):
@@ -202,26 +272,23 @@ def get_orchestrator(capital: float = 100000) -> TradingOrchestrator:
 
 
 if __name__ == '__main__':
-    print('=== Trading Orchestrator ===')
+    _log.info("=== Trading Orchestrator ===")
     orch = get_orchestrator(100000)
     orch.iniciar_paper_trading(['NVDA', 'AAPL', 'MSFT'])
 
     for ticker in ['NVDA', 'AAPL']:
         r = orch.ejecutar_senal(ticker, 'COMPRA', 100)
-        print(f"\n{ticker}:")
-        for k, v in r.items():
-            print(f"  {k}: {v}")
+        _log.info(f"{ticker}: {r}")
 
     report = orch.reporte_general()
-    print(f"\n=== Reporte General ===")
-    print(f"Ordenes: {report['n_ordenes']}")
+    _log.info(f"Ordenes: {report['n_ordenes']}")
     if 'broker' in report:
-        print(f"Portafolio: ${report['broker']['valor_portafolio']:.2f}")
+        _log.info(f"Portafolio: ${report['broker']['valor_portafolio']:.2f}")
     if 'tca' in report:
-        print(f"TCA trades: {report['tca'].get('total_trades', 0)}")
+        _log.info(f"TCA trades: {report['tca'].get('total_trades', 0)}")
 
     tca_path = orch.generar_reporte_tca()
     if tca_path:
-        print(f"Reporte TCA: {tca_path}")
+        _log.info(f"Reporte TCA: {tca_path}")
 
     orch.detener_paper_trading()

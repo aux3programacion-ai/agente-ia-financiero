@@ -1,0 +1,49 @@
+2026-07-03 21:57:12 | ERROR    | agente_financiero.multi_agent_system | Agent macro error on NVDA: 'dict' object has no attribute 'upper'
+2026-07-03 22:18:25 | INFO     | agente_financiero.circuito_completo | === 01. Técnicos ===
+2026-07-03 22:18:33 | ERROR    | agente_financiero.circuito_completo | [ERROR] 01. Técnicos: name 'ttl' is not defined
+2026-07-03 22:18:33 | INFO     | agente_financiero.circuito_completo | === 02. Social ===
+2026-07-03 22:19:27 | INFO     | agente_financiero.circuito_completo | [OK] 02. Social completado en 53.8s
+2026-07-03 22:19:27 | INFO     | agente_financiero.circuito_completo | === 03. Analyst Ratings ===
+2026-07-03 22:19:55 | INFO     | agente_financiero.circuito_completo | [WARN] 03. Analyst Ratings completado en 28.0s
+2026-07-03 22:19:55 | INFO     | agente_financiero.circuito_completo | === 04. Riesgo ===
+2026-07-03 22:20:00 | INFO     | agente_financiero.circuito_completo | [OK] 04. Riesgo completado en 5.2s
+2026-07-03 22:20:00 | INFO     | agente_financiero.circuito_completo | === 05. Auto Features ===
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | [WARN] 05. Auto Features completado en 11.9s
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | === 06. Feature Discovery ===
+2026-07-03 22:20:12 | ERROR    | agente_financiero.circuito_completo | [ERROR] 06. Feature Discovery: module 'ast' has no attribute 'Exec'
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | === 07. Aprendizaje ===
+2026-07-03 22:20:12 | ERROR    | agente_financiero.circuito_completo | [ERROR] 07. Aprendizaje: name 'np' is not defined
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | === 08. Skills ===
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | [WARN] 08. Skills completado en 0.0s
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | === 09. Auto Evolution ===
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | [WARN] 09. Auto Evolution completado en 0.0s
+2026-07-03 22:20:12 | INFO     | agente_financiero.circuito_completo | === 10. Calibración Real ===
+2026-07-03 22:20:30 | ERROR    | agente_financiero.circuito_completo | [ERROR] 10. Calibración Real: 'NoneType' object has no attribute 'get'
+2026-07-03 22:20:30 | INFO     | agente_financiero.circuito_completo | === 11. Walk-Forward ===
+2026-07-03 22:20:30 | ERROR    | agente_financiero.circuito_completo | [ERROR] 11. Walk-Forward: 'NoneType' object has no attribute 'get'
+2026-07-03 22:20:30 | INFO     | agente_financiero.circuito_completo | === 12. Online Learning ===
+2026-07-03 22:20:36 | ERROR    | agente_financiero.circuito_completo | [ERROR] 12. Online Learning: unhashable type: 'dict'
+2026-07-03 22:20:36 | INFO     | agente_financiero.circuito_completo | === 13. Backtest ===
+2026-07-03 22:20:36 | ERROR    | agente_financiero.circuito_completo | [ERROR] 13. Backtest: No module named 'backtest_engine'
+2026-07-03 22:20:36 | INFO     | agente_financiero.circuito_completo | === 14. Stress Test ===
+2026-07-03 22:20:36 | ERROR    | agente_financiero.circuito_completo | [ERROR] 14. Stress Test: 'NoneType' object has no attribute 'get'
+2026-07-03 22:20:36 | INFO     | agente_financiero.circuito_completo | === 15. Ablation Studio ===
+2026-07-03 22:20:36 | ERROR    | agente_financiero.circuito_completo | [ERROR] 15. Ablation Studio: unhashable type: 'dict'
+2026-07-03 22:20:36 | INFO     | agente_financiero.circuito_completo | === 16. SHAP Explanations ===
+2026-07-03 22:20:53 | ERROR    | agente_financiero.circuito_completo | [ERROR] 16. SHAP Explanations: unhashable type: 'dict'
+2026-07-03 22:20:53 | INFO     | agente_financiero.circuito_completo | === 17. Regime Models ===
+2026-07-03 22:20:53 | ERROR    | agente_financiero.circuito_completo | [ERROR] 17. Regime Models: 'NoneType' object has no attribute 'get'
+2026-07-03 22:20:53 | INFO     | agente_financiero.circuito_completo | ========================================
+2026-07-03 22:20:53 | INFO     | agente_financiero.circuito_completo | PIPELINE COMPLETO - Total: 148.1s
+2026-07-03 22:20:53 | INFO     | agente_financiero.circuito_completo | Steps OK: 2 WARN: 4 ERROR: 11
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 8.71, 'error': "name 'ttl' is not defined", 'timestamp': '2026-07-04T04:18:33.796334Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.01, 'error': "module 'ast' has no attribute 'Exec'", 'timestamp': '2026-07-04T04:20:12.797176Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.08, 'error': "name 'np' is not defined", 'timestamp': '2026-07-04T04:20:12.876177Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 17.95, 'error': "'NoneType' object has no attribute 'get'", 'timestamp': '2026-07-04T04:20:30.853346Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.02, 'error': "'NoneType' object has no attribute 'get'", 'timestamp': '2026-07-04T04:20:30.871867Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 5.53, 'error': "unhashable type: 'dict'", 'timestamp': '2026-07-04T04:20:36.397521Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.0, 'error': "No module named 'backtest_engine'", 'timestamp': '2026-07-04T04:20:36.399028Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.01, 'error': "'NoneType' object has no attribute 'get'", 'timestamp': '2026-07-04T04:20:36.413638Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.02, 'error': "unhashable type: 'dict'", 'timestamp': '2026-07-04T04:20:36.432422Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 16.73, 'error': "unhashable type: 'dict'", 'timestamp': '2026-07-04T04:20:53.165869Z'}
+2026-07-03 22:20:53 | WARNING  | agente_financiero.circuito_completo |   ! {'status': 'ERROR', 'elapsed_s': 0.01, 'error': "'NoneType' object has no attribute 'get'", 'timestamp': '2026-07-04T04:20:53.174285Z'}

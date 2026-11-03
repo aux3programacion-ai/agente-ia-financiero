@@ -4,8 +4,13 @@ aprendizaje.py - Sistema de aprendizaje autonomo multi-factor.
 Evaluacion temporal ponderada, calibracion por sector/rango/modelo,
 decaimiento exponencial, y retroalimentacion estructurada al AI.
 """
-import json, os, time, math
+import json
+import math
+import os
+import time
 from datetime import datetime, timezone
+
+import numpy as np
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 HIST_PATH = os.path.join(DATA_DIR, 'Datos', 'predicciones_hist.json')
@@ -69,7 +74,7 @@ if os.path.exists(PRECIOS_PATH):
 if os.path.exists(NEWS_PATH):
     try:
         nd = json.load(open(NEWS_PATH)).get('por_ticker', {})
-    except:
+    except Exception:
         nd = {}
 else:
     nd = {}
@@ -77,6 +82,18 @@ else:
 # --- Evaluar predicciones pendientes ---
 hoy = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 evaluados = 0
+
+# Detección de Concept Drift
+precision_history = [p.get('acertada') for t in TICKERS for p in hist[t]['predicciones'] if p.get('acertada') is not None]
+if len(precision_history) > 100:
+    drift_threshold = 0.05
+    short_term_acc = np.mean(precision_history[-20:])
+    long_term_acc = np.mean(precision_history[-100:])
+    
+    if long_term_acc - short_term_acc > drift_threshold:
+        print(f'[!] ALERT: Concept Drift detectado. Acc(20d)={short_term_acc:.2%}, Acc(100d)={long_term_acc:.2%}')
+        # Aquí se podría disparar una re-calibración automática
+        
 for t in TICKERS:
     preds = hist[t]['predicciones']
     for p in preds:
@@ -101,7 +118,7 @@ for t in TICKERS:
         if p.get('precio_objetivo_30d') and p.get('precio_real') and not p.get('target_verificado'):
             try:
                 dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)).days
-            except:
+            except Exception:
                 dias = 0
             if dias >= 30 and p['precio_real'] and p['precio_objetivo_30d'] > 0:
                 real = p['precio_real']
@@ -128,10 +145,10 @@ if not precios:
     try:
         import yfinance as yf
         for t in TICKERS:
-            h = yf.Ticker(t).history(period='6mo', progress=False)
+            h = yf.Ticker(t).history(period='6mo')
             if not h.empty:
                 precios[t] = {'price': float(h['Close'].iloc[-1]), 'change': 0}
-    except:
+    except Exception:
         pass
 for t in TICKERS:
     preds = hist[t]['predicciones']
@@ -139,13 +156,13 @@ for t in TICKERS:
         if p.get('resultado_30d') is None:
             try:
                 fecha_pred = datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)
-            except:
+            except Exception:
                 continue
             dias_transcurridos = (datetime.now(timezone.utc) - fecha_pred).days
             if 20 <= dias_transcurridos <= 40:
                 try:
                     import yfinance as yf
-                    h = yf.Ticker(t).history(start=fecha_pred.strftime('%Y-%m-%d'), end='now', progress=False)
+                    h = yf.Ticker(t).history(start=fecha_pred.strftime('%Y-%m-%d'), end='now')
                     if len(h) >= 15:
                         precio_ini = float(h['Close'].iloc[0])
                         precio_fin = float(h['Close'].iloc[-1])
@@ -158,7 +175,7 @@ for t in TICKERS:
                         if p['acertada_30d']:
                             aciertos_30d += 1
                         evaluados_30d += 1
-                except:
+                except Exception:
                     pass
 precision_30d = round(aciertos_30d / evaluados_30d, 4) if evaluados_30d > 0 else None
 if evaluados_30d > 0:
@@ -173,7 +190,7 @@ for t in TICKERS:
         if p.get('acertada') is not None:
             try:
                 dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)).days
-            except:
+            except Exception:
                 dias = 30
             w = peso_temporal(dias)
             peso_total += w
@@ -203,7 +220,7 @@ for t in TICKERS:
         if p.get('acertada') is not None:
             try:
                 dias = (datetime.now(timezone.utc) - datetime.strptime(p['fecha'], '%Y-%m-%d').replace(tzinfo=timezone.utc)).days
-            except:
+            except Exception:
                 dias = 30
             w = peso_temporal(dias)
             peso_total_global += w

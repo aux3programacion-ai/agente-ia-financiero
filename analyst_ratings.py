@@ -1,4 +1,8 @@
-import json, os, sys, time, re, urllib.request, random
+import json
+import os
+import re
+import time
+import urllib.request
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
@@ -13,9 +17,9 @@ def fetch_tipranks(ticker):
         with urllib.request.urlopen(req, timeout=10) as r:
             html = r.read().decode('utf-8', errors='replace')
         # Extract consensus rating
-        buy_match = re.search(r'(\d+)\s*Buy', html, re.I)
-        hold_match = re.search(r'(\d+)\s*Hold', html, re.I)
-        sell_match = re.search(r'(\d+)\s*Sell', html, re.I)
+        buy_match = re.search(r'(\d+)\s*Buy', html, re.IGNORECASE)
+        hold_match = re.search(r'(\d+)\s*Hold', html, re.IGNORECASE)
+        sell_match = re.search(r'(\d+)\s*Sell', html, re.IGNORECASE)
         buys = int(buy_match.group(1)) if buy_match else 0
         holds = int(hold_match.group(1)) if hold_match else 0
         sells = int(sell_match.group(1)) if sell_match else 0
@@ -27,25 +31,25 @@ def fetch_tipranks(ticker):
                 'consensus_score': round(consensus_score, 1),
                 'consensus': 'buy' if consensus_score > 65 else 'hold' if consensus_score > 35 else 'sell'
             }
-    except:
+    except Exception:
         pass
     return None
 
 def fetch_briefing(ticker):
     """Fallback: scrape Briefing.com upgrades/downgrades."""
     try:
-        url = f'https://www.briefing.com/calendar/upgrades-downgrades'
+        url = 'https://www.briefing.com/calendar/upgrades-downgrades'
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10) as r:
             html = r.read().decode('utf-8', errors='replace')
         # Briefing embeds ticker in upgrade/downgrade lines
-        pattern = re.compile(rf'{ticker}.*?(upgrad|downgrad|initiat|reiterat)', re.I)
+        pattern = re.compile(rf'{ticker}.*?(upgrad|downgrad|initiat|reiterat)', re.IGNORECASE)
         matches = pattern.findall(html)
         if matches:
             upgrades = sum(1 for m in matches if 'upgrad' in m.lower())
             downgrades = sum(1 for m in matches if 'downgrad' in m.lower())
             return {'upgrades': upgrades, 'downgrades': downgrades}
-    except:
+    except Exception:
         pass
     return None
 
@@ -68,7 +72,7 @@ def main():
                     print(f'briefing: {brief}')
                 else:
                     results[t] = {'consensus': 'neutral', 'consensus_score': 50, 'note': 'No data'}
-                    print(f'[no data]')
+                    print('[no data]')
             time.sleep(0.3)
         except Exception as e:
             print(f'[!] {e}')

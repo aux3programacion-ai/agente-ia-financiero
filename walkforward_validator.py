@@ -6,13 +6,14 @@ Genera métricas out-of-sample y detecta overfitting.
 """
 import json
 import os
-import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple, Callable
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 from config.settings import get_setting
 from model_store import get_model_store
@@ -45,7 +46,7 @@ def generate_walk_forward_splits(
     test_size_dias: int = TEST_SIZE_DIAS,
     gap_dias: int = GAP_DIAS,
     min_train_size: int = MIN_TRAIN_SIZE
-) -> List[WFSplit]:
+) -> list[WFSplit]:
     """
     Genera splits expansion window con embargo (gap).
     
@@ -90,10 +91,10 @@ def walk_forward_train_test(
     gap_dias: int = GAP_DIAS,
     min_train_size: int = MIN_TRAIN_SIZE,
     retrain_each_split: bool = True,
-    model_params: Optional[Dict] = None,
+    model_params: dict | None = None,
     model_name: str = 'xgboost',
     regime: str = 'global'
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Walk-forward validation completa.
     
@@ -145,8 +146,13 @@ def walk_forward_train_test(
         y_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else y_pred
         
         from sklearn.metrics import (
-            accuracy_score, precision_score, recall_score, f1_score,
-            roc_auc_score, log_loss, brier_score_loss
+            accuracy_score,
+            brier_score_loss,
+            f1_score,
+            log_loss,
+            precision_score,
+            recall_score,
+            roc_auc_score,
         )
         
         y_test_bin = (y_test > 0).astype(int)
@@ -201,7 +207,7 @@ def walk_forward_train_test(
         return {'error': 'No splits con datos suficientes', 'splits': 0}
     
     # Métricas agregadas OOS
-    from sklearn.metrics import accuracy_score, roc_auc_score, brier_score_loss
+    from sklearn.metrics import accuracy_score, brier_score_loss, roc_auc_score
     oos_accuracy = float(accuracy_score(all_oos_targets, [1 if p > 0.5 else 0 for p in all_oos_predictions]))
     oos_auc = float(roc_auc_score(all_oos_targets, all_oos_predictions))
     oos_brier = float(brier_score_loss(all_oos_targets, all_oos_predictions))
@@ -243,7 +249,7 @@ def walk_forward_train_test(
     return summary
 
 
-def _detect_overfitting(results: List[Dict]) -> float:
+def _detect_overfitting(results: list[dict]) -> float:
     """
     Detecta overfitting: diferencia entre train y test accuracy.
     >0.15 = overfitting severo, >0.08 = moderado.
@@ -264,9 +270,9 @@ def cross_validate_model_predictive_power(
     features_df: pd.DataFrame,
     target_series: pd.Series,
     model_name: str = 'xgboost',
-    regimes_series: Optional[pd.Series] = None,
+    regimes_series: pd.Series | None = None,
     **kwargs
-) -> Dict:
+) -> dict:
     """
     Walk-forward validation por régimen de mercado.
     Si regimes_series se provee, corre walk-forward separado por régimen.
@@ -311,7 +317,7 @@ def cross_validate_model_predictive_power(
 def load_walkforward_results(
     model_name: str = 'xgboost',
     regime: str = 'global'
-) -> Optional[Dict]:
+) -> dict | None:
     path = OUTPUT_DIR / f'walkforward_{model_name}_{regime}.json'
     if path.exists():
         with open(path) as f:

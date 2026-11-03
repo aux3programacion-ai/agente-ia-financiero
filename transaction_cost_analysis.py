@@ -4,15 +4,13 @@ transaction_cost_analysis.py - Analisis de costos de transaccion (TCA).
 Slippage real vs esperado, market impact, timing cost,
 oportunity cost, y reportes post-trade.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field, asdict
+import os
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-import json, os
 from pathlib import Path
 
-from config.settings import get_setting
+import numpy as np
+import pandas as pd
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'tca'
@@ -109,8 +107,8 @@ class CalculatorTCA:
 class TCAAnalyzer:
     def __init__(self):
         self.calculator = CalculatorTCA()
-        self.trades: List[TradeRecord] = []
-        self.resultados: List[TCAResult] = []
+        self.trades: list[TradeRecord] = []
+        self.resultados: list[TCAResult] = []
 
     def analizar_trade(self, trade: TradeRecord) -> TCAResult:
         costos = self.calculator.calcular_todo(trade)
@@ -143,7 +141,7 @@ class TCAAnalyzer:
                 pass
         return result
 
-    def analizar_lote(self, trades: List[TradeRecord]) -> List[TCAResult]:
+    def analizar_lote(self, trades: list[TradeRecord]) -> list[TCAResult]:
         return [self.analizar_trade(t) for t in trades]
 
     def crear_trade_desde_orden(self, order_id: str, ticker: str, lado: str,
@@ -163,7 +161,7 @@ class TCAAnalyzer:
             volumen_diario=volumen_diario, volatilidad=volatilidad,
             spread_bps=spread_bps, participacion=participacion)
 
-    def resumen_estadistico(self) -> Dict:
+    def resumen_estadistico(self) -> dict:
         if not self.resultados:
             return {}
         df = self._a_dataframe()
@@ -265,7 +263,7 @@ class SimuladorTCA:
             spread_bps=float(self.rng.exponential(10)),
             participacion=float(self.rng.uniform(0.001, 0.05)))
 
-    def simular_lote(self, tickers: List[str], n_por_ticker: int = 10) -> List[TradeRecord]:
+    def simular_lote(self, tickers: list[str], n_por_ticker: int = 10) -> list[TradeRecord]:
         from uuid import uuid4
         trades = []
         for ticker in tickers:

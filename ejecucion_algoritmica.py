@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """ejecucion_algoritmica.py - Ejecucion algoritmica VWAP/TWAP/Implementation Shortfall."""
+import os
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-import json, os
-from pathlib import Path
-from config.settings import get_setting
+
 DATA_DIR = os.environ.get("GITHUB_WORKSPACE", ".")
 OUTPUT_DIR = Path(DATA_DIR) / "Datos" / "ejecucion"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -15,9 +15,9 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 @dataclass
 class ExecutionOrder:
     ticker: str; side: str; total_shares: int; executed_shares: int
-    price_limit: Optional[float]; start_time: datetime; algo: str
-    status: str = 'pending'; fill_price: Optional[float] = None
-    slippage_bps: Optional[float] = None
+    price_limit: float | None; start_time: datetime; algo: str
+    status: str = 'pending'; fill_price: float | None = None
+    slippage_bps: float | None = None
 
 class VWAPExecutor:
     def __init__(self, target_pct=0.1, min_chunk=100):
@@ -99,7 +99,7 @@ class ExecutionManager:
             'VWAP': VWAPExecutor(), 'TWAP': TWAPExecutor(),
             'ImplementationShortfall': ImplementationShortfallExecutor()
         }
-        self.orders: List[ExecutionOrder] = []
+        self.orders: list[ExecutionOrder] = []
 
     def execute(self, algo: str, ticker: str, side: str, shares: int,
                 price_data: pd.DataFrame) -> ExecutionOrder:

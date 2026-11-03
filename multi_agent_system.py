@@ -6,16 +6,16 @@ that debate and produce ensemble predictions with dynamic weighting.
 """
 import json
 import os
-import time
-import re
-import numpy as np
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional, Tuple, Callable
 from collections import defaultdict
-from dataclasses import dataclass, asdict
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 
-from config.settings import get_setting
+from data_validator import AnalisisTecnicoSchema
+from logger import get_module_logger
+
+_log = get_module_logger('multi_agent_system')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'multi_agent'
@@ -30,7 +30,7 @@ class AgentVote:
     probability: float
     confidence: float
     reasoning: str
-    features_used: List[str]
+    features_used: list[str]
     regime: str
     timestamp: str = ''
     
@@ -42,7 +42,7 @@ class AgentVote:
 @dataclass
 class DebateRound:
     ticker: str
-    votes: List[AgentVote]
+    votes: list[AgentVote]
     consensus_direction: str
     consensus_probability: float
     consensus_confidence: float
@@ -63,8 +63,14 @@ class BaseAgent:
         self.accuracy_by_regime = defaultdict(lambda: {'total': 0, 'correct': 0})
         self.confidence_calibration = []
     
-    def analyze(self, ticker: str, context: Dict) -> AgentVote:
+    def analyze(self, ticker: str, context: dict) -> AgentVote:
         raise NotImplementedError
+        
+    def _get_regime(self, context: dict) -> str:
+        regime = context.get('regimen', 'LATERAL')
+        if isinstance(regime, dict):
+            return regime.get('regimen', 'LATERAL')
+        return str(regime)
     
     def update_performance(self, vote: AgentVote, actual_direction: str):
         was_correct = vote.direction == actual_direction
@@ -91,7 +97,7 @@ class TechnicalAgent(BaseAgent):
     name = 'tecnico'
     description = 'Chartist: RSI, MACD, volumen, soporte/resistencia, patrones de velas'
     
-    def analyze(self, ticker: str, context: Dict) -> AgentVote:
+    def analyze(self, ticker: str, context: dict) -> AgentVote:
         tec = context.get('tecnico', {})
         if not tec or tec.get('error'):
             return AgentVote(self.name, ticker, 'neutral', 50, 0, 'Sin datos técnicos', [], context.get('regimen', ''))
@@ -157,14 +163,14 @@ class TechnicalAgent(BaseAgent):
         
         return AgentVote(self.name, ticker, direction, prob, conf, 
                         ' | '.join(signals), ['rsi', 'macd', 'vol_ratio', 'tendencia'],
-                        context.get('regimen', ''))
+                        self._get_regime(context))
 
 
 class FundamentalAgent(BaseAgent):
     name = 'fundamental'
     description = 'Valor intrínseco: earnings, P/E, crecimiento, márgenes, analyst ratings'
     
-    def analyze(self, ticker: str, context: Dict) -> AgentVote:
+    def analyze(self, ticker: str, context: dict) -> AgentVote:
         ratings = context.get('analyst_ratings', {})
         earnings = context.get('earnings', {})
         
@@ -197,15 +203,16 @@ class FundamentalAgent(BaseAgent):
         
         return AgentVote(self.name, ticker, direction, prob, conf,
                         ' | '.join(signals) if signals else 'Sin datos fundamentales',
-                        ['consensus', 'earnings_sentiment'], context.get('regimen', ''))
+                        ['consensus', 'earnings_sentiment'], self._get_regime(context))
 
 
 class MacroAgent(BaseAgent):
     name = 'macro'
     description = 'Contexto macro: tasas, yield curve, VIX, DXY, régimen de mercado'
     
-    def analyze(self, ticker: str, context: Dict) -> AgentVote:
-        regime = context.get('regimen', 'LATERAL')
+    def analyze(self, ticker: str, context: dict) -> AgentVote:
+        regime_data = context.get('regimen', {})
+        regime = regime_data.get('regimen', 'LATERAL') if isinstance(regime_data, dict) else regime_data
         macro = context.get('macro', {})
         riesgo = context.get('riesgo', {})
         
@@ -258,7 +265,7 @@ class SentimentAgent(BaseAgent):
     name = 'sentimiento'
     description = 'Análisis de sentimiento: noticias, social media, insider trading'
     
-    def analyze(self, ticker: str, context: Dict) -> AgentVote:
+    def analyze(self, ticker: str, context: dict) -> AgentVote:
         social = context.get('social', {})
         alt_data = context.get('alternative_data', {})
         
@@ -305,14 +312,13 @@ class SentimentAgent(BaseAgent):
         
         return AgentVote(self.name, ticker, direction, prob, conf,
                         ' | '.join(signals) if signals else 'Sin datos de sentimiento',
-                        ['social_score', 'insider_net', 'search_trend'], context.get('regimen', ''))
-
+                        ['social_score', 'insider_net', 'search_trend'], self._get_regime(context))
 
 class RiskAgent(BaseAgent):
     name = 'riesgo'
     description = 'Risk Manager: VaR, volatilidad, drawdown, correlación, beta'
     
-    def analyze(self, ticker: str, context: Dict) -> AgentVote:
+    def analyze(self, ticker: str, context: dict) -> AgentVote:
         riesgo = context.get('riesgo', {})
         tickers_data = riesgo.get('tickers', {}) if isinstance(riesgo, dict) else {}
         ticker_risk = tickers_data.get(ticker, {}) if isinstance(tickers_data, dict) else {}
@@ -364,7 +370,7 @@ class RiskAgent(BaseAgent):
         
         return AgentVote(self.name, ticker, direction, prob, conf,
                         ' | '.join(signals) if signals else 'Riesgo normal',
-                        ['var_95', 'beta', 'vol_anual'], context.get('regimen', ''))
+                        ['var_95', 'beta', 'vol_anual'], self._get_regime(context))
 
 
 class MetaReviewer:
@@ -375,8 +381,9 @@ class MetaReviewer:
         self.agent_weights = {}
         self.consensus_history = []
     
-    def evaluate_and_weight(self, votes: List[AgentVote], context: Dict) -> DebateRound:
-        regime = context.get('regimen', 'INCIERTO')
+    def evaluate_and_weight(self, votes: list[AgentVote], context: dict) -> DebateRound:
+        regime_data = context.get('regimen', 'INCIERTO')
+        regime = regime_data.get('regimen', 'INCIERTO') if isinstance(regime_data, dict) else regime_data
         weighted_probs = []
         weighted_confs = []
         total_weight = 0
@@ -385,6 +392,7 @@ class MetaReviewer:
             agent_name = vote.agent_name
             base_weight = self.agent_weights.get(agent_name, {}).get('weight', 1.0)
             
+            # Here regime is a string, so this should be fine.
             regime_accuracy = self.agent_weights.get(agent_name, {}).get(regime, 0.5)
             regime_factor = 0.5 + regime_accuracy
             dynamic_weight = base_weight * regime_factor
@@ -467,13 +475,13 @@ class MetaReviewer:
             try:
                 state = json.loads(path.read_text())
                 self.agent_weights = state.get('agent_weights', {})
-            except:
-                pass
+            except Exception as e:
+                _log.warning(f"Failed to load meta_reviewer state: {e}")
 
 
 class MultiAgentSystem:
     def __init__(self):
-        self.agents: Dict[str, BaseAgent] = {
+        self.agents: dict[str, BaseAgent] = {
             'tecnico': TechnicalAgent(),
             'fundamental': FundamentalAgent(),
             'macro': MacroAgent(),
@@ -489,7 +497,8 @@ class MultiAgentSystem:
         if self.debate_history_path.exists():
             try:
                 self.debate_history = json.loads(self.debate_history_path.read_text())
-            except:
+            except Exception as e:
+                _log.error(f"Error cargando historia: {e}")
                 self.debate_history = {'rounds': []}
         else:
             self.debate_history = {'rounds': []}
@@ -498,14 +507,23 @@ class MultiAgentSystem:
         self.debate_history['rounds'] = self.debate_history['rounds'][-1000:]
         self.debate_history_path.write_text(json.dumps(self.debate_history, indent=2))
     
-    def analyze_ticker(self, ticker: str, context: Dict) -> DebateRound:
+    def analyze_ticker(self, ticker: str, context: dict) -> DebateRound:
+
         votes = []
-        for name, agent in self.agents.items():
+        
+        def run_agent(name, agent):
             try:
-                vote = agent.analyze(ticker, context)
-                votes.append(vote)
+                return agent.analyze(ticker, context)
             except Exception as e:
-                print(f'[MAS] Error {name} en {ticker}: {e}')
+                _log.error(f"Agent {name} error on {ticker}: {e}")
+                return None
+
+        with ThreadPoolExecutor() as executor:
+            future_to_agent = {executor.submit(run_agent, name, agent): name for name, agent in self.agents.items()}
+            for future in future_to_agent:
+                result = future.result()
+                if result:
+                    votes.append(result)
         
         debate = self.meta_reviewer.evaluate_and_weight(votes, context)
         
@@ -515,7 +533,7 @@ class MultiAgentSystem:
         
         return debate
     
-    def analyze_universe(self, tickers: List[str], context: Dict) -> Dict[str, DebateRound]:
+    def analyze_universe(self, tickers: list[str], context: dict) -> dict[str, DebateRound]:
         results = {}
         for ticker in tickers:
             ticker_ctx = {**context}
@@ -526,7 +544,7 @@ class MultiAgentSystem:
             results[ticker] = self.analyze_ticker(ticker, ticker_ctx)
         return results
     
-    def update_from_outcomes(self, outcomes: Dict[str, str]):
+    def update_from_outcomes(self, outcomes: dict[str, str]):
         """Update agent performance from actual outcomes. outcomes = {ticker: 'up'/'down'}"""
         for round_data in self.debate_history['rounds']:
             ticker = round_data.get('ticker', '')
@@ -553,7 +571,7 @@ class MultiAgentSystem:
                 }
         self._save_history()
     
-    def get_consensus_summary(self, ticker: str) -> Dict:
+    def get_consensus_summary(self, ticker: str) -> dict:
         rounds = [r for r in self.debate_history['rounds'] if r.get('ticker') == ticker]
         if not rounds:
             return {}
@@ -570,7 +588,7 @@ class MultiAgentSystem:
                             for v in latest['votes']]
         }
     
-    def agent_report(self) -> Dict:
+    def agent_report(self) -> dict:
         report = {}
         for name, agent in self.agents.items():
             report[name] = {
@@ -593,7 +611,7 @@ def get_multi_agent_system() -> MultiAgentSystem:
     return _mas
 
 
-def analyze_with_agents(ticker: str, context: Dict = None) -> Dict:
+def analyze_with_agents(ticker: str, context: dict = None) -> dict:
     mas = get_multi_agent_system()
     if context is None:
         context = _load_default_context()
@@ -601,8 +619,7 @@ def analyze_with_agents(ticker: str, context: Dict = None) -> Dict:
     return mas.get_consensus_summary(ticker)
 
 
-def _load_default_context() -> Dict:
-    import glob
+def _load_default_context() -> dict:
     context = {}
     for fname, key in [
         ('analisis_tecnico.json', 'tecnico'),
@@ -615,9 +632,17 @@ def _load_default_context() -> Dict:
         path = Path(DATA_DIR) / 'Datos' / fname
         if path.exists():
             try:
-                context[key] = json.loads(path.read_text())
-            except:
-                pass
+                data = json.loads(path.read_text())
+                if key == 'tecnico':
+                    try:
+                        validated_data = AnalisisTecnicoSchema(**data)
+                        context[key] = validated_data.model_dump()
+                    except Exception as e:
+                        _log.error(f"Error validando {fname}: {e}")
+                else:
+                    context[key] = data
+            except Exception as e:
+                _log.error(f"Error cargando {fname}: {e}")
     return context
 
 
@@ -634,6 +659,6 @@ if __name__ == '__main__':
         for v in summary.get('votes_detail', []):
             print(f'  {v["agent"]:12s}: {v["direction"]:8s} prob={v["prob"]:.0f}% conf={v["conf"]:.0f}%')
     
-    print(f'\nAgent performance:')
+    print('\nAgent performance:')
     for name, data in mas.agent_report().items():
         print(f'  {name}: acc={data["accuracy"]:.1%} ({data["total_predictions"]} preds)')

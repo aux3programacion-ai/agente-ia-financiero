@@ -5,11 +5,10 @@ Permite inferencia rápida preservando precisión del ensemble.
 """
 import json
 import os
-import time
-import numpy as np
-import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any
+
+import numpy as np
 
 from config.settings import get_setting
 from model_store import get_model_store
@@ -25,7 +24,7 @@ XGB_PARAMS = get_setting('ml.xgboost', {})
 
 
 class KnowledgeDistiller:
-    def __init__(self, teacher_models: List[Any] = None):
+    def __init__(self, teacher_models: list[Any] = None):
         self.teacher_models = teacher_models or []
         self.student_model = None
         self.distillation_loss = None
@@ -74,14 +73,14 @@ class KnowledgeDistiller:
     def distill(
         self,
         X: np.ndarray,
-        y_hard: Optional[np.ndarray] = None,
+        y_hard: np.ndarray | None = None,
         temperature: float = 2.0,
         alpha: float = 0.7,
-        student_params: Optional[Dict] = None,
+        student_params: dict | None = None,
         save_model: bool = True,
         model_name: str = 'student_xgboost',
         regime: str = 'global'
-    ) -> Dict:
+    ) -> dict:
         """
         Entrena student model usando soft targets del teacher.
         
@@ -114,8 +113,8 @@ class KnowledgeDistiller:
         if soft_targets is None:
             return {'error': 'No hay teachers para generar soft targets'}
         
-        from sklearn.model_selection import train_test_split
         from sklearn.metrics import accuracy_score, log_loss
+        from sklearn.model_selection import train_test_split
         
         X_train, X_val, y_soft_train, y_soft_val = train_test_split(
             X, soft_targets, test_size=0.2, random_state=42
@@ -126,8 +125,8 @@ class KnowledgeDistiller:
                 X, y_hard, test_size=0.2, random_state=42
             )
         
-        from xgboost import XGBClassifier
         from sklearn.ensemble import RandomForestClassifier
+        from xgboost import XGBClassifier
         
         if 'small' in STUDENT_MODEL.lower():
             student = XGBClassifier(**student_params, verbosity=0)
@@ -191,11 +190,11 @@ class KnowledgeDistiller:
 
     def compress_ensemble(
         self,
-        models: List[Tuple[str, Any]],
+        models: list[tuple[str, Any]],
         X: np.ndarray,
-        y: Optional[np.ndarray] = None,
+        y: np.ndarray | None = None,
         max_teachers: int = 3
-    ) -> Dict:
+    ) -> dict:
         """
         Comprime un ensemble grande seleccionando los mejores teachers.
         """
@@ -235,13 +234,13 @@ def distill_xgboost_ensemble(
     X_val: np.ndarray,
     y_val: np.ndarray,
     n_teachers: int = 5
-) -> Dict:
+) -> dict:
     """
     Entrena ensemble de teachers XGBoost con diferentes semillas,
     luego destila a un student pequeño.
     """
-    from xgboost import XGBClassifier
     from sklearn.metrics import accuracy_score
+    from xgboost import XGBClassifier
     
     teachers = []
     for i in range(n_teachers):

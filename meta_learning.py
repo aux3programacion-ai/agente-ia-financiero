@@ -4,25 +4,23 @@ meta_learning.py - Meta-learning / Few-shot adaptation.
 MAML (Model-Agnostic Meta-Learning) para adaptación ultrarrápida
 a nuevos regímenes de mercado con <10 días de datos.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple, Callable
-from dataclasses import dataclass, field
-from datetime import datetime
 import json
 import os
+from datetime import datetime
 from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 try:
     import torch
-    import torch.nn as nn
-    import torch.optim as optim
+    from torch import nn, optim
     from torch.nn import functional as F
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'meta_learning'
@@ -94,7 +92,7 @@ class MAMLLearner:
             p.data = p.data - self.inner_lr * g
         return cloned
 
-    def meta_train_step(self, tasks: List[Tuple]) -> float:
+    def meta_train_step(self, tasks: list[tuple]) -> float:
         """Un paso de meta-entrenamiento en un batch de tareas.
 
         Cada tarea: (x_support, y_support, x_query, y_query)
@@ -157,19 +155,19 @@ class MAMLLearner:
 class FewShotRegimeAdapter:
     """Adaptación few-shot a nuevos regímenes de mercado."""
 
-    def __init__(self, feature_cols: List[str] = None):
+    def __init__(self, feature_cols: list[str] = None):
         self.feature_cols = feature_cols or [
             'rsi_14', 'macd_hist', 'vol_ratio', 'volatility_20d',
             'sma50_dist_pct', 'atr_pct', 'returns_5d', 'returns_20d'
         ]
-        self.maml: Optional[MAMLLearner] = None
+        self.maml: MAMLLearner | None = None
         self.adapted_model = None
-        self.regime_history: List[Dict] = []
-        self.adaptation_log: List[Dict] = []
+        self.regime_history: list[dict] = []
+        self.adaptation_log: list[dict] = []
 
     def prepare_tasks(self, data: pd.DataFrame, regime_col: str = 'regime',
                       target_col: str = 'forward_return',
-                      n_support: int = 20) -> List:
+                      n_support: int = 20) -> list:
         """Divide datos históricos en tareas por régimen para meta-entrenamiento."""
         feature_data = data[self.feature_cols].values
         target_data = (data[target_col] > 0).astype(float).values
@@ -202,7 +200,7 @@ class FewShotRegimeAdapter:
 
     def meta_train(self, data: pd.DataFrame, regime_col: str = 'regime',
                    target_col: str = 'forward_return',
-                   n_epochs: int = 100, n_support: int = 20) -> Dict:
+                   n_epochs: int = 100, n_support: int = 20) -> dict:
         """Entrena el meta-modelo en todos los regímenes históricos."""
         n_features = len(self.feature_cols)
         self.maml = MAMLLearner(input_dim=n_features)
@@ -225,7 +223,7 @@ class FewShotRegimeAdapter:
         return {'final_loss': losses[-1] if losses else 0, 'n_tasks': len(tasks)}
 
     def adapt_to_new_regime(self, x_new: pd.DataFrame, y_new: pd.Series,
-                            regime_name: str = 'nuevo') -> Dict:
+                            regime_name: str = 'nuevo') -> dict:
         """Adapta el modelo a un nuevo régimen con pocos datos."""
         if self.maml is None or not self.maml.trained:
             return {'error': 'Meta-modelo no entrenado. Ejecuta meta_train primero.'}
@@ -274,11 +272,11 @@ class MetaLearningPipeline:
 
     def __init__(self):
         self.adapter = FewShotRegimeAdapter()
-        self.results: Dict[str, Any] = {}
+        self.results: dict[str, Any] = {}
 
     def run(self, data: pd.DataFrame, regime_col: str = 'regime',
             target_col: str = 'forward_return',
-            n_epochs: int = 100) -> Dict:
+            n_epochs: int = 100) -> dict:
         train_result = self.adapter.meta_train(data, regime_col, target_col, n_epochs)
         self.results['train'] = train_result
 

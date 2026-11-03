@@ -1,7 +1,17 @@
-import json, os, sys, time, re, math, traceback, textwrap
+import ast
+import json
+import os
+import re
+import textwrap
+import time
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
+
+from logger import get_module_logger
+
+_log = get_module_logger('auto_feature_discovery')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = os.path.join(DATA_DIR, 'Datos')
@@ -9,6 +19,17 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 DISCOVERED_PATH = os.path.join(OUTPUT_DIR, 'auto_features_discovered.json')
 FEATURE_LOG = os.path.join(OUTPUT_DIR, 'feature_discovery_log.json')
+
+if not os.environ.get('OPENROUTER_KEY'):
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if os.path.exists(env_path):
+        for linea in open(env_path, encoding='utf-8', errors='replace'):
+            linea = linea.strip()
+            if linea and not linea.startswith('#') and '=' in linea:
+                k, v = linea.split('=', 1)
+                k = k.strip(); v = v.strip().strip('"').strip("'")
+                if k and v:
+                    os.environ.setdefault(k, v)
 
 API_KEY = os.environ.get('OPENROUTER_KEY', '')
 
@@ -27,13 +48,47 @@ EXISTING_FEATURES = [
     'macro_curve_inverted','macro_risk_on'
 ]
 
+DANGEROUS_NODES = {
+    ast.Import, ast.ImportFrom, ast.Exec, ast.Global,
+    ast.AsyncFunctionDef, ast.AsyncWith, ast.AsyncFor,
+}
+
+DANGEROUS_CALLS = {
+    'open', 'eval', 'exec', 'compile', 'getattr', 'setattr', 'delattr',
+    'globals', 'locals', 'vars', 'dir', 'input', 'breakpoint',
+    'os', 'subprocess', 'sys', 'shutil', 'pathlib', 'socket',
+    'urllib', 'requests', 'http',
+}
+
+def _validate_feature_code(code: str) -> bool:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return False
+    for node in ast.walk(tree):
+        if type(node) in DANGEROUS_NODES:
+            return False
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id in DANGEROUS_CALLS:
+                return False
+            if isinstance(func, ast.Attribute):
+                if func.attr.startswith('_'):
+                    return False
+                if isinstance(func.value, ast.Name) and func.value.id in DANGEROUS_CALLS:
+                    return False
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            if node.value.id in DANGEROUS_CALLS:
+                return False
+    return True
+
 def load_prediction_history():
     path = os.path.join(OUTPUT_DIR, 'aprendizaje.json')
     if not os.path.exists(path):
         return []
     try:
         return json.load(open(path)).get('predicciones', [])
-    except:
+    except Exception:
         return []
 
 def load_discovered_features():
@@ -41,7 +96,7 @@ def load_discovered_features():
         try:
             data = json.load(open(DISCOVERED_PATH))
             return data.get('features', []), data
-        except:
+        except Exception:
             pass
     return [], {'features': [], 'version': 0}
 
@@ -179,9 +234,20 @@ def test_feature(ticker, feature_def):
         if len(df) < 60:
             return -1, None
         
-        # Execute the feature code in restricted namespace
-        namespace = {'np': np, 'pd': pd, 'df': df}
-        exec(textwrap.dedent(feature_def['code']), namespace)
+        # Execute the feature code in restricted namespace with AST validation
+        code = textwrap.dedent(feature_def['code'])
+        if not _validate_feature_code(code):
+            return -1, None
+        SAFE_BUILTINS = {
+            'abs': abs, 'min': min, 'max': max, 'len': len,
+            'round': round, 'sum': sum, 'sorted': sorted,
+            'range': range, 'enumerate': enumerate, 'zip': zip,
+            'True': True, 'False': False, 'None': None,
+            'int': int, 'float': float, 'str': str, 'bool': bool,
+            'list': list, 'dict': dict, 'tuple': tuple, 'set': set,
+        }
+        namespace = {'__builtins__': SAFE_BUILTINS, 'np': np, 'pd': pd, 'df': df}
+        exec(code, namespace)
         
         if feature_def['function_name'] not in namespace:
             return -1, None
@@ -203,7 +269,7 @@ def test_feature(ticker, feature_def):
             return -1, None
         
         # Score: correlation with future return direction
-        from scipy.stats import pearsonr, spearmanr
+        from scipy.stats import pearsonr
         corr_p, _ = pearsonr(combined['feature'], combined['target'])
         
         # Also test predictive power via simple threshold
@@ -221,32 +287,30 @@ def test_feature(ticker, feature_def):
         score = min(1, max(0, score))
         
         return score, feature_series
-    except Exception as e:
+    except Exception:
         return -1, None
 
 def main():
-    print('[AutoFeature] Descubriendo nuevas features via LLM...')
+    _log.info("Descubriendo nuevas features via LLM...")
     
     predictions = load_prediction_history()
     if len(predictions) < 30:
-        print('  [!] Pocas predicciones, esperar mas datos')
+        _log.warning("Pocas predicciones, esperar mas datos")
         return
     
     existing_features, feature_db = load_discovered_features()
     existing_names = {f.get('function_name', '') for f in existing_features}
-    print(f'  {len(existing_features)} features ya descubiertas')
+    _log.info(f"{len(existing_features)} features ya descubiertas")
     
-    # Find failing tickers
     failing = detect_failing_tickers(predictions)
     if not failing:
-        print('  [OK] Sin tickers con declive significativo')
+        _log.info("Sin tickers con declive significativo")
         return
     
-    print(f'  {len(failing)} tickers con declive:')
+    _log.info(f"{len(failing)} tickers con declive")
     for f in failing[:5]:
-        print(f'    {f["ticker"]}: acc={f["recent_accuracy"]:.0%} (bajo {f["decline"]:.0%})')
+        _log.info(f'{f["ticker"]}: acc={f["recent_accuracy"]:.0%} (bajo {f["decline"]:.0%})')
     
-    # Try to discover new features for top failing tickers
     MAX_NEW = 2
     new_count = 0
     
@@ -254,62 +318,58 @@ def main():
         if new_count >= MAX_NEW:
             break
         ticker = f['ticker']
-        print(f'  Generando feature para {ticker}...')
+        _log.info(f"Generando feature para {ticker}...")
         
-        # Check not already tried recently
         already_tried = any(feat.get('ticker') == ticker for feat in existing_features[-5:])
         if already_tried:
-            print(f'    Ya se intento recientemente, skip')
+            _log.info(f"Ya se intento recientemente para {ticker}, skip")
             continue
         
-        # Generate feature via LLM
         feature_def = generate_feature_idea(ticker, f)
         if not feature_def:
             continue
         
         fn_name = feature_def['function_name']
         if fn_name in existing_names:
-            print(f'    Feature {fn_name} ya existe')
+            _log.info(f"Feature {fn_name} ya existe")
             continue
         
-        print(f'    Codigo generado: {fn_name}()')
+        _log.info(f"Codigo generado: {fn_name}()")
         
-        # Test against historical data
         score, series = test_feature(ticker, feature_def)
         
         if score > 0.55:
-            # APPROVED
             feature_def['approved'] = True
             feature_def['test_score'] = round(score, 4)
             feature_def['approved_at'] = time.strftime('%Y-%m-%dT%H:%M:%S')
             save_discovered_features(feature_db, feature_def)
             new_count += 1
-            print(f'    [APROBADA] score={score:.3f} -> guardada')
+            _log.info(f"[APROBADA] {fn_name} score={score:.3f}")
         elif score > 0:
-            print(f'    [RECHAZADA] score={score:.3f} < 0.55')
-            # Still save as rejected for tracking
+            _log.info(f"[RECHAZADA] {fn_name} score={score:.3f} < 0.55")
             feature_def['approved'] = False
             feature_def['test_score'] = round(score, 4)
             save_discovered_features(feature_db, feature_def)
         else:
-            print(f'    [ERROR] No se pudo probar')
+            _log.warning(f"[ERROR] No se pudo probar {fn_name}")
     
-    # Log
-    log = []
+    log_entries = []
     if os.path.exists(FEATURE_LOG):
-        try: log = json.load(open(FEATURE_LOG))
-        except: pass
-    log.append({
+        try:
+            log_entries = json.load(open(FEATURE_LOG))
+        except Exception as e:
+            _log.warning(f"Error loading feature log: {e}")
+    log_entries.append({
         'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S'),
         'failing_tickers': len(failing),
         'new_features': new_count,
         'total_features': len(feature_db['features']) if isinstance(feature_db, dict) else 0
     })
-    log = log[-100:]
+    log_entries = log_entries[-100:]
     with open(FEATURE_LOG, 'w') as f:
-        json.dump(log, f, indent=2)
+        json.dump(log_entries, f, indent=2)
     
-    print(f'[AutoFeature] OK: {new_count} nuevas features descubiertas')
+    _log.info(f"OK: {new_count} nuevas features descubiertas")
 
 if __name__ == '__main__':
     main()

@@ -1,5 +1,9 @@
-import json, os, sys, time, re, math, random
-from collections import defaultdict, Counter
+import json
+import os
+import random
+import re
+import time
+from collections import defaultdict
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = os.path.join(DATA_DIR, 'Datos')
@@ -27,7 +31,7 @@ SECTOR_MAP = {
 def load_examples():
     if os.path.exists(EXAMPLES_PATH):
         try: return json.load(open(EXAMPLES_PATH))
-        except: pass
+        except Exception: pass
     return {'examples': {}, 'version': 1}
 
 def save_examples(data):
@@ -85,7 +89,7 @@ def get_few_shot_prompt(ticker, regime):
         lines.append(f'    Probabilidad: {ex["probabilidad"]}% | Confianza: {ex["confianza"]}%')
         lines.append(f'    Analisis: {ex["analisis"][:200]}')
         if ex.get('acertada'):
-            lines.append(f'    Resultado: ACERTO')
+            lines.append('    Resultado: ACERTO')
     return '\n'.join(lines)
 
 # ============================================================
@@ -95,7 +99,7 @@ def get_few_shot_prompt(ticker, regime):
 def load_hypotheses():
     if os.path.exists(HYPOTHESIS_PATH):
         try: return json.load(open(HYPOTHESIS_PATH))
-        except: pass
+        except Exception: pass
     return {'hypotheses': [], 'verified': []}
 
 def generate_hypotheses(ticker, probabilidad, confianza, era_correcta, analisis, data_context):
@@ -104,8 +108,8 @@ def generate_hypotheses(ticker, probabilidad, confianza, era_correcta, analisis,
     
     if era_correcta:
         h1 = f"Prediccion correcta porque el analisis {analisis[:50]} capturo la tendencia correcta"
-        h2 = f"El regimen de mercado favorecio la direccion predicha"
-        h3 = f"La combinacion de tecnicos + noticias fue consistente con el movimiento"
+        h2 = "El regimen de mercado favorecio la direccion predicha"
+        h3 = "La combinacion de tecnicos + noticias fue consistente con el movimiento"
     else:
         direccion = 'alcista' if probabilidad > 50 else 'bajista'
         conf_level = 'alta' if confianza > 70 else 'media' if confianza > 50 else 'baja'
@@ -113,7 +117,7 @@ def generate_hypotheses(ticker, probabilidad, confianza, era_correcta, analisis,
         hypotheses = [
             {
                 'ticker': ticker,
-                'hipotesis': f'El analisis ignoro un factor macro que movio el mercado en direccion opuesta',
+                'hipotesis': 'El analisis ignoro un factor macro que movio el mercado en direccion opuesta',
                 'probabilidad': probabilidad,
                 'confianza': confianza,
                 'tipo': 'macro_miss',
@@ -202,7 +206,7 @@ def log_hypothesis_testing(predictions):
                 data['verified'].append({
                     'insight': h['hipotesis'],
                     'ticker': ticker,
-                    'tipo': h_type,
+                    'tipo': h.get('tipo', ''),
                     'confidence': confidence,
                     'verified_at': time.strftime('%Y-%m-%dT%H:%M:%S')
                 })
@@ -232,7 +236,7 @@ PROMPT_TEMPLATES = {
 def load_auto_prompts():
     if os.path.exists(PROMPT_GEN_PATH):
         try: return json.load(open(PROMPT_GEN_PATH))
-        except: pass
+        except Exception: pass
     return {'prompts': dict(PROMPT_TEMPLATES), 'performance': {}, 'winner': 'base', 'history': []}
 
 def test_prompt_vs_history(prompt_name, prompt_text, predictions):

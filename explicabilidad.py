@@ -1,4 +1,8 @@
-import json, os, sys, datetime, numpy as np, pandas as pd, warnings
+import datetime
+import json
+import os
+import warnings
+
 warnings.filterwarnings('ignore')
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
@@ -10,35 +14,35 @@ analisis_ia = {}
 try:
     with open(f'{DATA_DIR}/Datos/modelo_xgboost.json', 'r') as f:
         modelo_xgboost = json.load(f)
-    print(f'[OK] modelo_xgboost.json loaded')
+    print('[OK] modelo_xgboost.json loaded')
 except Exception as e:
     print(f'[!] Could not load modelo_xgboost.json: {e}')
 
 try:
     with open(f'{DATA_DIR}/Datos/predicciones_hist.json', 'r') as f:
         predicciones_hist = json.load(f)
-    print(f'[OK] predicciones_hist.json loaded')
+    print('[OK] predicciones_hist.json loaded')
 except Exception as e:
     print(f'[!] Could not load predicciones_hist.json: {e}')
 
 try:
     with open(f'{DATA_DIR}/Datos/analisis_ia.json', 'r') as f:
         analisis_ia = json.load(f)
-    print(f'[OK] analisis_ia.json loaded')
+    print('[OK] analisis_ia.json loaded')
 except Exception as e:
     print(f'[!] Could not load analisis_ia.json: {e}')
 
 ia_probs = analisis_ia.get('probabilidades', {})
 
 tickers_list = []
-if 'tickers' in modelo_xgboost and modelo_xgboost['tickers']:
+if modelo_xgboost.get('tickers'):
     tickers_list = list(modelo_xgboost['tickers'].keys())
 
 if not tickers_list:
     print('[!] No tickers in modelo_xgboost, trying predicciones_hist')
     tickers_list = list(predicciones_hist.keys())
 
-print(f'\n=== Computing SHAP-like Explanations ===\n')
+print('\n=== Computing SHAP-like Explanations ===\n')
 
 explicacion_output = {
     'timestamp': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -97,9 +101,7 @@ for ticker in sorted(tickers_list):
         for feat in features_top:
             peso = fi_global.get(feat, 0.1) / total_fi
             feat_name = feature_names_map.get(feat, feat)
-            if feat in ['rsi_14', 'macd_hist', 'return_1d', 'return_5d', 'return_20d']:
-                contribuye = 'alcista' if prob_xgboost > 55 else 'bajista'
-            elif feat == 'vol_ratio':
+            if feat in ['rsi_14', 'macd_hist', 'return_1d', 'return_5d', 'return_20d'] or feat == 'vol_ratio':
                 contribuye = 'alcista' if prob_xgboost > 55 else 'bajista'
             else:
                 contribuye = 'alcista' if prob_xgboost > 50 else 'bajista'
@@ -150,7 +152,7 @@ try:
 except Exception as e:
     print(f'[!] Save failed: {e}')
 
-print(f'\n=== SHAP Explainability Summary ===')
+print('\n=== SHAP Explainability Summary ===')
 tickers_done = explicacion_output['tickers']
 print(f'  Tickers explained: {len(tickers_done)}')
 for tk, tv in sorted(tickers_done.items()):

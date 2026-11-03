@@ -1,4 +1,7 @@
-import requests, json, re, sys, time
+import json
+import re
+
+import requests
 from bs4 import BeautifulSoup
 
 UNIV_FILE = "Datos/univ_global.json"
@@ -76,7 +79,7 @@ def get_sp500():
                                 tickers.append(t)
                                 break
                 tickers = list(dict.fromkeys(tickers))
-        except:
+        except Exception:
             pass
     if tickers and len(tickers) >= 100:
         print(f"[OK] SP500: {len(tickers)} tickers")
@@ -157,8 +160,8 @@ def main():
     os.makedirs("Datos", exist_ok=True)
     try:
         core = get_core_30()
-        print(f"[Core] 30 tickers base")
-    except:
+        print("[Core] 30 tickers base")
+    except Exception:
         core = []
         print("[Core] No file, fresh universe")
 

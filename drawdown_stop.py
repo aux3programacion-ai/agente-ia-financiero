@@ -1,6 +1,8 @@
-import json, os, sys, time
+import json
+import os
+import time
+
 import numpy as np
-import pandas as pd
 import yfinance as yf
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']

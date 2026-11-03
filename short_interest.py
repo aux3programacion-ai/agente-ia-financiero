@@ -1,4 +1,8 @@
-import json, os, sys, time, re, urllib.request
+import json
+import os
+import re
+import time
+import urllib.request
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
@@ -17,7 +21,7 @@ def fetch_short_interest_yahoo(ticker):
                 'shares_short': info.get('sharesShort', 0),
                 'days_to_cover': round(info.get('shortRatio', 0), 1)
             }
-    except:
+    except Exception:
         pass
     return None
 
@@ -38,12 +42,11 @@ def fetch_short_interest_finviz(ticker):
             result['short_interest'] = si_match.group(1)
         if result:
             return result
-    except:
+    except Exception:
         pass
     return None
 
 def main():
-    import yfinance as yf
     print('[Short Interest] Obteniendo datos de cortos...')
     results = {}
     for t in TICKERS_CORE:

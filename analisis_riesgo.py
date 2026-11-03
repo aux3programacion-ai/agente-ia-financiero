@@ -1,4 +1,11 @@
-import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time, math
+import json
+import math
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
 
 from portafolio_utils import cargar_portafolio
 
@@ -115,7 +122,7 @@ if n > 1:
                 triu = np.triu_indices(n_assets, k=1)
                 avg_c = np.mean(corr_slice.values[triu])
                 avg_corr_history[str(idx.date())] = round(float(avg_c), 4)
-        except:
+        except Exception:
             pass
     
     current_avg_corr = np.mean([matriz[i][j] for i in range(n) for j in range(i+1, n)])

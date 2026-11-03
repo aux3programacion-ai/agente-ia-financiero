@@ -3,15 +3,15 @@
 interfaz_lenguaje_natural.py - Chat en espanol para el sistema.
 Procesamiento de lenguaje natural para consultar el agente financiero.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-import json, os, re
+import os
+import re
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-from config.settings import get_setting
+import numpy as np
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'nlu'
@@ -20,14 +20,14 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 @dataclass
 class NLUQuery:
-    raw: str; intent: str; entities: Dict[str, Any]
-    tickers: List[str]; confidence: float; timestamp: str
+    raw: str; intent: str; entities: dict[str, Any]
+    tickers: list[str]; confidence: float; timestamp: str
 
 
 @dataclass
 class NLUResponse:
-    query: str; intent: str; answer: str; data: Optional[Dict] = None
-    chart_data: Optional[Dict] = None; confidence: float = 0.0
+    query: str; intent: str; answer: str; data: dict | None = None
+    chart_data: dict | None = None; confidence: float = 0.0
 
 
 class IntentClassifier:
@@ -43,7 +43,7 @@ class IntentClassifier:
         'ayuda': r'\b(ayuda|help|comandos|que.*puedes)\b',
     }
 
-    def classify(self, text: str) -> Tuple[str, float]:
+    def classify(self, text: str) -> tuple[str, float]:
         text_lower = text.lower()
         for intent, pattern in self.INTENTS.items():
             if intent == 'consulta_ticker':
@@ -53,14 +53,14 @@ class IntentClassifier:
                 return intent, 0.7 + len(match.group()) * 0.02
         return 'consulta_general', 0.5
 
-    def extract_tickers(self, text: str) -> List[str]:
+    def extract_tickers(self, text: str) -> list[str]:
         pattern = r'\b([A-Z]{1,5})\b'
         matches = re.findall(pattern, text.upper())
         known = ['NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA',
                  'SPY', 'QQQ', 'BTC', 'ETH']
         return [m for m in matches if m in known][:3]
 
-    def extract_entities(self, text: str, intent: str) -> Dict:
+    def extract_entities(self, text: str, intent: str) -> dict:
         entities = {}
         date_map = {'hoy': '1d', 'semana': '5d', 'mes': '21d',
                     'anual': '252d', 'ultimo': '30d', 'year': '252d'}
@@ -77,7 +77,7 @@ class IntentClassifier:
 
 class ResponseGenerator:
     def __init__(self):
-        self.data_providers: Dict[str, Callable] = {}
+        self.data_providers: dict[str, Callable] = {}
 
     def register_provider(self, intent: str, provider):
         self.data_providers[intent] = provider
@@ -92,7 +92,7 @@ class ResponseGenerator:
         return NLUResponse(query=query.raw, intent=query.intent,
             answer=answer, data=data, confidence=query.confidence)
 
-    def _format_answer(self, query: NLUQuery, data: Dict) -> str:
+    def _format_answer(self, query: NLUQuery, data: dict) -> str:
         intent = query.intent
         if intent == 'consulta_portafolio':
             v = data.get('valor', 0)
@@ -127,12 +127,12 @@ class ResponseGenerator:
         return data.get('mensaje', 'No entendi tu consulta')
 
 
-def _provider_portfolio(query: NLUQuery) -> Dict:
+def _provider_portfolio(query: NLUQuery) -> dict:
     return {'valor': 100000 + np.random.randint(-5000, 5000),
             'retorno': np.random.randn() * 0.01, 'cambio': np.random.randn() * 0.02}
 
 
-def _provider_signals(query: NLUQuery) -> Dict:
+def _provider_signals(query: NLUQuery) -> dict:
     result = {}
     for t in query.tickers or ['NVDA']:
         result[t] = {'senal': np.random.choice(['COMPRA', 'VENTA', 'NEUTRAL']),
@@ -140,12 +140,12 @@ def _provider_signals(query: NLUQuery) -> Dict:
     return result
 
 
-def _provider_risk(query: NLUQuery) -> Dict:
+def _provider_risk(query: NLUQuery) -> dict:
     return {'var_95': -0.023, 'var_99': -0.041, 'volatilidad': 0.185,
             'max_drawdown': -0.087, 'sharpe': 1.42}
 
 
-def _provider_performance(query: NLUQuery) -> Dict:
+def _provider_performance(query: NLUQuery) -> dict:
     return {'retorno': 0.187, 'sharpe': 1.42, 'sortino': 1.85, 'max_drawdown': -0.087}
 
 
@@ -153,7 +153,7 @@ class NaturalLanguageInterface:
     def __init__(self):
         self.classifier = IntentClassifier()
         self.response_gen = ResponseGenerator()
-        self.conversation_history: List[Dict] = []
+        self.conversation_history: list[dict] = []
         self._register_providers()
 
     def _register_providers(self):
@@ -178,7 +178,7 @@ class NaturalLanguageInterface:
         self.conversation_history = self.conversation_history[-50:]
         return response
 
-    def get_history(self) -> List[Dict]:
+    def get_history(self) -> list[dict]:
         return self.conversation_history
 
     def run_cli(self):

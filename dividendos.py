@@ -1,8 +1,7 @@
+import datetime
 import json
 import os
-import sys
 import time
-import datetime
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
@@ -11,6 +10,7 @@ OUTPUT = os.path.join(DATA_DIR, 'Datos', 'dividendos.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 from portafolio_utils import cargar_portafolio
+
 
 def tickers_a_procesar():
     portafolio = cargar_portafolio(DATA_DIR)
@@ -66,7 +66,7 @@ def procesar_yfinance(ticker):
             hist = yt.history(period='5d')
             if not hist.empty:
                 precio_actual = hist['Close'].iloc[-1]
-        except:
+        except Exception:
             pass
 
         if precio_actual is None or precio_actual == 0:
@@ -91,7 +91,7 @@ def procesar_yfinance(ticker):
                     pago_anterior = hace_5.head(4).sum()
                     if pago_anterior > 0:
                         crecimiento_5yr = round((pago_actual - pago_anterior) / pago_anterior, 4)
-            except:
+            except Exception:
                 pass
 
         ex_date = ''
@@ -103,7 +103,7 @@ def procesar_yfinance(ticker):
                     ex_date = str(calendar.loc['Ex-Dividend Date'].iloc[0])[:10]
                 if 'Dividend Date' in calendar.index:
                     pay_date = str(calendar.loc['Dividend Date'].iloc[0])[:10]
-        except:
+        except Exception:
             pass
 
         if not ex_date:
@@ -117,7 +117,7 @@ def procesar_yfinance(ticker):
             "anual_por_accion": round(pago_anual, 4),
             "crecimiento_5yr": crecimiento_5yr
         }
-    except:
+    except Exception:
         return None
 
 def main():
@@ -130,7 +130,7 @@ def main():
             print(f"  {t}...", end=' ')
             data = procesar_yfinance(t)
             if data is None:
-                print(f"[!] sin dividendos o error")
+                print("[!] sin dividendos o error")
             else:
                 print(f"[OK] yield: {data['yield']*100:.2f}%, freq: {data['frecuencia']}")
                 resultados[t] = data

@@ -4,24 +4,21 @@ generative_prices.py - Generative AI for synthetic price data.
 TimeGAN implementation for generating realistic financial time series,
 with synthetic data validation and discriminative evaluation.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime
 import json
 import os
 from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 try:
     import torch
-    import torch.nn as nn
-    import torch.optim as optim
+    from torch import nn, optim
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'generative'
@@ -240,9 +237,9 @@ class SyntheticDataValidator:
     """Validate synthetic data quality against real data."""
     
     def __init__(self):
-        self.metrics: Dict[str, float] = {}
+        self.metrics: dict[str, float] = {}
     
-    def validate(self, real: np.ndarray, synthetic: np.ndarray) -> Dict[str, float]:
+    def validate(self, real: np.ndarray, synthetic: np.ndarray) -> dict[str, float]:
         real = real.reshape(-1, real.shape[-1]) if real.ndim > 2 else real
         synthetic = synthetic.reshape(-1, synthetic.shape[-1]) if synthetic.ndim > 2 else synthetic
         
@@ -262,8 +259,8 @@ class SyntheticDataValidator:
         
         # Discriminative score: can a classifier tell them apart?
         try:
-            from sklearn.model_selection import cross_val_score
             from sklearn.ensemble import RandomForestClassifier
+            from sklearn.model_selection import cross_val_score
             
             n = min(len(real), len(synthetic), 1000)
             X = np.vstack([real[:n], synthetic[:n]])
@@ -317,7 +314,7 @@ class GenerativePricePipeline:
         
         return np.array(sequences)
     
-    def run(self, close: pd.Series, n_generate: int = 100) -> Dict[str, Any]:
+    def run(self, close: pd.Series, n_generate: int = 100) -> dict[str, Any]:
         print('[Generative] Preparing data...')
         data = self.prepare_data(close)
         print(f'[Generative] Sequences: {data.shape}')
@@ -363,6 +360,6 @@ if __name__ == '__main__':
     
     print(f"Real sequences: {result['n_real_sequences']}")
     print(f"Generated: {result['n_synthetic_sequences']}")
-    print(f"Validation metrics:")
+    print("Validation metrics:")
     for k, v in result['validation_metrics'].items():
         print(f"  {k}: {v:.4f}")

@@ -1,7 +1,9 @@
-import json, os, sys, time, math
-import numpy as np
-import pandas as pd
+import json
+import os
+import time
 import urllib.request
+
+import numpy as np
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT = os.path.join(DATA_DIR, 'Datos', 'surprise_index.json')
@@ -29,7 +31,7 @@ def fetch_economic_data():
                 if len(obs) >= 2:
                     v1, v2 = float(obs[0]['value']), float(obs[1]['value'])
                     surprises[name] = round((v1 - v2) / max(abs(v2), 0.01), 4)
-    except:
+    except Exception:
         pass
     
     # Surprise index from yield curve behavior

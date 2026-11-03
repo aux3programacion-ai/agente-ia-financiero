@@ -3,15 +3,13 @@
 backtest_alta_fidelidad.py - Simulador multi-activo de alta fidelidad.
 Slippage realista, latencia, restricciones de capital/regulatorias, costos.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-import json, os
+import os
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 
-from config.settings import get_setting
+import numpy as np
+import pandas as pd
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'backtest_hifi'
@@ -52,7 +50,7 @@ class LatencySimulator:
         self.jitter_ms = jitter_ms
         self.network_drops = network_drops
 
-    def simulate(self) -> Tuple[float, bool]:
+    def simulate(self) -> tuple[float, bool]:
         latency = self.base_ms + np.random.exponential(self.jitter_ms)
         dropped = np.random.random() < self.network_drops
         return latency, dropped
@@ -67,11 +65,11 @@ class CapitalConstraints:
         self.min_cash = min_cash
         self.capital = max_capital
         self.cash = max_capital
-        self.positions: Dict[str, float] = {}
-        self.violations: List[ConstraintViolation] = []
+        self.positions: dict[str, float] = {}
+        self.violations: list[ConstraintViolation] = []
 
     def check_order(self, ticker: str, side: str, shares: int,
-                    price: float) -> List[ConstraintViolation]:
+                    price: float) -> list[ConstraintViolation]:
         violations = []
         cost = shares * price
         if side == 'buy' and cost > self.cash:
@@ -110,7 +108,7 @@ class RegulatoryConstraints:
         self.max_single_ticker_pnl = max_single_ticker_pnl
 
     def check(self, ticker: str, side: str, shares: int, price: float,
-              portfolio_value: float, positions: Dict) -> List[ConstraintViolation]:
+              portfolio_value: float, positions: dict) -> list[ConstraintViolation]:
         violations = []
         turnover = (shares * price) / max(portfolio_value, 1)
         if turnover > self.max_daily_turnover:
@@ -126,12 +124,12 @@ class HighFidelityBacktest:
         self.latency = LatencySimulator()
         self.capital = CapitalConstraints(max_capital=initial_capital)
         self.regulatory = RegulatoryConstraints()
-        self.fills: List[FillSimulation] = []
-        self.violations: List[ConstraintViolation] = []
+        self.fills: list[FillSimulation] = []
+        self.violations: list[ConstraintViolation] = []
 
     def execute_order(self, ticker: str, side: str, shares: int,
                       price_data: pd.DataFrame, price_col='close',
-                      volume_col='volume', vol_col='volatility') -> Dict:
+                      volume_col='volume', vol_col='volatility') -> dict:
         row = price_data.iloc[0]
         price = float(row[price_col])
         volume = int(row.get(volume_col, 100000))
@@ -169,7 +167,7 @@ class HighFidelityBacktest:
 
     def run_backtest(self, signals: pd.DataFrame, price_data: pd.DataFrame,
                      ticker_col='ticker', signal_col='signal',
-                     shares_col='shares') -> Dict:
+                     shares_col='shares') -> dict:
         results = []
         for idx in range(len(signals)):
             sig = signals.iloc[idx]
@@ -189,7 +187,7 @@ class HighFidelityBacktest:
                 'violations': len(self.violations)}
 
     def report(self) -> str:
-        report = f"Backtest Hi-Fi Report\n"
+        report = "Backtest Hi-Fi Report\n"
         report += f"Capital inicial: ${self.capital.max_capital:,.0f}\n"
         report += f"Capital final: ${self.capital.capital + self.capital.cash:,.0f}\n"
         report += f"Violaciones: {len(self.violations)}\n"

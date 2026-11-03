@@ -1,4 +1,6 @@
-import json, os, sys, time
+import json
+import os
+import time
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT = os.path.join(DATA_DIR, 'Datos', 'onchain_data.json')
@@ -29,7 +31,7 @@ def fetch_onchain_summary():
                 data['btc_price_eur'] = ticker.get('EUR', {}).get('last', 0)
             else:
                 data[f'btc_{name}'] = raw.strip()
-        except:
+        except Exception:
             pass
     
     # Whale activity proxy: look at number of large transactions (>1 BTC) from blockchain.com
@@ -44,7 +46,7 @@ def fetch_onchain_summary():
             prev = [v['y'] for v in vals[-14:-7]]
             if recent and prev:
                 data['tx_trend_7d'] = round((sum(recent)/len(recent)) / (sum(prev)/len(prev)) - 1, 4)
-    except:
+    except Exception:
         pass
     
     # Exchange flow proxy: use total transaction volume as proxy for exchange activity
@@ -59,7 +61,7 @@ def fetch_onchain_summary():
             prev = [v['y'] for v in vals[-6:-3]]
             if recent and prev:
                 data['volume_trend_3d'] = round((sum(recent)/len(recent)) / (sum(prev)/len(prev)) - 1, 4)
-    except:
+    except Exception:
         pass
     
     return data

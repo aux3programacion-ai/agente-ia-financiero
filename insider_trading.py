@@ -1,10 +1,8 @@
 import json
 import os
-import sys
-import urllib.request
-import re
-import time
 import random
+import time
+import urllib.request
 
 TICKERS_CORE = ['NVDA','MU','DELL','AVGO','DDOG','SMCI','SNOW','CRWD','NOW','TSM','ARM','OKTA','HPE','NTAP','CLS','AAPL','AMZN','GOOGL','META','MSFT','LLY','AMAT','LRCX','PANW','ORCL','HON','UBER','GE','COST','NEE']
 
@@ -13,6 +11,7 @@ OUTPUT = os.path.join(DATA_DIR, 'Datos', 'insider_trading.json')
 os.makedirs(os.path.join(DATA_DIR, 'Datos'), exist_ok=True)
 
 from portafolio_utils import cargar_portafolio
+
 
 def tickers_a_procesar():
     portafolio = cargar_portafolio(DATA_DIR)
@@ -85,7 +84,7 @@ def procesar_ticker_yahoo(ticker):
             "score": score,
             "transacciones_recientes": transacciones
         }
-    except:
+    except Exception:
         return None
 
 def generar_fallback(ticker):
@@ -132,7 +131,7 @@ def main():
             data = procesar_ticker_yahoo(t)
             if data is None:
                 data = generar_fallback(t)
-                print(f"[!] fallback")
+                print("[!] fallback")
             else:
                 print(f"[OK] {data['total_transacciones']} transacciones, score: {data['score']}")
             resultados[t] = data

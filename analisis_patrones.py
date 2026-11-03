@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-import json, os, sys, yfinance as yf, numpy as np, pandas as pd, time
+import json
+import os
+import time
+
+import numpy as np
+import yfinance as yf
+
 from portafolio_utils import cargar_portafolio
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))

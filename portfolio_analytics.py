@@ -4,17 +4,16 @@ portfolio_analytics.py - Advanced portfolio analytics.
 Barra risk factor decomposition, Brinson performance attribution,
 Black-Litterman model, risk budgeting, and scenario analysis.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, field
-from datetime import datetime
 import json
 import os
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from scipy.optimize import minimize
+from typing import Any
 
-from config.settings import get_setting
+import numpy as np
+import pandas as pd
+from scipy.optimize import minimize
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'portfolio_analytics'
@@ -39,11 +38,11 @@ class FactorExposure:
 class BarraRiskModel:
     """Barra-style factor risk decomposition."""
     
-    def __init__(self, style_factors: List[str] = None):
+    def __init__(self, style_factors: list[str] = None):
         self.style_factors = style_factors or BARRA_STYLE_FACTORS
-        self.factor_returns: Optional[pd.DataFrame] = None
-        self.factor_cov: Optional[np.ndarray] = None
-        self.specific_risk: Optional[pd.Series] = None
+        self.factor_returns: pd.DataFrame | None = None
+        self.factor_cov: np.ndarray | None = None
+        self.specific_risk: pd.Series | None = None
     
     def estimate_factor_returns(self, returns: pd.DataFrame,
                                 exposures: pd.DataFrame) -> pd.DataFrame:
@@ -77,7 +76,7 @@ class BarraRiskModel:
     
     def risk_decomposition(self, weights: np.ndarray,
                            exposures: pd.DataFrame,
-                           specific_risk: pd.Series) -> Dict[str, Any]:
+                           specific_risk: pd.Series) -> dict[str, Any]:
         """Decompose portfolio risk into factor + specific."""
         if self.factor_cov is None:
             self.factor_covariance()
@@ -150,12 +149,12 @@ class BrinsonAttribution:
     """Brinson decomposition: allocation + selection + interaction effects."""
     
     def __init__(self):
-        self.results: Dict[str, float] = {}
+        self.results: dict[str, float] = {}
     
     def decompose(self, portfolio_weights: pd.Series,
                   benchmark_weights: pd.Series,
                   portfolio_returns: pd.Series,
-                  benchmark_returns: pd.Series) -> Dict[str, float]:
+                  benchmark_returns: pd.Series) -> dict[str, float]:
         """Brinson, Hood, Beebower (1986) attribution."""
         alloc_effect = ((portfolio_weights - benchmark_weights) * 
                         (benchmark_returns)).sum()
@@ -205,9 +204,9 @@ class BlackLitterman:
     def __init__(self, risk_aversion: float = 2.5, tau: float = 0.05):
         self.risk_aversion = risk_aversion
         self.tau = tau
-        self.implied_returns: Optional[np.ndarray] = None
-        self.posterior_returns: Optional[np.ndarray] = None
-        self.posterior_cov: Optional[np.ndarray] = None
+        self.implied_returns: np.ndarray | None = None
+        self.posterior_returns: np.ndarray | None = None
+        self.posterior_cov: np.ndarray | None = None
     
     def implied_equilibrium_returns(self, cap_weights: np.ndarray,
                                     cov_matrix: np.ndarray,
@@ -219,8 +218,8 @@ class BlackLitterman:
         return pi
     
     def add_views(self, P: np.ndarray, Q: np.ndarray,
-                  omega: Optional[np.ndarray] = None,
-                  sigma: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
+                  omega: np.ndarray | None = None,
+                  sigma: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
         """Combine prior with views for posterior."""
         if sigma is None:
             sigma = np.eye(len(P[0])) * 0.01
@@ -242,7 +241,7 @@ class BlackLitterman:
         return post_mean, self.posterior_cov
     
     def optimize(self, returns: np.ndarray, cov: np.ndarray,
-                 constraints: Optional[List] = None) -> np.ndarray:
+                 constraints: list | None = None) -> np.ndarray:
         """Mean-variance optimization."""
         n = len(returns)
         
@@ -324,7 +323,7 @@ class ScenarioAnalysis:
             'tech_bubble': {'equity': 0.10, 'bond': -0.04, 'commodity': -0.02, 'cash': 0.0},
         }
     
-    def run(self, weights: np.ndarray, asset_classes: List[str]) -> pd.DataFrame:
+    def run(self, weights: np.ndarray, asset_classes: list[str]) -> pd.DataFrame:
         results = []
         for scenario, impacts in self.scenarios.items():
             impact_vec = np.array([impacts.get(ac, 0) for ac in asset_classes])
@@ -353,7 +352,7 @@ class RiskMetrics:
     """Comprehensive risk metrics."""
     
     @staticmethod
-    def compute_all(returns: pd.Series) -> Dict[str, float]:
+    def compute_all(returns: pd.Series) -> dict[str, float]:
         rf = 0.05 / 252
         excess = returns - rf
         cum = (1 + returns).cumprod()
@@ -411,7 +410,7 @@ class PortfolioAnalytics:
     def full_report(self, returns: pd.DataFrame, weights: np.ndarray,
                     benchmark_returns: pd.Series = None,
                     exposures: pd.DataFrame = None,
-                    specific_risk: pd.Series = None) -> Dict:
+                    specific_risk: pd.Series = None) -> dict:
         results = {}
         
         if exposures is not None and specific_risk is not None:

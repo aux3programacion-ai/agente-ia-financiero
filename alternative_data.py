@@ -9,10 +9,8 @@ import os
 import re
 import time
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, List, Optional, Callable
-from collections import defaultdict
 
 try:
     from bs4 import BeautifulSoup
@@ -32,13 +30,13 @@ class DataSource:
     """Base class for alternative data sources."""
     name = 'base'
     
-    def fetch(self, tickers: List[str]) -> Dict:
+    def fetch(self, tickers: list[str]) -> dict:
         raise NotImplementedError
     
     def cache_key(self, ticker: str) -> str:
         return f'{self.name}_{ticker}'
     
-    def to_features(self, raw: Dict) -> Dict[str, float]:
+    def to_features(self, raw: dict) -> dict[str, float]:
         return {}
 
 
@@ -50,14 +48,14 @@ class EarningsTranscripts(DataSource):
         self.cache_dir = OUTPUT_DIR / 'transcripts'
         self.cache_dir.mkdir(exist_ok=True)
     
-    def fetch(self, tickers: List[str], quarters: int = 4) -> Dict:
+    def fetch(self, tickers: list[str], quarters: int = 4) -> dict:
         results = {}
         for ticker in tickers:
             results[ticker] = self._fetch_transcript(ticker)
             time.sleep(0.5)
         return results
     
-    def _fetch_transcript(self, ticker: str) -> Dict:
+    def _fetch_transcript(self, ticker: str) -> dict:
         try:
             url = f'https://finance.yahoo.com/calendar/earnings?symbol={ticker}'
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -79,7 +77,7 @@ class EarningsTranscripts(DataSource):
         except Exception as e:
             return {'ticker': ticker, 'error': str(e)[:100]}
     
-    def _parse_transcript(self, text: str) -> Dict:
+    def _parse_transcript(self, text: str) -> dict:
         """Extract sentiment and key phrases from transcript text."""
         positive_words = {'beat', 'growth', 'record', 'momentum', 'optimistic',
                          'strong', 'accelerating', 'outperform', 'raised', 'guidance_up'}
@@ -119,14 +117,14 @@ class MacroIndicators(DataSource):
         'CONSUMER_SENTIMENT': 'UMCSENT', 'HOUSING_STARTS': 'HOUST'
     }
     
-    def fetch(self, tickers: List[str] = None) -> Dict:
+    def fetch(self, tickers: list[str] = None) -> dict:
         results = {}
         for name, series_id in self.SERIES_MAP.items():
             results[name] = self._fetch_series(series_id)
             time.sleep(0.2)
         return self._compute_derived(results)
     
-    def _fetch_series(self, series_id: str) -> Dict:
+    def _fetch_series(self, series_id: str) -> dict:
         if not FRED_API_KEY:
             return self._simulate_series(series_id)
         
@@ -149,11 +147,11 @@ class MacroIndicators(DataSource):
                     'change_pct': round((current - previous) / abs(previous) * 100, 2) if previous != 0 else 0,
                     'updated': observations[0].get('date', '')
                 }
-        except Exception as e:
+        except Exception:
             pass
         return self._simulate_series(series_id)
     
-    def _simulate_series(self, series_id: str) -> Dict:
+    def _simulate_series(self, series_id: str) -> dict:
         import numpy as np
         base_values = {
             'GDP': 28000, 'CPIAUCSL': 315, 'UNRATE': 3.7,
@@ -170,7 +168,7 @@ class MacroIndicators(DataSource):
             'simulated': True
         }
     
-    def _compute_derived(self, raw: Dict) -> Dict:
+    def _compute_derived(self, raw: dict) -> dict:
         result = dict(raw)
         
         dgs10 = raw.get('DGS10', {}).get('value', 0)
@@ -189,7 +187,7 @@ class MacroIndicators(DataSource):
         
         return result
     
-    def to_features(self, raw: Dict) -> Dict[str, float]:
+    def to_features(self, raw: dict) -> dict[str, float]:
         features = {}
         for k, v in raw.items():
             if isinstance(v, dict):
@@ -202,14 +200,14 @@ class InsiderTrading(DataSource):
     """Track insider transactions (buys/sells by executives)."""
     name = 'insider_trading'
     
-    def fetch(self, tickers: List[str], days_back: int = 90) -> Dict:
+    def fetch(self, tickers: list[str], days_back: int = 90) -> dict:
         results = {}
         for ticker in tickers:
             results[ticker] = self._fetch_insider(ticker)
             time.sleep(0.3)
         return results
     
-    def _fetch_insider(self, ticker: str) -> Dict:
+    def _fetch_insider(self, ticker: str) -> dict:
         # SEC EDGAR API
         try:
             cik = self._get_cik(ticker)
@@ -232,10 +230,10 @@ class InsiderTrading(DataSource):
                 'total_transactions': buys + sells,
                 'source': 'sec_edgar'
             }
-        except:
+        except Exception:
             return self._simulate_insider(ticker)
     
-    def _get_cik(self, ticker: str) -> Optional[str]:
+    def _get_cik(self, ticker: str) -> str | None:
         try:
             url = f'https://www.sec.gov/cgi-bin/browse-edgar?CIK={ticker}&Find=Search&owner=exclude'
             req = urllib.request.Request(url, headers={'User-Agent': 'AgenteFinanciero/1.0'})
@@ -243,10 +241,10 @@ class InsiderTrading(DataSource):
                 html = r.read().decode()
             match = re.search(r'CIK=(\d{10})', html)
             return match.group(1) if match else None
-        except:
+        except Exception:
             return None
     
-    def _simulate_insider(self, ticker: str) -> Dict:
+    def _simulate_insider(self, ticker: str) -> dict:
         import numpy as np
         buys = int(np.random.poisson(2))
         sells = int(np.random.poisson(3))
@@ -264,13 +262,13 @@ class SearchTrends(DataSource):
     """Google Trends / search volume for tickers and related terms."""
     name = 'search_trends'
     
-    def fetch(self, tickers: List[str]) -> Dict:
+    def fetch(self, tickers: list[str]) -> dict:
         results = {}
         for ticker in tickers:
             results[ticker] = self._simulate_search(ticker)
         return results
     
-    def _simulate_search(self, ticker: str) -> Dict:
+    def _simulate_search(self, ticker: str) -> dict:
         import numpy as np
         base_volume = {
             'NVDA': 85, 'AAPL': 75, 'MSFT': 70, 'AMZN': 65, 'GOOGL': 60,
@@ -290,13 +288,13 @@ class OptionsFlow(DataSource):
     """Unusual options activity tracking."""
     name = 'options_flow'
     
-    def fetch(self, tickers: List[str]) -> Dict:
+    def fetch(self, tickers: list[str]) -> dict:
         results = {}
         for ticker in tickers:
             results[ticker] = self._simulate_options_flow(ticker)
         return results
     
-    def _simulate_options_flow(self, ticker: str) -> Dict:
+    def _simulate_options_flow(self, ticker: str) -> dict:
         import numpy as np
         total_volume = int(np.random.poisson(5000))
         put_volume = int(np.random.poisson(total_volume * 0.4))
@@ -316,7 +314,7 @@ class OptionsFlow(DataSource):
 
 class AlternativeDataAggregator:
     def __init__(self):
-        self.sources: Dict[str, DataSource] = {
+        self.sources: dict[str, DataSource] = {
             'earnings': EarningsTranscripts(),
             'macro': MacroIndicators(),
             'insider': InsiderTrading(),
@@ -331,14 +329,14 @@ class AlternativeDataAggregator:
         if self.history_path.exists():
             try:
                 self.cache = json.loads(self.history_path.read_text())
-            except:
+            except Exception:
                 self.cache = {'snapshots': []}
 
     def _save_history(self):
         self.cache['snapshots'] = self.cache.get('snapshots', [])[-100:]
         self.history_path.write_text(json.dumps(self.cache, indent=2, default=str))
 
-    def fetch_all(self, tickers: List[str], sources: Optional[List[str]] = None) -> Dict:
+    def fetch_all(self, tickers: list[str], sources: list[str] | None = None) -> dict:
         if sources is None:
             sources = list(self.sources.keys())
         
@@ -361,7 +359,7 @@ class AlternativeDataAggregator:
         
         return results
 
-    def to_features(self, raw: Dict) -> Dict[str, float]:
+    def to_features(self, raw: dict) -> dict[str, float]:
         features = {}
         
         # Earnings features
@@ -393,13 +391,13 @@ class AlternativeDataAggregator:
         
         return features
 
-    def get_latest(self) -> Dict:
+    def get_latest(self) -> dict:
         snapshots = self.cache.get('snapshots', [])
         if not snapshots:
             return {}
         return snapshots[-1].get('data', {})
 
-    def get_trend(self, metric: str, days: int = 30) -> List[float]:
+    def get_trend(self, metric: str, days: int = 30) -> list[float]:
         snapshots = self.cache.get('snapshots', [])[-days:]
         values = []
         for snap in snapshots:
@@ -410,7 +408,7 @@ class AlternativeDataAggregator:
                         values.append(ticker_data[metric])
         return values
 
-    def score_ticker(self, ticker: str, data: Dict) -> float:
+    def score_ticker(self, ticker: str, data: dict) -> float:
         score = 50.0  # neutral
         
         insider = data.get('insider', {}).get(ticker, {})
@@ -444,7 +442,7 @@ def get_alt_data_aggregator() -> AlternativeDataAggregator:
     return _aggregator
 
 
-def fetch_and_score(tickers: List[str], sources: Optional[List[str]] = None) -> Dict:
+def fetch_and_score(tickers: list[str], sources: list[str] | None = None) -> dict:
     agg = get_alt_data_aggregator()
     data = agg.fetch_all(tickers, sources)
     

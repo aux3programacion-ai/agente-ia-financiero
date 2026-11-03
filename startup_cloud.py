@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """startup_cloud.py - Inicializa datos semilla y lanza dashboard para Railway/Render."""
-import json, os, sys
+import json
+import os
+import sys
 from pathlib import Path
 
 DATOS = Path(__file__).parent / 'Datos'
@@ -34,13 +36,13 @@ if not PRECIOS_PATH.exists():
     precios = {}
     for t in tickers:
         try:
-            h = yf.Ticker(t).history(period='5d', progress=False)
+            h = yf.Ticker(t).history(period='5d')
             if not h.empty:
                 prices = h['Close'].tolist()
                 precios[t] = {'price': round(float(prices[-1]), 2),
                               'change': round(float(prices[-1] - prices[-2]), 2) if len(prices) > 1 else 0,
                               'pct': round((prices[-1]/prices[-2] - 1)*100, 2) if len(prices) > 1 else 0}
-        except:
+        except Exception:
             precios[t] = {'price': 100.0, 'change': 0, 'pct': 0}
     seed_p = {'fuente': 'yfinance', 'timestamp': '2026-01-01T00:00:00Z', 'precios': precios}
     PRECIOS_PATH.write_text(json.dumps(seed_p, indent=2), encoding='utf-8')

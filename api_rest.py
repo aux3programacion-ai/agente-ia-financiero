@@ -3,13 +3,17 @@
 api_rest.py - API REST + programacion 24/7.
 FastAPI endpoints, APScheduler tareas programadas, monitoreo.
 """
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
-import json, os, time
+import json
+import os
+import time
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import Any
+
+from logger import get_module_logger
+
+log = get_module_logger('api_rest')
 
 try:
     from fastapi import FastAPI, HTTPException, Query
@@ -23,11 +27,21 @@ try:
 except ImportError:
     SCHEDULER_AVAILABLE = False
 
-from config.settings import get_setting
 
 DATA_DIR = os.environ.get('GITHUB_WORKSPACE', '.')
 OUTPUT_DIR = Path(DATA_DIR) / 'Datos' / 'api'
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _load_json(path: str) -> dict | None:
+    p = Path(DATA_DIR) / 'Datos' / path
+    if p.exists():
+        try:
+            return json.loads(p.read_text(encoding='utf-8'))
+        except Exception as e:
+            log.error(f"Error loading {path}: {e}")
+    return None
+
 
 app = None
 if FASTAPI_AVAILABLE:
@@ -37,14 +51,14 @@ if FASTAPI_AVAILABLE:
 @dataclass
 class TaskSchedule:
     id: str; name: str; interval_minutes: int
-    last_run: Optional[str] = None; status: str = 'idle'
+    last_run: str | None = None; status: str = 'idle'
 
 
 class TaskManager:
     def __init__(self):
-        self.tasks: Dict[str, TaskSchedule] = {}
+        self.tasks: dict[str, TaskSchedule] = {}
         self.scheduler = BackgroundScheduler() if SCHEDULER_AVAILABLE else None
-        self.results: Dict[str, Any] = {}
+        self.results: dict[str, Any] = {}
 
     def register(self, task_id: str, name: str, interval: int, func, start=False):
         self.tasks[task_id] = TaskSchedule(task_id, name, interval)
@@ -57,7 +71,7 @@ class TaskManager:
         self.results[task_id] = {
             'result': result, 'timestamp': datetime.now().isoformat()}
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         return {t.id: asdict(t) for t in self.tasks.values()}
 
 
@@ -66,13 +80,13 @@ task_manager = TaskManager()
 
 class HealthMonitor:
     def __init__(self):
-        self.checks: Dict[str, Dict] = {}
+        self.checks: dict[str, dict] = {}
         self.start_time = datetime.now()
 
     def register_check(self, name: str, check_func):
         self.checks[name] = {'func': check_func, 'last': None, 'status': 'unknown'}
 
-    def run_all(self) -> Dict:
+    def run_all(self) -> dict:
         results = {}
         for name, check in self.checks.items():
             try:
@@ -83,6 +97,7 @@ class HealthMonitor:
             except Exception as e:
                 check['status'] = 'error'
                 results[name] = {'status': 'error', 'detail': str(e)}
+                log.error(f"Health check {name} failed: {e}")
         return results
 
     def get_uptime(self) -> str:
@@ -91,6 +106,59 @@ class HealthMonitor:
 
 
 health = HealthMonitor()
+
+
+class PortfolioDataProvider:
+    def get_portfolio(self) -> dict:
+        data = _load_json('optimizacion_portafolio.json')
+        if data:
+            return data
+        return {'error': 'No portfolio data available', 'tickers': {}}
+
+    def get_signals(self, ticker: str) -> dict:
+        ia_data = _load_json('analisis_ia.json')
+        if ia_data and 'probabilidades' in ia_data:
+            probs = ia_data['probabilidades']
+            if ticker in probs and isinstance(probs[ticker], dict):
+                p = probs[ticker]
+                prob = p.get('probabilidad', 50)
+                direction = 'COMPRA' if prob > 60 else ('VENTA' if prob < 40 else 'NEUTRAL')
+                return {
+                    'ticker': ticker.upper(),
+                    'senal': direction,
+                    'probabilidad': prob,
+                    'confianza': p.get('confianza', 50),
+                    'precio_objetivo': p.get('precio_objetivo_30d'),
+                    'timestamp': datetime.now().isoformat()
+                }
+        return {'ticker': ticker.upper(), 'senal': 'SIN_DATOS', 'confianza': 0}
+
+    def get_risk(self) -> dict:
+        risk_data = _load_json('analisis_riesgo.json')
+        if risk_data:
+            return risk_data
+        return {'error': 'No risk data available'}
+
+    def get_metrics(self) -> dict:
+        opt_data = _load_json('optimizacion_portafolio.json')
+        xgb_data = _load_json('modelo_xgboost.json')
+        metrics: dict[str, Any] = {}
+        if xgb_data:
+            metrics['wf_accuracy_mean'] = xgb_data.get('wf_accuracy_mean', 0)
+            metrics['wf_accuracy_std'] = xgb_data.get('wf_accuracy_std', 0)
+            metrics['train_accuracy'] = xgb_data.get('train_accuracy', 0)
+            metrics['current_regime'] = xgb_data.get('current_regime', 'UNKNOWN')
+            metrics['n_tickers'] = len(xgb_data.get('tickers', {}))
+        if opt_data:
+            for k in ['retorno_total', 'retorno_anual', 'sharpe', 'sortino', 'calmar', 'max_drawdown']:
+                if k in opt_data:
+                    metrics[k] = opt_data[k]
+        if metrics:
+            return metrics
+        return {'error': 'No metrics data available'}
+
+
+_portfolio_provider = PortfolioDataProvider()
 
 
 if FASTAPI_AVAILABLE:
@@ -107,28 +175,19 @@ if FASTAPI_AVAILABLE:
 
     @app.get('/api/v1/portafolio')
     def get_portfolio():
-        dates = pd.date_range('2024-01-01', '2024-12-31', freq='B')
-        p = 100 * np.exp(np.cumsum(np.random.randn(len(dates)) * 0.02 + 0.0005))
-        b = 100 * np.exp(np.cumsum(np.random.randn(len(dates)) * 0.015 + 0.0003))
-        return {'fechas': [str(d.date()) for d in dates],
-                'portafolio': p.tolist(), 'benchmark': b.tolist()}
+        return _portfolio_provider.get_portfolio()
 
     @app.get('/api/v1/senales/{ticker}')
     def get_signals(ticker: str):
-        return {'ticker': ticker.upper(), 'senal': 'COMPRA',
-                'confianza': round(0.5 + np.random.random() * 0.4, 2),
-                'timestamp': datetime.now().isoformat()}
+        return _portfolio_provider.get_signals(ticker.upper())
 
     @app.get('/api/v1/riesgo')
     def get_risk():
-        return {'var_95': -0.023, 'var_99': -0.041, 'vol_anual': 0.185,
-                'sharpe': 1.42, 'max_drawdown': -0.087, 'beta': 1.05}
+        return _portfolio_provider.get_risk()
 
     @app.get('/api/v1/metricas')
     def get_metrics():
-        return {'retorno_total': 0.187, 'retorno_anual': 0.094,
-                'sharpe': 1.42, 'sortino': 1.85, 'calmar': 1.08,
-                'win_rate': 0.54, 'trades': 342}
+        return _portfolio_provider.get_metrics()
 
     @app.post('/api/v1/ejecutar')
     def execute_signal(ticker: str = Query(...), side: str = Query(...),
@@ -202,5 +261,5 @@ if __name__ == '__main__':
     cfg.generate_uvicorn_config()
     cfg.generate_systemd_service()
     cfg.generate_dockerfile()
-    print(f'[API] Config generada. Health: {health.run_all()}')
-    print(f'[API] Tasks: {task_manager.get_status()}')
+    log.info("API config generated", checks=health.run_all())
+    log.info("Tasks registered", tasks=task_manager.get_status())
